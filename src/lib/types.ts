@@ -1,0 +1,503 @@
+// ── DPD & Risk Enums ──────────────────────────────────────────────
+export type DPDBucket =
+  | 'Current'
+  | '1-30'
+  | '31-60'
+  | '61-90'
+  | '91-120'
+  | '120+'
+  | 'Write-off';
+
+export type RiskGrade = 'A' | 'B' | 'C' | 'D' | 'E';
+
+export type IFRSStage = 'Stage 1' | 'Stage 2' | 'Stage 3';
+
+export type RAGStatus = 'Green' | 'Amber' | 'Red';
+
+export type PortfolioType =
+  | 'consumer_finance'
+  | 'trade_finance'
+  | 'corporate_finance';
+
+// ── Hierarchy ─────────────────────────────────────────────────────
+export interface Entity {
+  id: string;
+  name: string;
+  geography: string;
+  country: string;
+}
+
+export interface ProductType {
+  id: string;
+  name: string;
+  category: PortfolioType;
+}
+
+// ── Filter State ──────────────────────────────────────────────────
+export interface FilterState {
+  dateRange: { from: string | null; to: string | null };
+  portfolioTypes: PortfolioType[];
+  entities: string[];
+  countries: string[];
+  products: string[];
+  riskGrades: string[];
+  ifrsStages: IFRSStage[];
+  dpdBuckets: DPDBucket[];
+}
+
+// ── Trade Finance Facility (Raw Data) ─────────────────────────────
+export interface TradeFacility {
+  facilityReference: string;
+  entity: string;
+  obligorName: string;
+  region: string;
+  country: string;
+  sector: string;
+  commodity: string;
+  productType: string;
+  currency: string;
+  facilityLimit: number;
+  outstanding: number;
+  prevMonthOutstanding: number;
+  tenorDays: number;
+  startDate: string;
+  maturityDate: string;
+  internalRating: number;
+  externalRating: string;
+  daysPastDue: number;
+  ifrs9Stage: IFRSStage;
+  provisionRate: number;
+  provisionAmount: number;
+  collateralValue: number;
+  collateralCoverage: number;
+  riskWeight: number;
+  counterpartyBank: string | null;
+  watchlistFlag: boolean;
+  ewsScore: number;
+  ewsTriggers: string | null;
+}
+
+// ── Consumer Finance Metrics ──────────────────────────────────────
+export interface ConsumerMetricRow {
+  metricType: string;
+  metric: string;
+  values: Record<string, number | string | null>; // keyed by month e.g. "Apr'25"
+  benchmark: number | string | null;
+}
+
+export interface ConsumerProductData {
+  productName: string;
+  metrics: ConsumerMetricRow[];
+}
+
+// ── Net Flow Rate ─────────────────────────────────────────────────
+export interface NetFlowRow {
+  bucket: string;
+  values: Record<string, number>; // keyed by date string
+}
+
+// ── Collection / Roll Rate ────────────────────────────────────────
+export interface CollectionMetricRow {
+  portfolio: string;
+  bucket: string;
+  amount: number;
+  transitions: number;
+  normalized: number;
+  rollBackward: number;
+  stabilized: number;
+  rollForward: number;
+}
+
+export interface RollRateTimeSeries {
+  metric: string;
+  values: Record<string, number>; // keyed by date
+}
+
+// ── Static Pool / Vintage ─────────────────────────────────────────
+export interface VintagePoint {
+  vintage: string; // e.g. "Jan'22"
+  loanAmount: number;
+  mob: number;
+  delinquencyRate: number;
+  metricType: string; // X+, 30+, 60+, 90+, Gross Loss, Recoveries, NCL
+}
+
+// ── Roll Rate Flow (Sankey) ───────────────────────────────────────
+export interface RollRateFlow {
+  from: DPDBucket;
+  to: DPDBucket;
+  balance: number;
+  percentage: number;
+}
+
+// ── Heatmap Cell ──────────────────────────────────────────────────
+export interface HeatmapCell {
+  vintage: string;
+  mob: number;
+  rate: number;
+}
+
+// ── Portfolio Summary KPIs ────────────────────────────────────────
+export interface PortfolioSummary {
+  totalAUM: number;
+  totalFacilities: number;
+  newBookings: number;
+  momChange: number;
+  momChangePercent: number;
+  nplRatio: number;
+  stage2Plus3Pct: number;
+  provisionCoverage: number;
+  delinquency30Plus: number;
+  delinquency90Plus: number;
+  writeOffRate: number;
+  collectionEfficiency: number;
+  avgEWSScore: number;
+  watchlistCount: number;
+  watchlistExposure: number;
+}
+
+// ── Entity Performance ────────────────────────────────────────────
+export interface EntityPerformance {
+  entity: string;
+  geography: string;
+  approvedLimit: number;
+  outstanding: number;
+  headroom: number;
+  utilization: number;
+  stage1: number;
+  stage2: number;
+  stage3: number;
+  provisions: number;
+  provisionCoverage: number;
+  ragStatus: RAGStatus;
+}
+
+// ── Product Mix ───────────────────────────────────────────────────
+export interface ProductMixRow {
+  productType: string;
+  facilities: number;
+  limit: number;
+  outstanding: number;
+  portfolioShare: number;
+  avgTenor: number;
+  utilization: number;
+  stage2Plus3: number;
+  avgRating: number;
+  watchlistCount: number;
+}
+
+// ── Asset Quality / IFRS 9 ───────────────────────────────────────
+export interface AssetQualityByEntity {
+  entity: string;
+  stage1Count: number;
+  stage1Balance: number;
+  stage2Count: number;
+  stage2Balance: number;
+  stage3Count: number;
+  stage3Balance: number;
+  stage2Plus3Pct: number;
+  provisionCoverage: number;
+  rag: RAGStatus;
+}
+
+export interface RatingDistribution {
+  ratingBand: string;
+  count: number;
+  balance: number;
+  portfolioShare: number;
+  avgProvision: number;
+}
+
+// ── Concentration ─────────────────────────────────────────────────
+export interface ConcentrationNode {
+  name: string;
+  entity: string;
+  category: string; // obligor | sector | country
+  value: number;
+  portfolioShare: number;
+  facilities: number;
+  rating: number | string;
+}
+
+// ── Collections & Efficiency ──────────────────────────────────────
+export interface CollectionEfficiency {
+  entity: string;
+  collectionEfficiencyRatio: number;
+  overdueRatio: number;
+  avgDPD: number;
+  recoveryRate: number | null;
+  rolloverRate: number;
+  provisionOutstanding: number;
+  rag: RAGStatus;
+}
+
+// ── Watchlist ─────────────────────────────────────────────────────
+export interface WatchlistSummary {
+  entity: string;
+  watchlistCount: number;
+  watchlistExposure: number;
+  entityPortfolioShare: number;
+  ewsScore2PlusCount: number;
+  ewsScore2PlusExposure: number;
+  stage2Plus3Count: number;
+  rag: RAGStatus;
+}
+
+export interface WatchlistAccount {
+  facilityRef: string;
+  entity: string;
+  obligorName: string;
+  productType: string;
+  outstanding: number;
+  dpd: number;
+  stage: IFRSStage;
+  rating: number;
+  ewsScore: number;
+  triggers: string;
+  action: string;
+}
+
+// ── EWS Dashboard ─────────────────────────────────────────────────
+export interface EWSEntitySummary {
+  entity: string;
+  score0: number;
+  score1: number;
+  score2: number;
+  score3: number;
+  score4Plus: number;
+  totalFacilities: number;
+  avgEWSScore: number;
+  flaggedExposure: number;
+  rag: RAGStatus;
+}
+
+export interface EWSSignal {
+  dimension: string;
+  score: number;
+  threshold: number;
+  status: RAGStatus;
+}
+
+export interface EWSFacilityAlert {
+  facilityRef: string;
+  entity: string;
+  obligor: string;
+  ewsScore: number;
+  outstanding: number;
+  triggers: string;
+  stage: IFRSStage;
+  action: string;
+}
+
+// ── Macro & External Risk ─────────────────────────────────────────
+export interface FXRiskRow {
+  entity: string;
+  primaryCurrency: string;
+  fxRate: number;
+  volatility30Day: number;
+  volatility90Day: number;
+  ytdDepreciation: number;
+  portfolioExposure: number;
+  fxImpact: number;
+  capitalControls: boolean;
+  transferRisk: string;
+  rag: RAGStatus;
+}
+
+export interface CountryRiskRow {
+  entity: string;
+  sovereignRating: number;
+  countryRiskScore: number;
+  regulatoryScore: number;
+  politicalStabilityScore: number;
+  compositeScore: number;
+  exposure: number;
+  rwaShare: number;
+  capitalImpact: number;
+  recommendation: string;
+  rag: RAGStatus;
+}
+
+// ── Corporate Finance ─────────────────────────────────────────────
+export interface CorporatePortfolioRow {
+  particular: string;
+  months: Record<string, { total: number | string; fundBased: number | string; nonFB: number | string }>;
+}
+
+export interface CovenantTrackingRow {
+  groupId: string;
+  custId: string;
+  customerName: string;
+  dateOfDisbursal: string;
+  sanctionedLimit: number;
+  disbursedAmount: number;
+  currentPOS: number;
+  facilityType: string;
+  securityType: string;
+  securityCover: number;
+  riskRating: string;
+  covenantCategory: string;
+  covenantType: string;
+  covenantDescription: string;
+  covenantFrequency: string;
+  submissionDate: string;
+  approvalForExtension: string;
+  npaFlag: boolean;
+  restructuredFlag: boolean;
+  watchlistFlag: boolean;
+  writeoffFlag: boolean;
+}
+
+export interface CorporateWatchlistRow {
+  borrower: string;
+  sector: string;
+  exposure: string;
+  ewsTriggerType: string;
+  internalRating: string;
+  status: string;
+  remedialAction: string;
+}
+
+export interface CorporateDelinquencyRow {
+  groupId: string;
+  custId: string;
+  customerName: string;
+  sector: string;
+  industry: string;
+  sanctionedLimit: number;
+  disbursedAmount: number;
+  currentPOS: number;
+  facilityType: string;
+  securityType: string;
+  securityCover: number;
+  ratingAtDisbursement: string;
+  currentRating: string;
+  renewalDone: boolean;
+  dpdAtMonthEnd: number;
+  currentDPD: number;
+  reasonForDelinquency: string;
+  lastRemedialAction: string;
+  updateOnRemedial: string;
+  currentStatus: string;
+  nextStep: string;
+}
+
+// ── Non-Starter Analysis ──────────────────────────────────────────
+export interface NonStarterRow {
+  category: string;
+  product: string;
+  metric: string; // 'Facility in Force (#)' | 'Facility in Force ($)'
+  monthlyValues: Record<string, number>;
+  yearlyAverages: Record<string, number>;
+  quarterlyValues: Record<string, number>;
+}
+
+// ── TDD Metrics ───────────────────────────────────────────────────
+export interface TDDPreDisbursal {
+  metric: string;
+  values: Record<string, number | string>;
+}
+
+export interface TDDPostDisbursal {
+  variant: string; // Fresh | Renewal | Topup
+  bureauBucket: string;
+  values: Record<string, number>;
+}
+
+// ── Business Support / Risk Analytics ─────────────────────────────
+export interface ApprovedBaseRow {
+  laBand: string;
+  loanBands: Record<string, number>;
+  total: number;
+}
+
+export interface RejectedBaseRow {
+  loanType: string;
+  amountBands: Record<string, number>;
+  total: number;
+}
+
+// ── LOS Data — MTD / LMTD / FTD ─────────────────────────────────
+export interface LOSComparisonMetric {
+  metric: string;
+  product: string;
+  ftd: number;
+  mtd: number;
+  lmtd: number;
+  lmFull: number;
+  momChange: number;
+  target: number | null;
+  achievement: number | null;
+}
+
+export interface LOSFunnelStep {
+  stage: string;
+  product: string;
+  ftd: number;
+  mtd: number;
+  lmtd: number;
+  conversionRate: number;
+}
+
+export interface LOSDisbursementDaily {
+  date: string;
+  product: string;
+  count: number;
+  amount: number;
+  avgTicketSize: number;
+}
+
+// ── Aggregate Data Store ──────────────────────────────────────────
+export interface PortfolioData {
+  // Trade Finance
+  tradeFacilities: TradeFacility[];
+  entityPerformance: EntityPerformance[];
+  productMix: ProductMixRow[];
+  assetQuality: AssetQualityByEntity[];
+  ratingDistribution: RatingDistribution[];
+  concentrationNodes: ConcentrationNode[];
+  collectionEfficiency: CollectionEfficiency[];
+  watchlistSummary: WatchlistSummary[];
+  watchlistAccounts: WatchlistAccount[];
+  ewsEntitySummary: EWSEntitySummary[];
+  ewsFacilityAlerts: EWSFacilityAlert[];
+  fxRisk: FXRiskRow[];
+  countryRisk: CountryRiskRow[];
+  tradeExecutiveSummary: PortfolioSummary | null;
+
+  // Consumer Finance
+  consumerOverall: ConsumerMetricRow[];
+  consumerProducts: ConsumerProductData[];
+  netFlowRates: NetFlowRow[];
+  collectionMetrics: CollectionMetricRow[];
+  rollRateTimeSeries: RollRateTimeSeries[];
+  vintagePoints: VintagePoint[];
+  nonStarterData: NonStarterRow[];
+  tddPreDisbursal: TDDPreDisbursal[];
+  tddPostDisbursal: TDDPostDisbursal[];
+  approvedBase: ApprovedBaseRow[];
+  rejectedBase: RejectedBaseRow[];
+
+  // LOS Origination Data
+  losMetrics: LOSComparisonMetric[];
+  losFunnel: LOSFunnelStep[];
+  losDaily: LOSDisbursementDaily[];
+
+  // Corporate Finance
+  corporatePortfolio: CorporatePortfolioRow[];
+  covenantTracking: CovenantTrackingRow[];
+  corporateWatchlist: CorporateWatchlistRow[];
+  corporateDelinquency: CorporateDelinquencyRow[];
+  corporateRatingAnalysis: RatingDistribution[];
+
+  // Metadata
+  datasetInfo: DatasetInfo;
+}
+
+export interface DatasetInfo {
+  files: { name: string; sheets: string[]; recordCount: number }[];
+  loadedAt: string;
+  entities: string[];
+  countries: string[];
+  portfolioTypes: PortfolioType[];
+}
