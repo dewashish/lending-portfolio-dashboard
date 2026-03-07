@@ -10,6 +10,11 @@ export interface KPIItem {
   trend?: { value: number; label?: string };
   color?: string;
   icon?: React.ReactNode;
+  sparkline?: number[];
+  /** If true, downward trend is good (e.g. delinquency, FPD) */
+  invertTrend?: boolean;
+  benchmark?: number;
+  benchmarkLabel?: string;
 }
 
 interface Props {

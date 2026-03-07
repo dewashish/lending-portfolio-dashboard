@@ -4,9 +4,14 @@ import { Box } from '@mui/material';
 import { ConsumerProductTable } from '@/components/tables/ConsumerProductTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useProductMetrics } from '@/hooks/useConsumerData';
+import type { ScopeSelection } from '@/lib/types';
 
-export function ConsumerProductSection() {
-  const { data: products, isLoading } = useProductMetrics();
+interface Props {
+  scope?: ScopeSelection;
+}
+
+export function ConsumerProductSection({ scope }: Props) {
+  const { data: products, isLoading } = useProductMetrics(scope);
 
   if (isLoading) return <LoadingSkeleton />;
 

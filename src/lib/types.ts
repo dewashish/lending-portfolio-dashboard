@@ -19,6 +19,72 @@ export type PortfolioType =
   | 'trade_finance'
   | 'corporate_finance';
 
+// ── Multi-Geography Scope ─────────────────────────────────────────
+export type ScopeLevel = 'group' | 'region' | 'subsidiary';
+
+export interface ScopeSelection {
+  level: ScopeLevel;
+  regionId?: number;
+  subsidiaryId?: number;
+}
+
+export interface Region {
+  id: number;
+  name: string;
+  displayOrder: number;
+}
+
+export interface Subsidiary {
+  id: number;
+  name: string;
+  shortCode: string;
+  country: string;
+  countryCode: string;
+  regionId: number;
+  currencyCode: string;
+  institutionType: string;
+  isActive: boolean;
+}
+
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+}
+
+export interface FXRate {
+  fromCurrency: string;
+  toCurrency: string;
+  rate: number;
+  effectiveDate: string;
+}
+
+export interface DataSource {
+  id: number;
+  subsidiaryId: number;
+  sourceType: string;
+  sourceName: string | null;
+  lastSyncAt: string | null;
+  status: string;
+}
+
+export interface SubsidiaryScorecard {
+  subsidiaryId: number;
+  subsidiary: string;
+  shortCode: string;
+  country: string;
+  currencyCode: string;
+  region: string;
+  institutionType: string;
+  aumLocal: number | null;
+  aumUsd: number | null;
+  latestPeriod: string | null;
+  delinquency30Plus: number | null;
+  delinquency90Plus: number | null;
+  netCreditLoss: number | null;
+  fpdPct: number | null;
+}
+
 // ── Hierarchy ─────────────────────────────────────────────────────
 export interface Entity {
   id: string;
@@ -43,6 +109,7 @@ export interface FilterState {
   riskGrades: string[];
   ifrsStages: IFRSStage[];
   dpdBuckets: DPDBucket[];
+  scope: ScopeSelection;
 }
 
 // ── Trade Finance Facility (Raw Data) ─────────────────────────────
@@ -447,57 +514,3 @@ export interface LOSDisbursementDaily {
   avgTicketSize: number;
 }
 
-// ── Aggregate Data Store ──────────────────────────────────────────
-export interface PortfolioData {
-  // Trade Finance
-  tradeFacilities: TradeFacility[];
-  entityPerformance: EntityPerformance[];
-  productMix: ProductMixRow[];
-  assetQuality: AssetQualityByEntity[];
-  ratingDistribution: RatingDistribution[];
-  concentrationNodes: ConcentrationNode[];
-  collectionEfficiency: CollectionEfficiency[];
-  watchlistSummary: WatchlistSummary[];
-  watchlistAccounts: WatchlistAccount[];
-  ewsEntitySummary: EWSEntitySummary[];
-  ewsFacilityAlerts: EWSFacilityAlert[];
-  fxRisk: FXRiskRow[];
-  countryRisk: CountryRiskRow[];
-  tradeExecutiveSummary: PortfolioSummary | null;
-
-  // Consumer Finance
-  consumerOverall: ConsumerMetricRow[];
-  consumerProducts: ConsumerProductData[];
-  netFlowRates: NetFlowRow[];
-  collectionMetrics: CollectionMetricRow[];
-  rollRateTimeSeries: RollRateTimeSeries[];
-  vintagePoints: VintagePoint[];
-  nonStarterData: NonStarterRow[];
-  tddPreDisbursal: TDDPreDisbursal[];
-  tddPostDisbursal: TDDPostDisbursal[];
-  approvedBase: ApprovedBaseRow[];
-  rejectedBase: RejectedBaseRow[];
-
-  // LOS Origination Data
-  losMetrics: LOSComparisonMetric[];
-  losFunnel: LOSFunnelStep[];
-  losDaily: LOSDisbursementDaily[];
-
-  // Corporate Finance
-  corporatePortfolio: CorporatePortfolioRow[];
-  covenantTracking: CovenantTrackingRow[];
-  corporateWatchlist: CorporateWatchlistRow[];
-  corporateDelinquency: CorporateDelinquencyRow[];
-  corporateRatingAnalysis: RatingDistribution[];
-
-  // Metadata
-  datasetInfo: DatasetInfo;
-}
-
-export interface DatasetInfo {
-  files: { name: string; sheets: string[]; recordCount: number }[];
-  loadedAt: string;
-  entities: string[];
-  countries: string[];
-  portfolioTypes: PortfolioType[];
-}

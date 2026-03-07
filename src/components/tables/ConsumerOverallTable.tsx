@@ -20,7 +20,11 @@ import {
   Typography,
   Box,
   TableSortLabel,
+  Tooltip,
 } from '@mui/material';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import { formatPercent, formatCurrencyMM } from '@/lib/format';
 import type { ConsumerMetricRow } from '@/lib/types';
 
@@ -35,6 +39,11 @@ const GROUP_COLORS: Record<string, string> = {
   'Portfolio': '#4527a0',
   'Bookings': '#0d47a1',
 };
+
+/** Metrics where an increase is bad (delinquency, FPD, write-off, etc.) */
+function isInverseMetric(metric: string): boolean {
+  return /(%|FPD|SPD|TPD|NPA|DPD|Delinquency|Write-off|NCL|Net Credit Loss)/i.test(metric);
+}
 
 function isPercentMetric(metric: string): boolean {
   return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio)/i.test(metric);
@@ -56,6 +65,7 @@ function formatMetricValue(
   return String(value);
 }
 
+/** Color value cells when they deviate from benchmark */
 function getValueColor(
   value: number | string | null,
   benchmark: number | string | null,
@@ -69,13 +79,51 @@ function getValueColor(
   )
     return undefined;
 
-  // For rate-type metrics: exceeding benchmark is bad (red), being below is good (green)
   if (isPercentMetric(metric)) {
-    if (value > benchmark * 1.05) return '#ef5350'; // red — worse
-    if (value < benchmark * 0.95) return '#66bb6a'; // green — better
+    if (isInverseMetric(metric)) {
+      // For delinquency-type metrics: higher than benchmark = bad
+      if (value > benchmark * 1.05) return '#ef5350';
+      if (value < benchmark * 0.95) return '#66bb6a';
+    } else {
+      // For efficiency-type metrics: lower than benchmark = bad
+      if (value < benchmark * 0.95) return '#ef5350';
+      if (value > benchmark * 1.05) return '#66bb6a';
+    }
   }
   return undefined;
 }
+
+/** Compute MoM delta between last two periods */
+function getMoMDelta(row: ConsumerMetricRow, periodKeys: string[]): { value: number; pct: number } | null {
+  if (periodKeys.length < 2) return null;
+  const curr = row.values[periodKeys[periodKeys.length - 1]];
+  const prev = row.values[periodKeys[periodKeys.length - 2]];
+  if (typeof curr !== 'number' || typeof prev !== 'number') return null;
+  if (prev === 0) return { value: curr - prev, pct: 0 };
+  return { value: curr - prev, pct: ((curr - prev) / Math.abs(prev)) * 100 };
+}
+
+/** RAG status based on latest value vs benchmark */
+function getRAGStatus(row: ConsumerMetricRow, periodKeys: string[]): 'green' | 'amber' | 'red' | null {
+  if (periodKeys.length === 0) return null;
+  const latest = row.values[periodKeys[periodKeys.length - 1]];
+  const bm = row.benchmark;
+  if (typeof latest !== 'number' || typeof bm !== 'number') return null;
+
+  const ratio = latest / bm;
+  if (isInverseMetric(row.metric)) {
+    // Lower is better
+    if (ratio <= 0.95) return 'green';
+    if (ratio <= 1.10) return 'amber';
+    return 'red';
+  }
+  // Higher is better
+  if (ratio >= 1.05) return 'green';
+  if (ratio >= 0.90) return 'amber';
+  return 'red';
+}
+
+const RAG_COLORS = { green: '#66bb6a', amber: '#ffa726', red: '#ef5350' };
 
 /* ── component ───────────────────────────────────────────────────── */
 
@@ -90,8 +138,10 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
   /* dynamically extract period column keys from the first row */
   const periodKeys = useMemo<string[]>(() => {
     if (data.length === 0) return [];
-    return Object.keys(data[0].values);
+    return Object.keys(data[0].values).sort();
   }, [data]);
+
+  const latestPeriodKey = periodKeys.length > 0 ? periodKeys[periodKeys.length - 1] : '';
 
   /* group rows by metricType (preserving order of appearance) */
   const groups = useMemo(() => {
@@ -135,6 +185,7 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
           const row = info.row.original;
           const raw = row.values[key];
           const color = getValueColor(raw, row.benchmark, row.metric);
+          const isLatest = key === latestPeriodKey;
           return (
             <Box
               component="span"
@@ -142,7 +193,7 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
                 fontFamily: '"Roboto Mono", monospace',
                 fontSize: '0.75rem',
                 color: color ?? 'text.primary',
-                fontWeight: color ? 700 : 400,
+                fontWeight: isLatest ? 700 : (color ? 700 : 400),
               }}
             >
               {formatMetricValue(raw, row.metric)}
@@ -150,6 +201,58 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
           );
         },
       })),
+      // MoM Delta column
+      {
+        id: 'mom_delta',
+        header: 'MoM',
+        accessorFn: (row: ConsumerMetricRow) => {
+          const delta = getMoMDelta(row, periodKeys);
+          return delta?.pct ?? 0;
+        },
+        cell: (info) => {
+          const row = info.row.original;
+          const delta = getMoMDelta(row, periodKeys);
+          if (!delta) return <Box component="span" sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>—</Box>;
+
+          const isFlat = Math.abs(delta.pct) < 0.5;
+          const inverse = isInverseMetric(row.metric);
+          const isGood = isFlat ? null : inverse ? delta.pct < 0 : delta.pct > 0;
+
+          const color = isFlat ? '#78909c' : isGood ? '#66bb6a' : '#ef5350';
+          const Icon = isFlat ? TrendingFlatIcon : delta.pct > 0 ? TrendingUpIcon : TrendingDownIcon;
+
+          return (
+            <Tooltip
+              title={`${delta.pct >= 0 ? '+' : ''}${delta.pct.toFixed(1)}% (${formatMetricValue(delta.value, row.metric)})`}
+              arrow
+              placement="top"
+            >
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.3,
+                  bgcolor: `${color}18`,
+                  borderRadius: 0.5,
+                  px: 0.5,
+                  py: 0.15,
+                  cursor: 'default',
+                }}
+              >
+                <Icon sx={{ fontSize: 11, color }} />
+                <Typography
+                  component="span"
+                  sx={{ fontSize: '0.65rem', fontWeight: 700, color, lineHeight: 1 }}
+                >
+                  {Math.abs(delta.pct).toFixed(1)}%
+                </Typography>
+              </Box>
+            </Tooltip>
+          );
+        },
+      },
+      // Benchmark column
       {
         id: 'benchmark',
         accessorKey: 'benchmark',
@@ -170,9 +273,36 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
           );
         },
       },
+      // RAG Status column
+      {
+        id: 'rag',
+        header: 'Status',
+        accessorFn: () => null,
+        enableSorting: false,
+        cell: (info) => {
+          const row = info.row.original;
+          const rag = getRAGStatus(row, periodKeys);
+          if (!rag) return null;
+          const ragLabel = rag === 'green' ? 'On Track' : rag === 'amber' ? 'Watch' : 'Alert';
+          return (
+            <Tooltip title={ragLabel} arrow placement="top">
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: RAG_COLORS[rag],
+                  boxShadow: `0 0 4px ${RAG_COLORS[rag]}80`,
+                  mx: 'auto',
+                }}
+              />
+            </Tooltip>
+          );
+        },
+      },
     ];
     return cols;
-  }, [periodKeys]);
+  }, [periodKeys, latestPeriodKey]);
 
   /* build flat rows for TanStack, but we render grouped manually */
   const flatRows = useMemo(() => Array.from(groups.values()).flat(), [groups]);
@@ -208,11 +338,12 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
                   const sorted = header.column.getIsSorted();
                   /* hide the Metric Type header column — rendered as group rows */
                   if (header.id === 'metricType') return null;
+                  const isLatestPeriod = header.id === `period_${latestPeriodKey}`;
                   return (
                     <TableCell
                       key={header.id}
                       sx={{
-                        bgcolor: 'background.paper',
+                        bgcolor: isLatestPeriod ? 'action.selected' : 'background.paper',
                         color: 'text.secondary',
                         fontWeight: 700,
                         fontSize: '0.65rem',
@@ -224,6 +355,8 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
                         position: 'sticky',
                         top: 0,
                         zIndex: 2,
+                        ...(header.id === 'rag' && { textAlign: 'center', width: 40 }),
+                        ...(header.id === 'mom_delta' && { width: 70 }),
                       }}
                       sortDirection={sorted || undefined}
                     >
@@ -309,8 +442,15 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
                   {row.getVisibleCells().map((cell) => {
                     /* skip the hidden metricType column */
                     if (cell.column.id === 'metricType') return null;
+                    const isLatestPeriod = cell.column.id === `period_${latestPeriodKey}`;
                     return (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        sx={{
+                          ...(isLatestPeriod && { bgcolor: 'action.selected' }),
+                          ...(cell.column.id === 'rag' && { textAlign: 'center' }),
+                        }}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     );

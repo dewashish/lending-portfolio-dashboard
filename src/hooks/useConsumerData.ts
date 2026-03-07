@@ -1,64 +1,76 @@
 import useSWR from 'swr';
 import * as queries from '@/lib/queries/consumer';
+import { scopeKey } from '@/lib/queries/shared';
+import type { ScopeSelection } from '@/lib/types';
 
-export function useConsumerOverall() {
-  return useSWR('consumer-overall', queries.fetchConsumerOverall);
+export function useConsumerOverall(scope?: ScopeSelection) {
+  return useSWR(scopeKey('consumer-overall', scope), () => queries.fetchConsumerOverall(scope));
 }
 
-export function useProductMetrics() {
-  return useSWR('consumer-products', queries.fetchProductMetrics);
+export function useProductMetrics(scope?: ScopeSelection) {
+  return useSWR(scopeKey('consumer-products', scope), () => queries.fetchProductMetrics(scope));
 }
 
-export function useNetFlowRates() {
-  return useSWR('net-flow-rates', queries.fetchNetFlowRates);
+export function useNetFlowRates(scope?: ScopeSelection) {
+  return useSWR(scopeKey('net-flow-rates', scope), () => queries.fetchNetFlowRates(scope));
 }
 
-export function useRollRates() {
-  return useSWR('roll-rates', queries.fetchRollRates);
+export function useRollRates(scope?: ScopeSelection) {
+  return useSWR(scopeKey('roll-rates', scope), () => queries.fetchRollRates(scope));
 }
 
-export function useCollectionMetrics() {
-  return useSWR('collection-metrics', queries.fetchCollectionMetrics);
+export function useCollectionMetrics(scope?: ScopeSelection) {
+  return useSWR(scopeKey('collection-metrics', scope), () => queries.fetchCollectionMetrics(scope));
 }
 
-export function useVintagePoints(metricType?: string) {
-  return useSWR(
-    metricType ? `vintage-points-${metricType}` : 'vintage-points',
-    () => queries.fetchVintagePoints(metricType),
-  );
+export function useVintagePoints(metricType?: string, scope?: ScopeSelection) {
+  const key = metricType ? `vintage-points-${metricType}` : 'vintage-points';
+  return useSWR(scopeKey(key, scope), () => queries.fetchVintagePoints(metricType, scope));
 }
 
-export function useNonStarters() {
-  return useSWR('non-starters', queries.fetchNonStarters);
+export function useNonStarters(scope?: ScopeSelection) {
+  return useSWR(scopeKey('non-starters', scope), () => queries.fetchNonStarters(scope));
 }
 
-export function useTDDPre() {
-  return useSWR('tdd-pre', queries.fetchTDDPre);
+export function useTDDPre(scope?: ScopeSelection) {
+  return useSWR(scopeKey('tdd-pre', scope), () => queries.fetchTDDPre(scope));
 }
 
-export function useTDDPost() {
-  return useSWR('tdd-post', queries.fetchTDDPost);
+export function useTDDPost(scope?: ScopeSelection) {
+  return useSWR(scopeKey('tdd-post', scope), () => queries.fetchTDDPost(scope));
 }
 
-export function useApprovedBase() {
-  return useSWR('approved-base', queries.fetchApprovedBase);
+export function useApprovedBase(scope?: ScopeSelection) {
+  return useSWR(scopeKey('approved-base', scope), () => queries.fetchApprovedBase(scope));
 }
 
-export function useRejectedBase() {
-  return useSWR('rejected-base', queries.fetchRejectedBase);
+export function useRejectedBase(scope?: ScopeSelection) {
+  return useSWR(scopeKey('rejected-base', scope), () => queries.fetchRejectedBase(scope));
 }
 
-export function useLOSMetrics() {
-  return useSWR('los-metrics', queries.fetchLOSMetrics);
+export function useLOSMetrics(scope?: ScopeSelection) {
+  return useSWR(scopeKey('los-metrics', scope), () => queries.fetchLOSMetrics(scope));
 }
 
-export function useLOSFunnel(product?: string) {
-  return useSWR(
-    product ? `los-funnel-${product}` : 'los-funnel',
-    () => queries.fetchLOSFunnel(product),
-  );
+export function useLOSFunnel(product?: string, scope?: ScopeSelection) {
+  const key = product ? `los-funnel-${product}` : 'los-funnel';
+  return useSWR(scopeKey(key, scope), () => queries.fetchLOSFunnel(product, scope));
 }
 
-export function useLOSDaily() {
-  return useSWR('los-daily', queries.fetchLOSDaily);
+export function useLOSDaily(scope?: ScopeSelection) {
+  return useSWR(scopeKey('los-daily', scope), () => queries.fetchLOSDaily(scope));
+}
+
+// ── New: Scope Navigation Hooks ─────────────────────────────────
+
+export function useSubsidiaries() {
+  return useSWR('subsidiaries', queries.fetchSubsidiaries);
+}
+
+export function useRegions() {
+  return useSWR('regions', queries.fetchRegions);
+}
+
+export function useSubsidiaryScorecard(scope?: ScopeSelection) {
+  return useSWR(scopeKey('subsidiary-scorecard', scope), () => queries.fetchSubsidiaryScorecard(scope));
 }

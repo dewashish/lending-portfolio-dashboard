@@ -51,21 +51,15 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
     [mode],
   );
 
-  // Prevent flash of wrong theme on SSR
-  if (!mounted) {
-    return (
-      <ThemeProvider theme={darkTheme}>
-        <CssBaseline />
-        <div style={{ visibility: 'hidden' }}>{children}</div>
-      </ThemeProvider>
-    );
-  }
-
+  // Always render the same tree structure to prevent hooks reconciliation issues.
+  // Use visibility:hidden before mount to prevent flash of wrong theme.
   return (
     <ThemeModeContext.Provider value={value}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={mounted ? theme : darkTheme}>
         <CssBaseline />
-        {children}
+        <div style={mounted ? undefined : { visibility: 'hidden' }}>
+          {children}
+        </div>
       </ThemeProvider>
     </ThemeModeContext.Provider>
   );

@@ -15,7 +15,18 @@ import type {
   LOSComparisonMetric,
   LOSFunnelStep,
   LOSDisbursementDaily,
+  ScopeSelection,
+  SubsidiaryScorecard,
 } from '../types';
+import {
+  applyScopeAsync,
+  getSubsidiaryIdsByRegion,
+  fetchSubsidiaries,
+  fetchRegions,
+} from './shared';
+
+// Re-export shared scope navigation queries
+export { fetchSubsidiaries, fetchRegions };
 
 // ── Type aliases for rows ──────────────────────────────────────
 type OverallRow = Database['public']['Tables']['consumer_overall_metrics']['Row'];
@@ -33,7 +44,7 @@ type LOSMetricDbRow = Database['public']['Tables']['los_metrics']['Row'];
 type LOSFunnelDbRow = Database['public']['Tables']['los_funnel']['Row'];
 type LOSDailyDbRow = Database['public']['Tables']['los_daily']['Row'];
 
-// ── Helpers ──────────────────────────────────────────────────────
+// ── Pivot Helpers ────────────────────────────────────────────────
 
 function pivotToMetricRows(rows: OverallRow[]): ConsumerMetricRow[] {
   const map = new Map<string, ConsumerMetricRow>();
@@ -91,47 +102,99 @@ function pivotToRollRateSeries(rows: RollRateDbRow[]): RollRateTimeSeries[] {
 
 // ── Query Functions ──────────────────────────────────────────────
 
-export async function fetchConsumerOverall(): Promise<ConsumerMetricRow[]> {
-  const { data, error } = await supabase
+export async function fetchConsumerOverall(scope?: ScopeSelection): Promise<ConsumerMetricRow[]> {
+  let query = supabase
     .from('consumer_overall_metrics')
-    .select('metric_type, metric, period, value, benchmark')
+    .select('subsidiary_id, metric_type, metric, period, value, value_usd, benchmark')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
-  return pivotToMetricRows((data ?? []) as OverallRow[]);
+
+  const useUsd = !scope || scope.level !== 'subsidiary';
+  const rows = (data ?? []) as (OverallRow & { value_usd: number | null })[];
+
+  if (useUsd && rows.length > 0 && rows[0].value_usd != null) {
+    const amountMetrics = new Set([
+      'Total AUM', 'On-Book AUM', 'Off-Book AUM', 'New Bookings',
+      'Life-to-Date Disbursement', 'Write-offs', 'Recoveries', 'NCL',
+      'Average Ticket Size',
+    ]);
+    const aggregated = new Map<string, OverallRow>();
+    const countMap = new Map<string, number>();
+
+    for (const r of rows) {
+      const key = `${r.metric_type}|${r.metric}|${r.period}`;
+      if (!aggregated.has(key)) {
+        aggregated.set(key, {
+          ...r,
+          value: amountMetrics.has(r.metric) ? (r.value_usd ?? 0) : (r.value ?? 0),
+        });
+        countMap.set(key, 1);
+      } else {
+        const existing = aggregated.get(key)!;
+        if (amountMetrics.has(r.metric)) {
+          existing.value = (existing.value ?? 0) + (r.value_usd ?? 0);
+        } else {
+          existing.value = (existing.value ?? 0) + (r.value ?? 0);
+          countMap.set(key, (countMap.get(key) ?? 0) + 1);
+        }
+      }
+    }
+
+    aggregated.forEach((row, key) => {
+      if (!amountMetrics.has(row.metric)) {
+        const count = countMap.get(key) ?? 1;
+        row.value = (row.value ?? 0) / count;
+      }
+    });
+
+    return pivotToMetricRows(Array.from(aggregated.values()));
+  }
+
+  return pivotToMetricRows(rows);
 }
 
-export async function fetchProductMetrics(): Promise<ConsumerProductData[]> {
-  const { data, error } = await supabase
+export async function fetchProductMetrics(scope?: ScopeSelection): Promise<ConsumerProductData[]> {
+  let query = supabase
     .from('consumer_product_metrics')
     .select('product_name, metric_type, metric, period, value, benchmark')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
   return pivotToProductData((data ?? []) as ProductRow[]);
 }
 
-export async function fetchNetFlowRates(): Promise<NetFlowRow[]> {
-  const { data, error } = await supabase
+export async function fetchNetFlowRates(scope?: ScopeSelection): Promise<NetFlowRow[]> {
+  let query = supabase
     .from('net_flow_rates')
     .select('portfolio, bucket, period, value')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
   return pivotToNetFlowRows((data ?? []) as NetFlowDbRow[]);
 }
 
-export async function fetchRollRates(): Promise<RollRateTimeSeries[]> {
-  const { data, error } = await supabase
+export async function fetchRollRates(scope?: ScopeSelection): Promise<RollRateTimeSeries[]> {
+  let query = supabase
     .from('roll_rate_series')
     .select('bucket, metric, period, value')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
   return pivotToRollRateSeries((data ?? []) as RollRateDbRow[]);
 }
 
-export async function fetchCollectionMetrics(): Promise<CollectionMetricRow[]> {
-  const { data, error } = await supabase
+export async function fetchCollectionMetrics(scope?: ScopeSelection): Promise<CollectionMetricRow[]> {
+  let query = supabase
     .from('collection_metrics')
     .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as CollectionDbRow[]).map((r) => ({
     portfolio: r.portfolio,
@@ -145,9 +208,10 @@ export async function fetchCollectionMetrics(): Promise<CollectionMetricRow[]> {
   }));
 }
 
-export async function fetchVintagePoints(metricType?: string): Promise<VintagePoint[]> {
+export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelection): Promise<VintagePoint[]> {
   let query = supabase.from('vintage_points').select('vintage, loan_amount, mob, delinquency_rate, metric_type').order('id');
   if (metricType) query = query.eq('metric_type', metricType);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as VintageDbRow[]).map((r) => ({
@@ -159,11 +223,13 @@ export async function fetchVintagePoints(metricType?: string): Promise<VintagePo
   }));
 }
 
-export async function fetchNonStarters(): Promise<NonStarterRow[]> {
-  const { data, error } = await supabase
+export async function fetchNonStarters(scope?: ScopeSelection): Promise<NonStarterRow[]> {
+  let query = supabase
     .from('non_starters')
     .select('category, product, metric, period, value')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
 
   const map = new Map<string, NonStarterRow>();
@@ -184,11 +250,13 @@ export async function fetchNonStarters(): Promise<NonStarterRow[]> {
   return Array.from(map.values());
 }
 
-export async function fetchTDDPre(): Promise<TDDPreDisbursal[]> {
-  const { data, error } = await supabase
+export async function fetchTDDPre(scope?: ScopeSelection): Promise<TDDPreDisbursal[]> {
+  let query = supabase
     .from('tdd_pre_disbursal')
     .select('metric, period, value')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
 
   const map = new Map<string, TDDPreDisbursal>();
@@ -201,11 +269,13 @@ export async function fetchTDDPre(): Promise<TDDPreDisbursal[]> {
   return Array.from(map.values());
 }
 
-export async function fetchTDDPost(): Promise<TDDPostDisbursal[]> {
-  const { data, error } = await supabase
+export async function fetchTDDPost(scope?: ScopeSelection): Promise<TDDPostDisbursal[]> {
+  let query = supabase
     .from('tdd_post_disbursal')
     .select('variant, bureau_bucket, period, value')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
 
   const map = new Map<string, TDDPostDisbursal>();
@@ -219,11 +289,13 @@ export async function fetchTDDPost(): Promise<TDDPostDisbursal[]> {
   return Array.from(map.values());
 }
 
-export async function fetchApprovedBase(): Promise<ApprovedBaseRow[]> {
-  const { data, error } = await supabase
+export async function fetchApprovedBase(scope?: ScopeSelection): Promise<ApprovedBaseRow[]> {
+  let query = supabase
     .from('approved_base')
     .select('la_band, loan_band, count, amount')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
 
   const map = new Map<string, ApprovedBaseRow>();
@@ -232,17 +304,19 @@ export async function fetchApprovedBase(): Promise<ApprovedBaseRow[]> {
       map.set(r.la_band, { laBand: r.la_band, loanBands: {}, total: 0 });
     }
     const row = map.get(r.la_band)!;
-    row.loanBands[r.loan_band] = r.count ?? 0;
+    row.loanBands[r.loan_band] = (row.loanBands[r.loan_band] ?? 0) + (r.count ?? 0);
     row.total += r.count ?? 0;
   }
   return Array.from(map.values());
 }
 
-export async function fetchRejectedBase(): Promise<RejectedBaseRow[]> {
-  const { data, error } = await supabase
+export async function fetchRejectedBase(scope?: ScopeSelection): Promise<RejectedBaseRow[]> {
+  let query = supabase
     .from('rejected_base')
     .select('loan_type, amount_band, count, amount')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
 
   const map = new Map<string, RejectedBaseRow>();
@@ -251,17 +325,19 @@ export async function fetchRejectedBase(): Promise<RejectedBaseRow[]> {
       map.set(r.loan_type, { loanType: r.loan_type, amountBands: {}, total: 0 });
     }
     const row = map.get(r.loan_type)!;
-    row.amountBands[r.amount_band] = r.count ?? 0;
+    row.amountBands[r.amount_band] = (row.amountBands[r.amount_band] ?? 0) + (r.count ?? 0);
     row.total += r.count ?? 0;
   }
   return Array.from(map.values());
 }
 
-export async function fetchLOSMetrics(): Promise<LOSComparisonMetric[]> {
-  const { data, error } = await supabase
+export async function fetchLOSMetrics(scope?: ScopeSelection): Promise<LOSComparisonMetric[]> {
+  let query = supabase
     .from('los_metrics')
     .select('metric, product, ftd, mtd, lmtd, lm_full, mom_change, target, achievement')
     .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSMetricDbRow[]).map((r) => ({
     metric: r.metric,
@@ -276,9 +352,10 @@ export async function fetchLOSMetrics(): Promise<LOSComparisonMetric[]> {
   }));
 }
 
-export async function fetchLOSFunnel(product?: string): Promise<LOSFunnelStep[]> {
+export async function fetchLOSFunnel(product?: string, scope?: ScopeSelection): Promise<LOSFunnelStep[]> {
   let query = supabase.from('los_funnel').select('stage, product, ftd, mtd, lmtd, conversion_rate').order('id');
   if (product) query = query.eq('product', product);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSFunnelDbRow[]).map((r) => ({
@@ -291,11 +368,13 @@ export async function fetchLOSFunnel(product?: string): Promise<LOSFunnelStep[]>
   }));
 }
 
-export async function fetchLOSDaily(): Promise<LOSDisbursementDaily[]> {
-  const { data, error } = await supabase
+export async function fetchLOSDaily(scope?: ScopeSelection): Promise<LOSDisbursementDaily[]> {
+  let query = supabase
     .from('los_daily')
     .select('date, product, count, amount, avg_ticket_size')
     .order('date');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSDailyDbRow[]).map((r) => ({
     date: r.date,
@@ -303,5 +382,35 @@ export async function fetchLOSDaily(): Promise<LOSDisbursementDaily[]> {
     count: r.count ?? 0,
     amount: r.amount ?? 0,
     avgTicketSize: r.avg_ticket_size ?? 0,
+  }));
+}
+
+// ── Scorecard Query ──────────────────────────────────────────────
+
+export async function fetchSubsidiaryScorecard(scope?: ScopeSelection): Promise<SubsidiaryScorecard[]> {
+  let query = supabase
+    .from('v_subsidiary_scorecard')
+    .select('*');
+  if (scope?.regionId) {
+    const ids = await getSubsidiaryIdsByRegion(scope.regionId);
+    query = query.in('subsidiary_id', ids);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    subsidiaryId: r.subsidiary_id as number,
+    subsidiary: r.subsidiary as string,
+    shortCode: r.short_code as string,
+    country: r.country as string,
+    currencyCode: r.currency_code as string,
+    region: r.region as string,
+    institutionType: r.institution_type as string,
+    aumLocal: r.aum_local as number | null,
+    aumUsd: r.aum_usd as number | null,
+    latestPeriod: r.latest_period as string | null,
+    delinquency30Plus: r.delinquency_30plus as number | null,
+    delinquency90Plus: r.delinquency_90plus as number | null,
+    netCreditLoss: r.net_credit_loss as number | null,
+    fpdPct: r.fpd_pct as number | null,
   }));
 }

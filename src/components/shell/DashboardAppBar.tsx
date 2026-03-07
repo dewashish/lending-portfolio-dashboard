@@ -5,27 +5,39 @@ import {
 } from '@mui/material';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import { useThemeMode } from '@/lib/theme-context';
 import { ExecutiveSummaryButton } from '@/components/export/ExecutiveSummaryButton';
-import type { DatasetInfo } from '@/lib/types';
+import type { ScopeSelection } from '@/lib/types';
+import { useSubsidiaries, useRegions } from '@/hooks/useConsumerData';
 
 interface Props {
-  datasetInfo: DatasetInfo | null;
   onToggleAI: () => void;
-  onReload: () => void;
   onExportPDF: () => void;
   aiOpen: boolean;
   activeTab?: number;
+  scope?: ScopeSelection;
 }
 
-export function DashboardAppBar({ datasetInfo, onToggleAI, onReload, onExportPDF, aiOpen, activeTab }: Props) {
+export function DashboardAppBar({ onToggleAI, onExportPDF, aiOpen, activeTab, scope }: Props) {
   const { mode, toggleMode } = useThemeMode();
-  const fileCount = datasetInfo?.files.length ?? 0;
-  const totalRecords = datasetInfo?.files.reduce((s, f) => s + f.recordCount, 0) ?? 0;
+  const { data: subsidiaries } = useSubsidiaries();
+  const { data: regions } = useRegions();
+
+  const scopeLabel = (() => {
+    if (!scope || scope.level === 'group') return 'Group';
+    if (scope.level === 'region') {
+      const r = regions?.find((r) => r.id === scope.regionId);
+      return r ? r.name : 'Region';
+    }
+    if (scope.level === 'subsidiary') {
+      const s = subsidiaries?.find((s) => s.id === scope.subsidiaryId);
+      return s ? `${s.shortCode} · ${s.currencyCode}` : 'Subsidiary';
+    }
+    return 'Group';
+  })();
 
   return (
     <AppBar position="static" elevation={0}>
@@ -49,21 +61,13 @@ export function DashboardAppBar({ datasetInfo, onToggleAI, onReload, onExportPDF
           </Typography>
         </Box>
 
-        {datasetInfo && fileCount > 0 && (
-          <Chip
-            size="small"
-            label={`${fileCount} file${fileCount > 1 ? 's' : ''} · ${totalRecords} records`}
-            sx={{ bgcolor: 'rgba(0,137,123,0.15)', color: 'primary.light', fontWeight: 600 }}
-          />
-        )}
+        <Chip
+          size="small"
+          label={scopeLabel}
+          sx={{ bgcolor: 'rgba(0,137,123,0.15)', color: 'primary.light', fontWeight: 600 }}
+        />
 
-        <Tooltip title="Reload data from files">
-          <IconButton size="small" onClick={onReload} sx={{ color: 'text.secondary' }}>
-            <RefreshIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        {activeTab === 2 && <ExecutiveSummaryButton />}
+        {activeTab === 1 && <ExecutiveSummaryButton />}
 
         <Tooltip title="Export PDF">
           <IconButton size="small" onClick={onExportPDF} sx={{ color: 'text.secondary' }}>

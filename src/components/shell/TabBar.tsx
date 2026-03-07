@@ -2,20 +2,18 @@
 
 import { Tabs, Tab, Box } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import PersonIcon from '@mui/icons-material/Person';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import BusinessIcon from '@mui/icons-material/Business';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import DonutSmallIcon from '@mui/icons-material/DonutSmall';
 import { TAB_NAMES, type TabName } from '@/lib/constants';
 
 const TAB_ICONS: Record<TabName, React.ReactElement> = {
   'Group Overview': <DashboardIcon sx={{ fontSize: 18 }} />,
-  'Trade Finance': <AccountBalanceIcon sx={{ fontSize: 18 }} />,
   'Consumer Finance': <PersonIcon sx={{ fontSize: 18 }} />,
+  'Trade Finance': <AccountBalanceIcon sx={{ fontSize: 18 }} />,
   'Corporate Finance': <BusinessIcon sx={{ fontSize: 18 }} />,
-  'Early Warning': <WarningAmberIcon sx={{ fontSize: 18 }} />,
-  'Concentrations': <DonutSmallIcon sx={{ fontSize: 18 }} />,
+  'Risk & Concentrations': <WarningAmberIcon sx={{ fontSize: 18 }} />,
 };
 
 interface Props {

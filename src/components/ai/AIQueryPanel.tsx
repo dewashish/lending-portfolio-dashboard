@@ -13,12 +13,11 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { QueryInput } from './QueryInput';
-import type { PortfolioData } from '@/lib/types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  portfolio: PortfolioData | null;
+  portfolio?: unknown;
 }
 
 interface Message {

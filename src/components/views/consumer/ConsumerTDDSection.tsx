@@ -1,31 +1,31 @@
 'use client';
 
-import { Box, Typography, Card } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 import { TDDTable } from '@/components/tables/TDDTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useTDDPre, useTDDPost } from '@/hooks/useConsumerData';
+import type { ScopeSelection } from '@/lib/types';
 
-export function ConsumerTDDSection() {
-  const { data: pre, isLoading: l1 } = useTDDPre();
-  const { data: post, isLoading: l2 } = useTDDPost();
+interface Props {
+  scope?: ScopeSelection;
+}
+
+export function ConsumerTDDSection({ scope }: Props) {
+  const { data: pre, isLoading: l1 } = useTDDPre(scope);
+  const { data: post, isLoading: l2 } = useTDDPost(scope);
 
   if (l1 || l2) return <LoadingSkeleton />;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Card sx={{ p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', mb: 2 }}>
-          Pre-Disbursal TDD Analysis
-        </Typography>
-        <TDDTable data={pre ?? []} variant="pre" />
-      </Card>
-
-      <Card sx={{ p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', mb: 2 }}>
-          Post-Disbursal TDD Analysis
-        </Typography>
-        <TDDTable data={post ?? []} variant="post" />
-      </Card>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <TDDTable data={pre ?? []} variant="pre" title="Pre-Disbursal TDD Analysis" />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TDDTable data={post ?? []} variant="post" title="Post-Disbursal TDD Analysis" />
+        </Grid>
+      </Grid>
     </Box>
   );
 }

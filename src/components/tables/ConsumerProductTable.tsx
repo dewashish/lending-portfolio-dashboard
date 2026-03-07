@@ -22,7 +22,11 @@ import {
   TableSortLabel,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
 } from '@mui/material';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import { formatPercent, formatCurrencyMM } from '@/lib/format';
 import type { ConsumerProductData, ConsumerMetricRow } from '@/lib/types';
 
@@ -37,6 +41,10 @@ const GROUP_COLORS: Record<string, string> = {
   'Portfolio': '#4527a0',
   'Bookings': '#0d47a1',
 };
+
+function isInverseMetric(metric: string): boolean {
+  return /(%|FPD|SPD|TPD|NPA|DPD|Delinquency|Write-off|NCL|Net Credit Loss)/i.test(metric);
+}
 
 function isPercentMetric(metric: string): boolean {
   return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio)/i.test(metric);
@@ -58,24 +66,40 @@ function formatMetricValue(
   return String(value);
 }
 
-function getValueColor(
+/** Heatmap color based on where value sits in the min-max range for a metric row */
+function getHeatmapBg(
   value: number | string | null,
-  benchmark: number | string | null,
+  allValues: (number | string | null)[],
   metric: string,
 ): string | undefined {
-  if (
-    value == null ||
-    benchmark == null ||
-    typeof value === 'string' ||
-    typeof benchmark === 'string'
-  )
-    return undefined;
+  if (typeof value !== 'number') return undefined;
+  const nums = allValues.filter((v): v is number => typeof v === 'number');
+  if (nums.length < 2) return undefined;
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  if (max === min) return undefined;
 
-  if (isPercentMetric(metric)) {
-    if (value > benchmark * 1.05) return '#ef5350';
-    if (value < benchmark * 0.95) return '#66bb6a';
+  const ratio = (value - min) / (max - min); // 0 = lowest, 1 = highest
+
+  if (isInverseMetric(metric)) {
+    // For delinquency: low (green) → high (red)
+    if (ratio <= 0.3) return 'rgba(102,187,106,0.12)';
+    if (ratio >= 0.7) return 'rgba(239,83,80,0.12)';
+    return 'rgba(255,167,38,0.08)';
   }
-  return undefined;
+  // For positive metrics: high (green) → low (red)
+  if (ratio >= 0.7) return 'rgba(102,187,106,0.12)';
+  if (ratio <= 0.3) return 'rgba(239,83,80,0.12)';
+  return 'rgba(255,167,38,0.08)';
+}
+
+function getMoMDelta(row: ConsumerMetricRow, periodKeys: string[]): { value: number; pct: number } | null {
+  if (periodKeys.length < 2) return null;
+  const curr = row.values[periodKeys[periodKeys.length - 1]];
+  const prev = row.values[periodKeys[periodKeys.length - 2]];
+  if (typeof curr !== 'number' || typeof prev !== 'number') return null;
+  if (prev === 0) return { value: curr - prev, pct: 0 };
+  return { value: curr - prev, pct: ((curr - prev) / Math.abs(prev)) * 100 };
 }
 
 /* ── component ───────────────────────────────────────────────────── */
@@ -91,7 +115,6 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
     selectedProduct ?? data[0]?.productName ?? '',
   );
 
-  /* resolve the active product */
   const activeProduct = selectedProduct ?? internalProduct;
 
   const productData = useMemo<ConsumerMetricRow[]>(() => {
@@ -99,13 +122,13 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
     return match?.metrics ?? data[0]?.metrics ?? [];
   }, [data, activeProduct]);
 
-  /* dynamically extract period column keys */
   const periodKeys = useMemo<string[]>(() => {
     if (productData.length === 0) return [];
-    return Object.keys(productData[0].values);
+    return Object.keys(productData[0].values).sort();
   }, [productData]);
 
-  /* group rows by metricType */
+  const latestPeriodKey = periodKeys.length > 0 ? periodKeys[periodKeys.length - 1] : '';
+
   const groups = useMemo(() => {
     const map = new Map<string, ConsumerMetricRow[]>();
     productData.forEach((row) => {
@@ -118,7 +141,6 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
 
   const flatRows = useMemo(() => Array.from(groups.values()).flat(), [groups]);
 
-  /* columns */
   const columns = useMemo<ColumnDef<ConsumerMetricRow, unknown>[]>(() => {
     const cols: ColumnDef<ConsumerMetricRow, unknown>[] = [
       {
@@ -144,15 +166,21 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
         cell: (info) => {
           const row = info.row.original;
           const raw = row.values[key];
-          const color = getValueColor(raw, row.benchmark, row.metric);
+          const allVals = periodKeys.map((pk) => row.values[pk]);
+          const heatBg = getHeatmapBg(raw, allVals, row.metric);
+          const isLatest = key === latestPeriodKey;
           return (
             <Box
               component="span"
               sx={{
                 fontFamily: '"Roboto Mono", monospace',
                 fontSize: '0.75rem',
-                color: color ?? 'text.primary',
-                fontWeight: color ? 700 : 400,
+                fontWeight: isLatest ? 700 : 400,
+                display: 'inline-block',
+                px: 0.5,
+                py: 0.15,
+                borderRadius: 0.5,
+                bgcolor: heatBg,
               }}
             >
               {formatMetricValue(raw, row.metric)}
@@ -160,6 +188,57 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
           );
         },
       })),
+      // MoM Delta column
+      {
+        id: 'mom_delta',
+        header: 'MoM',
+        accessorFn: (row: ConsumerMetricRow) => {
+          const delta = getMoMDelta(row, periodKeys);
+          return delta?.pct ?? 0;
+        },
+        cell: (info) => {
+          const row = info.row.original;
+          const delta = getMoMDelta(row, periodKeys);
+          if (!delta) return <Box component="span" sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>—</Box>;
+
+          const isFlat = Math.abs(delta.pct) < 0.5;
+          const inverse = isInverseMetric(row.metric);
+          const isGood = isFlat ? null : inverse ? delta.pct < 0 : delta.pct > 0;
+          const color = isFlat ? '#78909c' : isGood ? '#66bb6a' : '#ef5350';
+          const Icon = isFlat ? TrendingFlatIcon : delta.pct > 0 ? TrendingUpIcon : TrendingDownIcon;
+
+          return (
+            <Tooltip
+              title={`${delta.pct >= 0 ? '+' : ''}${delta.pct.toFixed(1)}% (${formatMetricValue(delta.value, row.metric)})`}
+              arrow
+              placement="top"
+            >
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.3,
+                  bgcolor: `${color}18`,
+                  borderRadius: 0.5,
+                  px: 0.5,
+                  py: 0.15,
+                  cursor: 'default',
+                }}
+              >
+                <Icon sx={{ fontSize: 11, color }} />
+                <Typography
+                  component="span"
+                  sx={{ fontSize: '0.65rem', fontWeight: 700, color, lineHeight: 1 }}
+                >
+                  {Math.abs(delta.pct).toFixed(1)}%
+                </Typography>
+              </Box>
+            </Tooltip>
+          );
+        },
+      },
+      // Benchmark
       {
         id: 'benchmark',
         accessorKey: 'benchmark',
@@ -182,7 +261,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
       },
     ];
     return cols;
-  }, [periodKeys]);
+  }, [periodKeys, latestPeriodKey]);
 
   const table = useReactTable({
     data: flatRows,
@@ -213,7 +292,6 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
           Product Metrics — {activeProduct}
         </Typography>
 
-        {/* product selector */}
         {!selectedProduct && data.length > 1 && (
           <ToggleButtonGroup
             size="small"
@@ -249,11 +327,12 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
                   const canSort = header.column.getCanSort();
                   const sorted = header.column.getIsSorted();
                   if (header.id === 'metricType') return null;
+                  const isLatestPeriod = header.id === `period_${latestPeriodKey}`;
                   return (
                     <TableCell
                       key={header.id}
                       sx={{
-                        bgcolor: 'background.paper',
+                        bgcolor: isLatestPeriod ? 'action.selected' : 'background.paper',
                         color: 'text.secondary',
                         fontWeight: 700,
                         fontSize: '0.65rem',
@@ -265,6 +344,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
                         position: 'sticky',
                         top: 0,
                         zIndex: 2,
+                        ...(header.id === 'mom_delta' && { width: 70 }),
                       }}
                       sortDirection={sorted || undefined}
                     >
@@ -348,8 +428,14 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
                 >
                   {row.getVisibleCells().map((cell) => {
                     if (cell.column.id === 'metricType') return null;
+                    const isLatestPeriod = cell.column.id === `period_${latestPeriodKey}`;
                     return (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        sx={{
+                          ...(isLatestPeriod && { bgcolor: 'action.selected' }),
+                        }}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     );

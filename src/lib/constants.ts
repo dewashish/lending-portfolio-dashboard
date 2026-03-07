@@ -42,14 +42,15 @@ export const STAGE_COLORS: Record<IFRSStage, string> = {
 
 export const TAB_NAMES = [
   'Group Overview',
-  'Trade Finance',
   'Consumer Finance',
+  'Trade Finance',
   'Corporate Finance',
-  'Early Warning',
-  'Concentrations',
+  'Risk & Concentrations',
 ] as const;
 
 export type TabName = (typeof TAB_NAMES)[number];
+
+export const DEFAULT_SCOPE = { level: 'group' as const };
 
 export const DEFAULT_FILTERS: FilterState = {
   dateRange: { from: null, to: null },
@@ -60,14 +61,15 @@ export const DEFAULT_FILTERS: FilterState = {
   riskGrades: [],
   ifrsStages: [],
   dpdBuckets: [],
+  scope: DEFAULT_SCOPE,
 };
 
 export const ENTITIES = [
   'Samman Capital',
-  'First Women Bank Ltd (FWBL)',
+  'Bank Limited',
   'Beltone',
   'Mirabank',
-  'Lulo Bank',
+  'LuloBank',
 ] as const;
 
 export const TRADE_PRODUCT_TYPES = [

@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadDataFromDisk } from '@/lib/data-loader';
+import { fetchTradeEntityPerformance, fetchTradeExecutiveSummary, fetchTradeWatchlist, fetchTradeConcentrations } from '@/lib/queries/trade';
+import { fetchEWSEntitySummary, fetchFXRisk, fetchCountryRisk } from '@/lib/queries/risk';
+import { fetchCorporateWatchlist } from '@/lib/queries/corporate';
 
-function buildPortfolioContext(): string {
-  const data = loadDataFromDisk();
-  const summary = data.tradeExecutiveSummary;
+async function buildPortfolioContext(): Promise<string> {
+  const [summary, entityPerf, watchlist, concentrations, ewsSummary, fxRisk, countryRisk, corpWatchlist] = await Promise.all([
+    fetchTradeExecutiveSummary().catch(() => null),
+    fetchTradeEntityPerformance().catch(() => []),
+    fetchTradeWatchlist().catch(() => []),
+    fetchTradeConcentrations().catch(() => []),
+    fetchEWSEntitySummary().catch(() => []),
+    fetchFXRisk().catch(() => []),
+    fetchCountryRisk().catch(() => []),
+    fetchCorporateWatchlist().catch(() => []),
+  ]);
+
   const lines: string[] = ['Portfolio Context Summary:'];
 
   if (summary) {
@@ -13,46 +24,38 @@ function buildPortfolioContext(): string {
     lines.push(`- Stage 2+3%: ${summary.stage2Plus3Pct != null ? (summary.stage2Plus3Pct * 100).toFixed(2) + '%' : 'N/A'}`);
     lines.push(`- Provision Coverage: ${summary.provisionCoverage != null ? (summary.provisionCoverage * 100).toFixed(2) + '%' : 'N/A'}`);
     lines.push(`- Watchlist Count: ${summary.watchlistCount ?? 0}`);
-    lines.push(`- Watchlist Exposure: $${summary.watchlistExposure?.toFixed(2) ?? 'N/A'}mm`);
-    lines.push(`- Delinquency 30+: ${summary.delinquency30Plus != null ? (summary.delinquency30Plus * 100).toFixed(2) + '%' : 'N/A'}`);
-    lines.push(`- Delinquency 90+: ${summary.delinquency90Plus != null ? (summary.delinquency90Plus * 100).toFixed(2) + '%' : 'N/A'}`);
-    lines.push(`- Collection Efficiency: ${summary.collectionEfficiency != null ? (summary.collectionEfficiency * 100).toFixed(2) + '%' : 'N/A'}`);
   }
 
-  // Entity breakdown
-  if (data.entityPerformance.length > 0) {
+  if (entityPerf.length > 0) {
     lines.push('\nEntity Performance:');
-    data.entityPerformance.forEach((e) => {
+    entityPerf.forEach((e) => {
       lines.push(
-        `  - ${e.entity}: Outstanding $${e.outstanding.toFixed(2)}mm, Utilization ${(e.utilization * 100).toFixed(1)}%, Stage2 ${(e.stage2 * 100).toFixed(1)}%, Stage3 ${(e.stage3 * 100).toFixed(1)}%, RAG: ${e.ragStatus}`,
+        `  - ${e.entity}: Outstanding $${e.outstanding.toFixed(2)}mm, Utilization ${(e.utilization * 100).toFixed(1)}%, RAG: ${e.ragStatus}`,
       );
     });
   }
 
-  // Watchlist
-  if (data.watchlistAccounts.length > 0) {
-    lines.push(`\nWatchlist Accounts: ${data.watchlistAccounts.length} flagged facilities`);
-    data.watchlistAccounts.slice(0, 10).forEach((w) => {
+  if (watchlist.length > 0) {
+    lines.push(`\nWatchlist Accounts: ${watchlist.length} flagged facilities`);
+    watchlist.slice(0, 10).forEach((w) => {
       lines.push(
-        `  - ${w.obligorName} (${w.entity}): $${w.outstanding.toFixed(2)}mm, DPD ${w.dpd}, EWS ${w.ewsScore}, ${w.stage}`,
+        `  - ${w.obligorName}: $${w.outstanding.toFixed(2)}mm, DPD ${w.dpd}, EWS ${w.ewsScore}, ${w.stage}`,
       );
     });
   }
 
-  // EWS
-  if (data.ewsEntitySummary.length > 0) {
+  if (ewsSummary.length > 0) {
     lines.push('\nEWS Entity Summary:');
-    data.ewsEntitySummary.forEach((e) => {
+    ewsSummary.forEach((e) => {
       lines.push(
         `  - ${e.entity}: Avg EWS ${e.avgEWSScore.toFixed(1)}, Score 4+: ${e.score4Plus}, Flagged Exposure $${e.flaggedExposure.toFixed(2)}mm, RAG: ${e.rag}`,
       );
     });
   }
 
-  // Concentration top 5
-  if (data.concentrationNodes.length > 0) {
+  if (concentrations.length > 0) {
     lines.push('\nTop Concentration (by value):');
-    data.concentrationNodes
+    concentrations
       .sort((a, b) => b.value - a.value)
       .slice(0, 10)
       .forEach((c) => {
@@ -62,30 +65,32 @@ function buildPortfolioContext(): string {
       });
   }
 
-  // FX Risk
-  if (data.fxRisk.length > 0) {
+  if (fxRisk.length > 0) {
     lines.push('\nFX Risk:');
-    data.fxRisk.forEach((f) => {
+    fxRisk.forEach((f) => {
       lines.push(
         `  - ${f.entity} (${f.primaryCurrency}): Vol30D ${(f.volatility30Day * 100).toFixed(1)}%, YTD Deprec ${(f.ytdDepreciation * 100).toFixed(1)}%, RAG: ${f.rag}`,
       );
     });
   }
 
-  // Corporate watchlist
-  if (data.corporateWatchlist.length > 0) {
-    lines.push(`\nCorporate Watchlist: ${data.corporateWatchlist.length} entries`);
-    data.corporateWatchlist.slice(0, 5).forEach((c) => {
+  if (countryRisk.length > 0) {
+    lines.push('\nCountry Risk:');
+    countryRisk.forEach((r) => {
+      lines.push(
+        `  - ${r.entity}: Composite ${r.compositeScore.toFixed(1)}, Exposure $${r.exposure.toFixed(2)}mm, RAG: ${r.rag}`,
+      );
+    });
+  }
+
+  if (corpWatchlist.length > 0) {
+    lines.push(`\nCorporate Watchlist: ${corpWatchlist.length} entries`);
+    corpWatchlist.slice(0, 5).forEach((c) => {
       lines.push(
         `  - ${c.borrower} (${c.sector}): Exposure ${c.exposure}, Rating ${c.internalRating}, Status: ${c.status}`,
       );
     });
   }
-
-  // Dataset info
-  lines.push(`\nDataset: ${data.datasetInfo.files.length} files loaded at ${data.datasetInfo.loadedAt}`);
-  lines.push(`Entities: ${data.datasetInfo.entities.join(', ')}`);
-  lines.push(`Countries: ${data.datasetInfo.countries.join(', ')}`);
 
   return lines.join('\n');
 }
@@ -110,11 +115,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const context = buildPortfolioContext();
+    const context = await buildPortfolioContext();
 
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `You are a senior credit risk analyst reviewing a lending portfolio dashboard. Use the following portfolio data context to answer the user's question accurately and concisely. If the data doesn't contain enough information to answer, say so clearly.
 

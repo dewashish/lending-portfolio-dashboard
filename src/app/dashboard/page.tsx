@@ -4,32 +4,22 @@ import { useState, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { DashboardAppBar } from '@/components/shell/DashboardAppBar';
 import { TabBar } from '@/components/shell/TabBar';
-import { FilterBar } from '@/components/shell/FilterBar';
-import { usePortfolioData, useDataLoader } from '@/hooks/usePortfolioData';
-import { useFilters } from '@/hooks/useFilters';
+import { ScopeBar } from '@/components/shell/ScopeBar';
+import type { ScopeSelection } from '@/lib/types';
+import { DEFAULT_SCOPE } from '@/lib/constants';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { KPIRowSkeleton, ChartSkeleton } from '@/components/common/LoadingSkeleton';
-import { EmptyState } from '@/components/common/EmptyState';
 
 import { GroupOverviewView } from '@/components/views/GroupOverviewView';
-import { TradeFinanceView } from '@/components/views/TradeFinanceView';
 import { ConsumerFinanceView } from '@/components/views/ConsumerFinanceView';
+import { TradeFinanceView } from '@/components/views/TradeFinanceView';
 import { CorporateFinanceView } from '@/components/views/CorporateFinanceView';
-import { EarlyWarningView } from '@/components/views/EarlyWarningView';
-import { ConcentrationsView } from '@/components/views/ConcentrationsView';
+import { RiskConcentrationsView } from '@/components/views/RiskConcentrationsView';
 import { AIQueryPanel } from '@/components/ai/AIQueryPanel';
 
 export default function DashboardPage() {
-  const { portfolio, isLoading, refresh } = usePortfolioData();
-  const { reload } = useDataLoader();
-  const { filters, setFilters, resetFilters, hasActiveFilters } = useFilters();
   const [activeTab, setActiveTab] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
-
-  const handleReload = useCallback(async () => {
-    await reload(true);
-    refresh();
-  }, [reload, refresh]);
+  const [scope, setScope] = useState<ScopeSelection>(DEFAULT_SCOPE);
 
   const handleExportPDF = useCallback(async () => {
     const el = document.getElementById('dashboard-view-content');
@@ -43,31 +33,13 @@ export default function DashboardPage() {
     pdf.save('portfolio-report.pdf');
   }, []);
 
-  if (isLoading) {
-    return (
-      <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <DashboardAppBar datasetInfo={null} onToggleAI={() => {}} onReload={() => {}} onExportPDF={() => {}} aiOpen={false} />
-        <TabBar activeTab={0} onTabChange={() => {}} />
-        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <KPIRowSkeleton />
-          <ChartSkeleton height={400} />
-        </Box>
-      </Box>
-    );
-  }
-
   const renderView = () => {
-    if (!portfolio || !portfolio.datasetInfo?.files?.length) {
-      return <EmptyState message="No data loaded. Place Excel files in the data/ folder and click Reload." />;
-    }
-
     switch (activeTab) {
-      case 0: return <GroupOverviewView portfolio={portfolio} filters={filters} />;
-      case 1: return <TradeFinanceView portfolio={portfolio} filters={filters} />;
-      case 2: return <ConsumerFinanceView portfolio={portfolio} filters={filters} />;
-      case 3: return <CorporateFinanceView portfolio={portfolio} filters={filters} />;
-      case 4: return <EarlyWarningView portfolio={portfolio} filters={filters} />;
-      case 5: return <ConcentrationsView portfolio={portfolio} filters={filters} />;
+      case 0: return <GroupOverviewView key="tab-0" scope={scope} />;
+      case 1: return <ConsumerFinanceView key="tab-1" scope={scope} />;
+      case 2: return <TradeFinanceView key="tab-2" scope={scope} />;
+      case 3: return <CorporateFinanceView key="tab-3" scope={scope} />;
+      case 4: return <RiskConcentrationsView key="tab-4" scope={scope} />;
       default: return null;
     }
   };
@@ -75,21 +47,14 @@ export default function DashboardPage() {
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <DashboardAppBar
-        datasetInfo={portfolio?.datasetInfo ?? null}
         onToggleAI={() => setAiOpen(!aiOpen)}
-        onReload={handleReload}
         onExportPDF={handleExportPDF}
         aiOpen={aiOpen}
         activeTab={activeTab}
+        scope={scope}
       />
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        onReset={resetFilters}
-        hasActiveFilters={hasActiveFilters}
-        portfolio={portfolio}
-      />
+      <ScopeBar scope={scope} onChange={setScope} />
       <Box
         id="dashboard-view-content"
         sx={{
@@ -109,7 +74,7 @@ export default function DashboardPage() {
       <AIQueryPanel
         open={aiOpen}
         onClose={() => setAiOpen(false)}
-        portfolio={portfolio}
+        portfolio={null}
       />
     </Box>
   );
