@@ -82,7 +82,7 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
         : TrendingDownIcon;
 
   return (
-    <Card sx={{ p: 2, flex: 1, minWidth: 155, position: 'relative', overflow: 'visible' }}>
+    <Card sx={{ p: 2, flex: '1 1 0', minWidth: 130, position: 'relative', overflow: 'visible' }}>
       <Stack spacing={0.75}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Typography

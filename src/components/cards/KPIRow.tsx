@@ -1,6 +1,6 @@
 'use client';
 
-import { Stack } from '@mui/material';
+import { Box } from '@mui/material';
 import { KPICard } from './KPICard';
 import type { ThresholdContext } from '@/lib/types';
 
@@ -27,10 +27,10 @@ interface Props {
 
 export function KPIRow({ items }: Props) {
   return (
-    <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 0.5 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
       {items.map((item) => (
         <KPICard key={item.label} {...item} />
       ))}
-    </Stack>
+    </Box>
   );
 }

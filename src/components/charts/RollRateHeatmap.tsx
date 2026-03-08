@@ -15,7 +15,7 @@ interface Props {
 /** Bucket group prefixes used to insert thicker separator lines */
 const BUCKET_PREFIXES = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
 
-const ROW_H = 32;
+const ROW_H = 40;
 const MARGIN = { top: 60, right: 20, bottom: 10, left: 170 };
 
 export function RollRateHeatmap({ data }: Props) {
