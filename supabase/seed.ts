@@ -1397,6 +1397,212 @@ function buildTradeEntityPerformance(): Row[] {
   return rows;
 }
 
+// ---------------------------------------------------------------------------
+// 17. corporate_delinquency (customers per subsidiary)
+// ---------------------------------------------------------------------------
+const CORP_CUSTOMERS = [
+  { name: 'Orascom Construction', sector: 'Auto & Auto Components', facility: 'Bank Guarantee', rating: 'A' },
+  { name: 'Reliance Industries', sector: 'Textiles', facility: 'Term Loan', rating: 'A' },
+  { name: 'Ecopetrol', sector: 'Real Estate', facility: 'Letter of Credit', rating: 'AAA' },
+  { name: 'NIS a.d.', sector: 'Metals & Mining', facility: 'Overdraft', rating: 'A' },
+  { name: 'Engro Corporation', sector: 'NBFC', facility: 'Cash Credit', rating: 'BBB+' },
+  { name: 'CIB Egypt', sector: 'Real Estate', facility: 'Working Capital', rating: 'BBB' },
+  { name: 'Lucky Cement', sector: 'Real Estate', facility: 'Project Finance', rating: 'AAA' },
+  { name: 'Grupo Aval', sector: 'Auto & Auto Components', facility: 'WCDL', rating: 'AA+' },
+  { name: 'Telekom Srbija', sector: 'FMCG', facility: 'Term Loan', rating: 'AA+' },
+  { name: 'HDFC Ltd', sector: 'Metals & Mining', facility: 'Cash Credit', rating: 'AA' },
+  { name: 'Metalac a.d.', sector: 'Auto & Auto Components', facility: 'WCDL', rating: 'BBB+' },
+  { name: 'Hub Power', sector: 'FMCG', facility: 'Cash Credit', rating: 'AA' },
+  { name: 'Bajaj Finance', sector: 'NBFC', facility: 'WCDL', rating: 'BBB' },
+  { name: 'Emaar Properties', sector: 'Real Estate', facility: 'Term Loan', rating: 'AA+' },
+  { name: 'Tata Motors', sector: 'Auto & Auto Components', facility: 'Cash Credit', rating: 'A' },
+];
+
+function buildCorporateDelinquency(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const corpUsd = aumUsd * 0.25; // Corporate ~25% of AUM
+    const perCust = corpUsd / CORP_CUSTOMERS.length;
+
+    CORP_CUSTOMERS.forEach((cust, ci) => {
+      const n = noise(sub.id, ci, 77);
+      const sanctioned = +(perCust * 1.3 * n).toFixed(2);
+      const disbursed = +(perCust * 1.1 * n).toFixed(2);
+      const pos = +(perCust * n).toFixed(2);
+      const dpd = ci < 10 ? 0 : [30, 60, 45, 90, 120][ci - 10] ?? 0;
+      const secCover = +(0.8 + n * 0.4).toFixed(2);
+
+      rows.push({
+        subsidiary_id: sub.id,
+        group_id: `G${sub.id}${(ci + 1).toString().padStart(3, '0')}`,
+        cust_id: `C${sub.id}${(ci + 1).toString().padStart(3, '0')}`,
+        customer_name: cust.name,
+        sector: cust.sector,
+        industry: cust.sector,
+        sanctioned_limit: sanctioned,
+        sanctioned_limit_usd: sanctioned,
+        disbursed_amount: disbursed,
+        disbursed_amount_usd: disbursed,
+        current_pos: pos,
+        current_pos_usd: pos,
+        facility_type: cust.facility,
+        security_type: ci % 3 === 0 ? 'Collateral' : ci % 3 === 1 ? 'Guarantee' : 'Unsecured',
+        security_cover: secCover,
+        rating_at_disbursement: cust.rating,
+        current_rating: cust.rating,
+        renewal_done: dpd === 0,
+        dpd_at_month_end: dpd,
+        current_dpd: dpd,
+        reason_for_delinquency: dpd > 0 ? 'Cash flow mismatch' : '',
+        last_remedial_action: dpd > 0 ? 'Follow-up initiated' : '',
+        update_on_remedial: dpd > 0 ? 'In progress' : '',
+        current_status: dpd > 90 ? 'NPA' : dpd > 0 ? 'SMA' : 'Standard',
+        next_step: dpd > 0 ? 'Restructuring review' : '',
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 18. corporate_portfolio_metrics (period-based KPIs per subsidiary)
+// ---------------------------------------------------------------------------
+function buildCorporatePortfolioMetrics(): Row[] {
+  const rows: Row[] = [];
+  const periods = ['Q1 2025', 'Q2 2025', 'Jul 2025', 'Aug 2025'];
+  const particulars = [
+    'Total Sanctioned Limit',
+    'Total Disbursement',
+    'Current POS',
+    'Fund Based Exposure',
+    'Non-Fund Based Exposure',
+    'Avg. Yield',
+  ];
+
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const corpUsd = aumUsd * 0.25;
+
+    periods.forEach((period, pi) => {
+      const growth = 1 + pi * 0.03;
+      particulars.forEach((particular) => {
+        const n = noise(sub.id, pi, particular.length);
+        let total = 0;
+        let fundBased = 0;
+        let nonFundBased = 0;
+
+        switch (particular) {
+          case 'Total Sanctioned Limit': total = corpUsd * 1.4 * growth * n; break;
+          case 'Total Disbursement': total = corpUsd * 1.1 * growth * n; break;
+          case 'Current POS': total = corpUsd * growth * n; break;
+          case 'Fund Based Exposure': total = corpUsd * 0.65 * growth * n; break;
+          case 'Non-Fund Based Exposure': total = corpUsd * 0.35 * growth * n; break;
+          case 'Avg. Yield': total = +(7.5 + (n - 1) * 2).toFixed(2); break;
+        }
+        fundBased = particular === 'Avg. Yield' ? 0 : total * 0.65;
+        nonFundBased = particular === 'Avg. Yield' ? 0 : total * 0.35;
+
+        rows.push({
+          subsidiary_id: sub.id,
+          particular,
+          period,
+          total: +total.toFixed(2),
+          total_usd: +total.toFixed(2),
+          fund_based: +fundBased.toFixed(2),
+          fund_based_usd: +fundBased.toFixed(2),
+          non_fund_based: +nonFundBased.toFixed(2),
+          non_fund_based_usd: +nonFundBased.toFixed(2),
+          report_date: '2025-08-15',
+          data_source_id: sub.dsOffset,
+        });
+      });
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 19. corporate_watchlist (flagged borrowers per subsidiary)
+// ---------------------------------------------------------------------------
+function buildCorporateWatchlist(): Row[] {
+  const rows: Row[] = [];
+  const watchlistCustomers = CORP_CUSTOMERS.slice(10); // last 5 customers
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const perCust = aumUsd * 0.25 / CORP_CUSTOMERS.length;
+
+    watchlistCustomers.forEach((cust, ci) => {
+      const n = noise(sub.id, ci + 10, 33);
+      rows.push({
+        subsidiary_id: sub.id,
+        borrower: cust.name,
+        sector: cust.sector,
+        exposure: +(perCust * n).toFixed(2),
+        exposure_usd: +(perCust * n).toFixed(2),
+        ews_trigger_type: ['Financial Stress', 'Rating Downgrade', 'Sector Risk', 'Cash Flow', 'Covenant Breach'][ci % 5],
+        internal_rating: cust.rating,
+        status: ci % 2 === 0 ? 'Active' : 'Under Review',
+        remedial_action: ci % 3 === 0 ? 'Enhanced monitoring' : 'Restructuring review',
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 20. corporate_covenants (per subsidiary)
+// ---------------------------------------------------------------------------
+function buildCorporateCovenants(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const corpUsd = aumUsd * 0.25;
+    const perCust = corpUsd / CORP_CUSTOMERS.length;
+
+    CORP_CUSTOMERS.slice(0, 10).forEach((cust, ci) => {
+      const n = noise(sub.id, ci, 55);
+      const sanctioned = +(perCust * 1.3 * n).toFixed(2);
+      const disbursed = +(perCust * 1.1 * n).toFixed(2);
+      const pos = +(perCust * n).toFixed(2);
+      const npaFlag = ci >= 8;
+      const watchlistFlag = ci >= 7;
+
+      rows.push({
+        subsidiary_id: sub.id,
+        group_id: `G${sub.id}${(ci + 1).toString().padStart(3, '0')}`,
+        cust_id: `C${sub.id}${(ci + 1).toString().padStart(3, '0')}`,
+        customer_name: cust.name,
+        sanctioned_limit: sanctioned,
+        sanctioned_limit_usd: sanctioned,
+        disbursed_amount: disbursed,
+        disbursed_amount_usd: disbursed,
+        current_pos: pos,
+        current_pos_usd: pos,
+        facility_type: cust.facility,
+        security_type: ci % 3 === 0 ? 'Collateral' : ci % 3 === 1 ? 'Guarantee' : 'Unsecured',
+        security_cover: +(0.8 + n * 0.4).toFixed(2),
+        risk_rating: cust.rating,
+        covenant_category: ci % 3 === 0 ? 'Financial' : ci % 3 === 1 ? 'Non-Financial' : 'Reporting',
+        covenant_type: ci % 3 === 0 ? 'DSCR' : ci % 3 === 1 ? 'Change of Control' : 'Quarterly Reporting',
+        covenant_description: ci % 3 === 0 ? 'DSCR > 1.2x' : ci % 3 === 1 ? 'No change of control' : 'Quarterly financial reporting',
+        covenant_frequency: ci % 2 === 0 ? 'Quarterly' : 'Annual',
+        npa_flag: npaFlag,
+        restructured_flag: false,
+        watchlist_flag: watchlistFlag,
+        writeoff_flag: false,
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    });
+  }
+  return rows;
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -1486,6 +1692,18 @@ async function main() {
 
   console.log('Seeding trade_entity_performance...');
   await batchInsert('trade_entity_performance', buildTradeEntityPerformance());
+
+  console.log('Seeding corporate_delinquency...');
+  await batchInsert('corporate_delinquency', buildCorporateDelinquency());
+
+  console.log('Seeding corporate_portfolio_metrics...');
+  await batchInsert('corporate_portfolio_metrics', buildCorporatePortfolioMetrics());
+
+  console.log('Seeding corporate_watchlist...');
+  await batchInsert('corporate_watchlist', buildCorporateWatchlist());
+
+  console.log('Seeding corporate_covenants...');
+  await batchInsert('corporate_covenants', buildCorporateCovenants());
 
   // -----------------------------------------------------------
   // Risk Appetite Settings (14 global defaults)
