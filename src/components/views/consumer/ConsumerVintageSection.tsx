@@ -6,7 +6,7 @@ import { VintageCurves } from '@/components/charts/VintageCurves';
 import { VintageHeatmap } from '@/components/charts/VintageHeatmap';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useVintagePoints } from '@/hooks/useConsumerData';
-import type { ScopeSelection } from '@/lib/types';
+import type { ScopeSelection, ConsumerFilters } from '@/lib/types';
 
 const METRIC_TYPES = ['30+', '60+', '90+', 'X+', 'Gross Loss', 'Recoveries', 'NCL'] as const;
 
@@ -22,9 +22,11 @@ const METRIC_DESCRIPTIONS: Record<string, string> = {
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
-export function ConsumerVintageSection({ scope }: Props) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ConsumerVintageSection({ scope, filters }: Props) {
   const [metricType, setMetricType] = useState<string>('30+');
   const { data: vintageData, isLoading } = useVintagePoints(undefined, scope);
 

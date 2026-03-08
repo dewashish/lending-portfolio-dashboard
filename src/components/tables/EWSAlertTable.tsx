@@ -2,7 +2,7 @@
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { PortfolioTable } from '@/components/tables/PortfolioTable';
-import { formatCurrencyMM } from '@/lib/format';
+import { formatCurrencyMM, formatRating } from '@/lib/format';
 import type { EWSFacilityAlert } from '@/lib/types';
 
 const col = createColumnHelper<EWSFacilityAlert>();
@@ -29,7 +29,7 @@ const columns = [
             display: 'inline-block',
           }}
         >
-          {score.toFixed(1)}
+          {formatRating(score)}
         </span>
       );
     },

@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from './ChartContainer';
+import { formatCurrencyMM } from '@/lib/format';
 import type { EntityPerformance } from '@/lib/types';
 
 interface Props {
@@ -58,7 +59,7 @@ export function EntityBreakdownBar({ data, onEntityClick }: Props) {
       .attr('fill', d3Tokens.textMuted)
       .attr('font-size', '11px')
       .attr('font-family', 'IBM Plex Mono, monospace')
-      .text(d => `$${d.outstanding.toFixed(1)}mm`);
+      .text(d => formatCurrencyMM(d.outstanding));
 
     // Y axis
     g.append('g')
@@ -72,7 +73,7 @@ export function EntityBreakdownBar({ data, onEntityClick }: Props) {
     // X axis
     g.append('g')
       .attr('transform', `translate(0,${h})`)
-      .call(d3.axisBottom(x).ticks(5).tickFormat(d => `$${d}mm`))
+      .call(d3.axisBottom(x).ticks(5).tickFormat(d => formatCurrencyMM(+d)))
       .selectAll('text')
       .attr('fill', d3Tokens.textFaint)
       .attr('font-size', '10px');

@@ -5,6 +5,8 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
+import { formatNumber, formatPercent } from '@/lib/format';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import type { LOSComparisonMetric } from '@/lib/types';
 
 interface Props {
@@ -15,6 +17,7 @@ const TEAL = '#00897b';
 const GRAY = '#94a3b8';
 
 export function MTDComparisonBar({ data }: Props) {
+  const { getColor } = useRiskAppetite();
   const { d3Tokens } = useThemeMode();
 
   const filtered = useMemo(() => {
@@ -79,7 +82,7 @@ export function MTDComparisonBar({ data }: Props) {
           .attr('fill', d3Tokens.textMuted)
           .attr('font-size', '10px')
           .attr('font-family', 'IBM Plex Mono, monospace')
-          .text(metric.mtd.toLocaleString());
+          .text(formatNumber(metric.mtd));
 
         // MoM delta annotation next to MTD bar
         const delta = metric.momChange;
@@ -87,13 +90,13 @@ export function MTDComparisonBar({ data }: Props) {
           const deltaSign = delta >= 0 ? '+' : '';
           const deltaColor = delta >= 0 ? '#4caf50' : '#f44336';
           g.append('text')
-            .attr('x', x(metric.mtd) + 4 + (metric.mtd.toLocaleString().length * 6 + 8))
+            .attr('x', x(metric.mtd) + 4 + (formatNumber(metric.mtd).length * 6 + 8))
             .attr('y', mtdY + barHeight / 2)
             .attr('dy', '0.35em')
             .attr('fill', deltaColor)
             .attr('font-size', '9px')
             .attr('font-family', 'IBM Plex Mono, monospace')
-            .text(`(${deltaSign}${(delta * 100).toFixed(1)}%)`);
+            .text(`(${deltaSign}${formatPercent(delta, 1)})`);
         }
 
         // LMTD bar
@@ -115,15 +118,11 @@ export function MTDComparisonBar({ data }: Props) {
           .attr('fill', d3Tokens.textFaint)
           .attr('font-size', '10px')
           .attr('font-family', 'IBM Plex Mono, monospace')
-          .text(metric.lmtd.toLocaleString());
+          .text(formatNumber(metric.lmtd));
 
         // Traffic light circle at right edge
         const achievement = metric.achievement;
-        let trafficColor = '#f44336'; // red
-        if (achievement != null) {
-          if (achievement >= 0.45) trafficColor = '#4caf50'; // green
-          else if (achievement >= 0.35) trafficColor = '#ff9800'; // amber
-        }
+        const trafficColor = achievement != null ? getColor('los_achievement', achievement) : '#f44336';
 
         g.append('circle')
           .attr('cx', w + 20)
@@ -175,7 +174,7 @@ export function MTDComparisonBar({ data }: Props) {
         .attr('font-size', '10px')
         .text('Achievement status');
     },
-    [filtered, d3Tokens],
+    [filtered, d3Tokens, getColor],
   );
 
   return (

@@ -6,11 +6,14 @@ import { ConsumerOverallTable } from '@/components/tables/ConsumerOverallTable';
 import { DPDBucketDistribution } from '@/components/charts/DPDBucketDistribution';
 import { OverviewSkeleton } from '@/components/common/LoadingSkeleton';
 import { useConsumerOverall, useNetFlowRates } from '@/hooks/useConsumerData';
-import { formatPercent, formatCurrencyMM } from '@/lib/format';
-import type { ScopeSelection, ConsumerMetricRow } from '@/lib/types';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
+import { formatPercent, formatCurrency } from '@/lib/format';
+import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
 /** Extract latest numeric value for a named metric */
@@ -39,6 +42,8 @@ interface SummaryMetric {
   delta: number | null;
   rag: 'green' | 'amber' | 'red';
   invertDelta?: boolean;
+  metricKey?: string;
+  rawValue?: number;
 }
 
 function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
@@ -75,13 +80,25 @@ function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
                 {m.label}
               </Typography>
               <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.75}>
-                <Typography
-                  variant="h6"
-                  className="mono"
-                  sx={{ fontWeight: 800, fontSize: '1rem', lineHeight: 1 }}
-                >
-                  {m.value}
-                </Typography>
+                {m.metricKey != null && m.rawValue != null ? (
+                  <BreachBadge metricKey={m.metricKey} value={m.rawValue}>
+                    <Typography
+                      variant="h6"
+                      className="mono"
+                      sx={{ fontWeight: 800, fontSize: '1rem', lineHeight: 1 }}
+                    >
+                      {m.value}
+                    </Typography>
+                  </BreachBadge>
+                ) : (
+                  <Typography
+                    variant="h6"
+                    className="mono"
+                    sx={{ fontWeight: 800, fontSize: '1rem', lineHeight: 1 }}
+                  >
+                    {m.value}
+                  </Typography>
+                )}
                 <Box
                   sx={{
                     width: 8,
@@ -96,7 +113,7 @@ function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
               {m.delta != null && (
                 <Chip
                   size="small"
-                  label={`${m.delta >= 0 ? '+' : ''}${m.delta.toFixed(1)}% MoM`}
+                  label={`${m.delta >= 0 ? '+' : ''}${formatPercent(m.delta, 1)} MoM`}
                   sx={{
                     mt: 0.5,
                     height: 18,
@@ -116,9 +133,10 @@ function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
   );
 }
 
-export function ConsumerOverviewSection({ scope }: Props) {
-  const { data: overall, isLoading: loadingOverall } = useConsumerOverall(scope);
-  const { data: netFlow, isLoading: loadingNetFlow } = useNetFlowRates(scope);
+export function ConsumerOverviewSection({ scope, filters }: Props) {
+  const { data: overall, isLoading: loadingOverall } = useConsumerOverall(scope, filters);
+  const { data: netFlow, isLoading: loadingNetFlow } = useNetFlowRates(scope, filters);
+  const { getStatus } = useRiskAppetite();
 
   const summaryMetrics = useMemo<SummaryMetric[]>(() => {
     if (!overall || overall.length === 0) return [];
@@ -128,19 +146,16 @@ export function ConsumerOverviewSection({ scope }: Props) {
       label: string,
       format: (v: number) => string,
       inverse: boolean,
-      ragThresholds: [number, number],
+      metricKey?: string,
     ): SummaryMetric => {
       const curr = getLatestValue(overall, metricName);
       const prev = getPreviousValue(overall, metricName);
       const delta = curr != null && prev != null && prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : null;
 
       let rag: 'green' | 'amber' | 'red' = 'green';
-      if (curr != null) {
-        if (inverse) {
-          rag = curr <= ragThresholds[0] ? 'green' : curr <= ragThresholds[1] ? 'amber' : 'red';
-        } else {
-          rag = curr >= ragThresholds[1] ? 'green' : curr >= ragThresholds[0] ? 'amber' : 'red';
-        }
+      if (curr != null && metricKey) {
+        const status = getStatus(metricKey, curr);
+        rag = status === 'Green' ? 'green' : status === 'Amber' ? 'amber' : 'red';
       }
 
       return {
@@ -149,17 +164,19 @@ export function ConsumerOverviewSection({ scope }: Props) {
         delta,
         rag,
         invertDelta: inverse,
+        metricKey,
+        rawValue: curr ?? undefined,
       };
     };
 
     return [
-      computeMetric('Total AUM', 'Total AUM', (v) => formatCurrencyMM(v), false, [0, 0]),
-      computeMetric('FPD%', 'FPD Rate', (v) => formatPercent(v), true, [0.03, 0.035]),
-      computeMetric('30+ Amt%', '30+ DPD', (v) => formatPercent(v), true, [0.05, 0.06]),
-      computeMetric('90+ Amt%', '90+ DPD', (v) => formatPercent(v), true, [0.015, 0.02]),
-      computeMetric('Net Credit Loss', 'NCL Rate', (v) => formatPercent(v), true, [0.01, 0.015]),
+      computeMetric('Total AUM', 'Total AUM', (v) => formatCurrency(v), false),
+      computeMetric('FPD%', 'FPD Rate', (v) => formatPercent(v), true, 'fpd_pct'),
+      computeMetric('30+ Amt%', '30+ DPD', (v) => formatPercent(v), true, 'dpd_30_plus'),
+      computeMetric('90+ Amt%', '90+ DPD', (v) => formatPercent(v), true, 'dpd_90_plus'),
+      computeMetric('Net Credit Loss', 'NCL Rate', (v) => formatPercent(v), true, 'net_credit_loss'),
     ];
-  }, [overall]);
+  }, [overall, getStatus]);
 
   if (loadingOverall || loadingNetFlow) return <OverviewSkeleton />;
 

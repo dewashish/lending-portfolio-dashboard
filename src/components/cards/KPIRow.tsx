@@ -2,6 +2,7 @@
 
 import { Stack } from '@mui/material';
 import { KPICard } from './KPICard';
+import type { ThresholdContext } from '@/lib/types';
 
 export interface KPIItem {
   label: string;
@@ -15,6 +16,9 @@ export interface KPIItem {
   invertTrend?: boolean;
   benchmark?: number;
   benchmarkLabel?: string;
+  metricKey?: string;
+  rawValue?: number;
+  thresholdContext?: ThresholdContext;
 }
 
 interface Props {

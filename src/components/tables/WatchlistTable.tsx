@@ -33,7 +33,7 @@ const columns = [
         score >= 3 ? '#f44336' : score >= 2 ? '#ff9800' : '#4caf50';
       return (
         <span style={{ color, fontWeight: 700 }}>
-          {score.toFixed(1)}
+          {formatRating(score)}
         </span>
       );
     },

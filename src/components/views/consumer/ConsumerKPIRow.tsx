@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import { KPIRow, type KPIItem } from '@/components/cards/KPIRow';
-import { formatCurrencyMM, formatPercent } from '@/lib/format';
+import { formatCurrency, formatPercent } from '@/lib/format';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import type { ConsumerMetricRow, ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -42,6 +43,8 @@ function getBenchmark(data: ConsumerMetricRow[], metricName: string): number | u
 }
 
 export function ConsumerKPIRow({ data }: Props) {
+  const { getColor } = useRiskAppetite();
+
   const items = useMemo<KPIItem[]>(() => {
     const aumValues = getAllValues(data, 'Total AUM');
     const bookingsValues = getAllValues(data, 'New Bookings');
@@ -68,14 +71,14 @@ export function ConsumerKPIRow({ data }: Props) {
     return [
       {
         label: 'Total AUM',
-        value: formatCurrencyMM(aum),
+        value: formatCurrency(aum),
         trend: { value: momChange(aum, aumPrev) },
         subtitle: 'MoM',
         sparkline: aumValues,
       },
       {
         label: 'New Bookings',
-        value: formatCurrencyMM(bookings),
+        value: formatCurrency(bookings),
         trend: { value: momChange(bookings, bookingsPrev) },
         subtitle: 'MoM',
         sparkline: bookingsValues,
@@ -83,41 +86,47 @@ export function ConsumerKPIRow({ data }: Props) {
       {
         label: 'FPD%',
         value: formatPercent(fpd),
-        color: fpd > 0.035 ? '#f44336' : fpd > 0.03 ? '#ff9800' : '#4caf50',
+        color: getColor('fpd_pct', fpd),
         trend: { value: momChange(fpd, fpdPrev) },
         invertTrend: true,
         sparkline: fpdValues,
         benchmark: getBenchmark(data, 'FPD%'),
+        metricKey: 'fpd_pct',
+        rawValue: fpd,
       },
       {
         label: '30+ DPD',
         value: formatPercent(dpd30),
-        color: dpd30 > 0.06 ? '#f44336' : dpd30 > 0.05 ? '#ff9800' : '#4caf50',
+        color: getColor('dpd_30_plus', dpd30),
         trend: { value: momChange(dpd30, dpd30Prev) },
         invertTrend: true,
         sparkline: dpd30Values,
         benchmark: getBenchmark(data, '30+ Amt%'),
+        metricKey: 'dpd_30_plus',
+        rawValue: dpd30,
       },
       {
         label: '90+ DPD',
         value: formatPercent(dpd90),
-        color: dpd90 > 0.02 ? '#f44336' : dpd90 > 0.015 ? '#ff9800' : '#4caf50',
+        color: getColor('dpd_90_plus', dpd90),
         trend: { value: momChange(dpd90, dpd90Prev) },
         invertTrend: true,
         sparkline: dpd90Values,
         benchmark: getBenchmark(data, '90+ Amt%'),
+        metricKey: 'dpd_90_plus',
+        rawValue: dpd90,
       },
       {
         label: 'Net Credit Loss',
         value: formatPercent(nclRate),
-        subtitle: formatCurrencyMM(nclAmt),
+        subtitle: formatCurrency(nclAmt),
         trend: { value: momChange(nclRate, nclRatePrev) },
         invertTrend: true,
         sparkline: nclRateValues,
         benchmark: getBenchmark(data, 'Net Credit Loss'),
       },
     ];
-  }, [data]);
+  }, [data, getColor]);
 
   return <KPIRow items={items} />;
 }

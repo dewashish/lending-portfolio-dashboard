@@ -112,6 +112,12 @@ export interface FilterState {
   scope: ScopeSelection;
 }
 
+// ── Consumer Filters (contextual) ────────────────────────────────
+export interface ConsumerFilters {
+  period: string | null;   // null = all periods (show full trend)
+  products: string[];      // [] = all products
+}
+
 // ── Trade Finance Facility (Raw Data) ─────────────────────────────
 export interface TradeFacility {
   facilityReference: string;
@@ -449,6 +455,130 @@ export interface CorporateDelinquencyRow {
   nextStep: string;
 }
 
+// ── Trade Stage Migration ────────────────────────────────────────
+export interface TradeStageMigrationRow {
+  period: string;
+  priorStage: IFRSStage;
+  currentStage: IFRSStage;
+  facilityCount: number;
+  balance: number;
+}
+
+// ── Trade DPD Roll Rate ──────────────────────────────────────────
+export interface TradeDPDRollRateRow {
+  period: string;
+  fromBucket: string;
+  toBucket: string;
+  facilityCount: number;
+  balance: number;
+  transitionPct: number;
+}
+
+// ── Trade DPD Aging ──────────────────────────────────────────────
+export interface TradeDPDAgingRow {
+  subsidiaryName: string;
+  dpdBucket: string;
+  facilityCount: number;
+  balance: number;
+}
+
+// ── Corporate Top Customers ──────────────────────────────────────
+export interface CorporateTopCustomerRow {
+  customerName: string;
+  sector: string;
+  sanctionedLimit: number;
+  disbursedAmount: number;
+  currentPOS: number;
+  facilityType: string;
+  riskRating: string;
+  dpd: number;
+  ifrsStage: string;
+  rankByDisbursement: number;
+  rankByPOS: number;
+}
+
+// ── Corporate Industry Concentration ─────────────────────────────
+export interface CorporateIndustryConcentrationRow {
+  sector: string;
+  period: string;
+  disbursement: number;
+  pos: number;
+  portfolioShare: number;
+  irr: number | null;
+  facilityCount: number;
+}
+
+// ── Corporate Collateral Analysis ────────────────────────────────
+export interface CorporateCollateralRow {
+  collateralType: string;
+  facilityCount: number;
+  collateralValue: number;
+  exposureCovered: number;
+  coverageRatio: number;
+}
+
+// ── Corporate LTV Distribution ───────────────────────────────────
+export interface CorporateLTVRow {
+  ltvBand: string;
+  facilityCount: number;
+  balance: number;
+  portfolioShare: number;
+}
+
+// ── Corporate Maturity Profile ───────────────────────────────────
+export interface CorporateMaturityRow {
+  maturityBand: string;
+  facilityBasis: string;
+  facilityCount: number;
+  balance: number;
+  portfolioShare: number;
+}
+
+// ── Corporate Provisioning & ECL ─────────────────────────────────
+export interface CorporateProvisioningRow {
+  period: string;
+  ifrsStage: string;
+  grossExposure: number;
+  provisionAmount: number;
+  pcrPct: number;
+}
+
+// ── Corporate Rating Analysis ────────────────────────────────────
+export interface CorporateRatingAnalysisRow {
+  period: string;
+  ratingBand: string;
+  disbursement: number;
+  pos: number;
+  facilityCount: number;
+  portfolioShare: number;
+}
+
+// ── Corporate Rating Migration ───────────────────────────────────
+export interface CorporateRatingMigrationRow {
+  customerName: string;
+  sector: string;
+  priorRating: string;
+  currentRating: string;
+  migrationDirection: string;
+  triggerReason: string;
+  exposure: number;
+  migrationDate: string;
+}
+
+// ── Corporate Executive Summary ──────────────────────────────────
+export interface CorporatePortfolioSummary {
+  totalPOS: number;
+  totalDisbursement: number;
+  totalSanctioned: number;
+  delinquencyRate: number;
+  npaRate: number;
+  avgSecurityCover: number;
+  covenantBreachRate: number;
+  provisionCoverageRatio: number;
+  watchlistCount: number;
+  delinquentCount: number;
+}
+
 // ── Non-Starter Analysis ──────────────────────────────────────────
 export interface NonStarterRow {
   category: string;
@@ -457,6 +587,47 @@ export interface NonStarterRow {
   monthlyValues: Record<string, number>;
   yearlyAverages: Record<string, number>;
   quarterlyValues: Record<string, number>;
+}
+
+// ── Risk Appetite Settings ────────────────────────────────────────
+export type MetricDirection = 'lower_is_better' | 'higher_is_better';
+export type RiskAppetiteScopeLevel = 'global' | 'region' | 'subsidiary' | 'business_line' | 'product';
+
+export interface RiskAppetiteRow {
+  id: number;
+  metric_key: string;
+  scope_level: RiskAppetiteScopeLevel;
+  region_id: number | null;
+  subsidiary_id: number | null;
+  business_line: string | null;
+  product_name: string | null;
+  appetite: number;
+  tolerance: number;
+  updated_at: string;
+}
+
+export interface ResolvedThreshold {
+  appetite: number;
+  tolerance: number;
+  scopeLevel: RiskAppetiteScopeLevel;
+  isInherited: boolean;
+}
+
+export interface MetricDefinition {
+  key: string;
+  label: string;
+  direction: MetricDirection;
+  defaultAppetite: number;
+  defaultTolerance: number;
+  businessLine: 'consumer_finance' | 'trade_finance' | 'corporate_finance';
+  category: string;
+}
+
+export interface ThresholdContext {
+  subsidiaryId?: number;
+  regionId?: number;
+  businessLine?: string;
+  product?: string;
 }
 
 // ── TDD Metrics ───────────────────────────────────────────────────

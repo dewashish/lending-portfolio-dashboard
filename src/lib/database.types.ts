@@ -1,6 +1,30 @@
 export interface Database {
   public: {
     Tables: {
+      // ── User Profiles ───────────────────────────────────────────
+      profiles: {
+        Row: {
+          id: string;
+          display_name: string;
+          role: 'super_admin' | 'cro' | 'product_analyst' | 'risk_analyst' | null;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          display_name?: string;
+          role?: 'super_admin' | 'cro' | 'product_analyst' | 'risk_analyst' | null;
+          avatar_url?: string | null;
+        };
+        Update: {
+          display_name?: string;
+          role?: 'super_admin' | 'cro' | 'product_analyst' | 'risk_analyst' | null;
+          avatar_url?: string | null;
+        };
+        Relationships: [];
+      };
+
       // ── Dimension Tables ──────────────────────────────────────────
       regions: {
         Row: { id: number; name: string; display_order: number; created_at: string };

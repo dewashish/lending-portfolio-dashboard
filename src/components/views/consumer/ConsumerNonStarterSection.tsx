@@ -5,17 +5,22 @@ import { Box, Card, Typography, Stack } from '@mui/material';
 import { NonStarterTable } from '@/components/tables/NonStarterTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useNonStarters } from '@/hooks/useConsumerData';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
-import type { ScopeSelection, NonStarterRow } from '@/lib/types';
+import type { ScopeSelection, NonStarterRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
 interface NSKpi {
   label: string;
   value: string;
   color: string;
+  metricKey?: string;
+  rawValue?: number;
 }
 
 function NSKPIStrip({ kpis }: { kpis: NSKpi[] }) {
@@ -29,20 +34,35 @@ function NSKPIStrip({ kpis }: { kpis: NSKpi[] }) {
           >
             {k.label}
           </Typography>
-          <Typography
-            variant="h6"
-            className="mono"
-            sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
-          >
-            {k.value}
-          </Typography>
+          {k.metricKey != null && k.rawValue != null ? (
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+              <Typography
+                variant="h6"
+                className="mono"
+                sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+              >
+                {k.value}
+              </Typography>
+            </BreachBadge>
+          ) : (
+            <Typography
+              variant="h6"
+              className="mono"
+              sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+            >
+              {k.value}
+            </Typography>
+          )}
         </Card>
       ))}
     </Stack>
   );
 }
 
-function computeNSKPIs(data: NonStarterRow[]): NSKpi[] {
+function computeNSKPIs(
+  data: NonStarterRow[],
+  getColor: (metricKey: string, value: number) => string,
+): NSKpi[] {
   if (data.length === 0) return [];
 
   const kpis: NSKpi[] = [];
@@ -56,7 +76,9 @@ function computeNSKPIs(data: NonStarterRow[]): NSKpi[] {
       kpis.push({
         label: 'Non-Starter Rate',
         value: formatPercent(latest),
-        color: latest <= 0.02 ? '#66bb6a' : latest <= 0.04 ? '#ffa726' : '#ef5350',
+        color: getColor('non_starter_rate', latest),
+        metricKey: 'non_starter_rate',
+        rawValue: latest,
       });
     }
   }
@@ -78,10 +100,11 @@ function computeNSKPIs(data: NonStarterRow[]): NSKpi[] {
   return kpis;
 }
 
-export function ConsumerNonStarterSection({ scope }: Props) {
-  const { data: nonStarters, isLoading } = useNonStarters(scope);
+export function ConsumerNonStarterSection({ scope, filters }: Props) {
+  const { data: nonStarters, isLoading } = useNonStarters(scope, filters);
+  const { getColor } = useRiskAppetite();
 
-  const kpis = useMemo(() => computeNSKPIs(nonStarters ?? []), [nonStarters]);
+  const kpis = useMemo(() => computeNSKPIs(nonStarters ?? [], getColor), [nonStarters, getColor]);
 
   if (isLoading) return <LoadingSkeleton />;
 

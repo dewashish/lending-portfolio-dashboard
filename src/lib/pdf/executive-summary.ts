@@ -1,8 +1,12 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { PDF_COLORS, PDF_FONTS, PDF_MARGINS, ragColor } from '@/components/export/PDFStyles';
+import { PDF_COLORS, PDF_FONTS, PDF_MARGINS } from '@/components/export/PDFStyles';
 import * as queries from '@/lib/queries/consumer';
 import { formatPercent, formatCurrency } from '@/lib/format';
+import { fetchAllThresholds } from '@/lib/queries/risk-appetite';
+import { resolveThreshold, getRAGStatus } from '@/lib/risk-appetite/resolve-thresholds';
+import { getMetricDef } from '@/lib/risk-appetite/metric-registry';
+import type { RiskAppetiteRow, ThresholdContext, ScopeSelection } from '@/lib/types';
 
 interface ExecSummaryData {
   overall: Awaited<ReturnType<typeof queries.fetchConsumerOverall>>;
@@ -34,7 +38,7 @@ function momPct(current: number, previous: number): string {
   if (previous === 0) return 'N/A';
   const change = ((current - previous) / previous) * 100;
   const sign = change > 0 ? '+' : '';
-  return `${sign}${change.toFixed(1)}%`;
+  return `${sign}${formatPercent(change, 1)}`;
 }
 
 function getLatestPeriod(data: { values: Record<string, number | string | null> }[]): string {
@@ -105,7 +109,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   doc.text(`Page ${pageNum} of ${totalPages}`, w - PDF_MARGINS.page.right, h - 7, { align: 'right' });
 }
 
-function drawKeyMetricsPage(doc: jsPDF, data: ExecSummaryData) {
+function drawKeyMetricsPage(doc: jsPDF, data: ExecSummaryData, allThresholds: RiskAppetiteRow[] = []) {
   doc.addPage('a4', 'landscape');
   drawHeader(doc, 'KEY METRICS & PORTFOLIO HEALTH');
 
@@ -136,10 +140,10 @@ function drawKeyMetricsPage(doc: jsPDF, data: ExecSummaryData) {
   // KPI table with traffic lights
   const kpiRows = [
     ['Total AUM', formatCurrency(aum), momPct(aum, aumPrev), '—'],
-    ['FPD%', formatPercent(fpd), '', fpd > 0.035 ? 'RED' : fpd > 0.03 ? 'AMBER' : 'GREEN'],
-    ['30+ DPD%', formatPercent(dpd30), '', dpd30 > 0.06 ? 'RED' : dpd30 > 0.05 ? 'AMBER' : 'GREEN'],
-    ['90+ DPD%', formatPercent(dpd90), '', dpd90 > 0.02 ? 'RED' : dpd90 > 0.015 ? 'AMBER' : 'GREEN'],
-    ['Net Credit Loss', formatPercent(ncl), '', ncl > 0.012 ? 'RED' : ncl > 0.008 ? 'AMBER' : 'GREEN'],
+    ['FPD%', formatPercent(fpd), '', ragLabel('fpd_pct', fpd, allThresholds).toUpperCase()],
+    ['30+ DPD%', formatPercent(dpd30), '', ragLabel('dpd_30_plus', dpd30, allThresholds).toUpperCase()],
+    ['90+ DPD%', formatPercent(dpd90), '', ragLabel('dpd_90_plus', dpd90, allThresholds).toUpperCase()],
+    ['Net Credit Loss', formatPercent(ncl), '', ragLabel('net_credit_loss', ncl, allThresholds).toUpperCase()],
   ];
 
   autoTable(doc, {
@@ -277,8 +281,8 @@ function drawCompositionPage(doc: jsPDF, data: ExecSummaryData) {
         formatCurrency(m.ftd),
         formatCurrency(m.mtd),
         formatCurrency(m.lmtd),
-        `${m.momChange > 0 ? '+' : ''}${m.momChange.toFixed(1)}%`,
-        m.achievement != null ? `${m.achievement.toFixed(0)}%` : '—',
+        `${m.momChange > 0 ? '+' : ''}${formatPercent(m.momChange, 1)}`,
+        m.achievement != null ? formatPercent(m.achievement, 0) : '—',
       ]);
 
     autoTable(doc, {
@@ -342,7 +346,7 @@ function drawCompositionPage(doc: jsPDF, data: ExecSummaryData) {
   }
 }
 
-function drawRisksPage(doc: jsPDF, data: ExecSummaryData) {
+function drawRisksPage(doc: jsPDF, data: ExecSummaryData, allThresholds: RiskAppetiteRow[] = []) {
   doc.addPage('a4', 'landscape');
   drawHeader(doc, 'RISK ASSESSMENT & RECOMMENDATIONS');
 
@@ -361,19 +365,23 @@ function drawRisksPage(doc: jsPDF, data: ExecSummaryData) {
   doc.text('Key Risk Indicators', PDF_MARGINS.page.left, currentY);
   currentY += 6;
 
-  // Risk bullets
+  // Risk bullets — use dynamic thresholds
   const risks: string[] = [];
-  if (fpd > 0.035) risks.push(`FPD rate at ${formatPercent(fpd)} exceeds tolerance threshold of 3.5%. Recommend tightening sourcing criteria and bureau score cut-offs.`);
-  else if (fpd > 0.03) risks.push(`FPD rate at ${formatPercent(fpd)} approaching threshold. Monitor sourcing quality closely.`);
+  const fpdStatus = ragLabel('fpd_pct', fpd, allThresholds);
+  if (fpdStatus === 'Red') risks.push(`FPD rate at ${formatPercent(fpd)} exceeds tolerance threshold. Recommend tightening sourcing criteria and bureau score cut-offs.`);
+  else if (fpdStatus === 'Amber') risks.push(`FPD rate at ${formatPercent(fpd)} approaching threshold. Monitor sourcing quality closely.`);
   else risks.push(`FPD rate at ${formatPercent(fpd)} is within acceptable range. Sourcing quality is healthy.`);
 
-  if (dpd30 > 0.06) risks.push(`30+ delinquency at ${formatPercent(dpd30)} is elevated. Intensify early-bucket collection efforts and review skip-payment trends.`);
+  const dpd30Status = ragLabel('dpd_30_plus', dpd30, allThresholds);
+  if (dpd30Status === 'Red') risks.push(`30+ delinquency at ${formatPercent(dpd30)} is elevated. Intensify early-bucket collection efforts and review skip-payment trends.`);
   else risks.push(`30+ delinquency at ${formatPercent(dpd30)} is within benchmarks.`);
 
-  if (dpd90 > 0.02) risks.push(`90+ delinquency at ${formatPercent(dpd90)} requires attention. Review write-off and recovery strategies.`);
+  const dpd90Status = ragLabel('dpd_90_plus', dpd90, allThresholds);
+  if (dpd90Status === 'Red') risks.push(`90+ delinquency at ${formatPercent(dpd90)} requires attention. Review write-off and recovery strategies.`);
   else risks.push(`90+ delinquency at ${formatPercent(dpd90)} remains controlled.`);
 
-  if (ncl > 0.01) risks.push(`Net Credit Loss at ${formatPercent(ncl)} is above target. Evaluate provision adequacy and recovery pipeline.`);
+  const nclStatus = ragLabel('net_credit_loss', ncl, allThresholds);
+  if (nclStatus === 'Red' || nclStatus === 'Amber') risks.push(`Net Credit Loss at ${formatPercent(ncl)} is above target. Evaluate provision adequacy and recovery pipeline.`);
   else risks.push(`Net Credit Loss at ${formatPercent(ncl)} is within budget parameters.`);
 
   doc.setFontSize(PDF_FONTS.body);
@@ -451,7 +459,7 @@ function drawRisksPage(doc: jsPDF, data: ExecSummaryData) {
           const raw = String(hookData.cell.raw);
           const numVal = parseFloat(raw);
           if (!isNaN(numVal)) {
-            hookData.cell.styles.textColor = ragColor(numVal / 100, 0.25, 0.35);
+            hookData.cell.styles.textColor = ragColorForMetric('roll_forward_rate', numVal / 100, allThresholds);
           }
         }
       },
@@ -470,15 +478,31 @@ function drawRisksPage(doc: jsPDF, data: ExecSummaryData) {
   );
 }
 
-export async function generateExecutiveSummary(): Promise<void> {
+/** Helper: get RAG label for a metric value using dynamic thresholds */
+function ragLabel(metricKey: string, value: number, allThresholds: RiskAppetiteRow[], ctx: ThresholdContext = {}): string {
+  const resolved = resolveThreshold(metricKey, allThresholds, ctx);
+  const def = getMetricDef(metricKey);
+  return getRAGStatus(value, resolved.appetite, resolved.tolerance, def?.direction ?? 'lower_is_better');
+}
+
+/** Helper: get RAG color array [r,g,b] for jsPDF from metric key */
+function ragColorForMetric(metricKey: string, value: number, allThresholds: RiskAppetiteRow[], ctx: ThresholdContext = {}): [number, number, number] {
+  const status = ragLabel(metricKey, value, allThresholds, ctx);
+  if (status === 'Green') return [76, 175, 80];
+  if (status === 'Amber') return [255, 152, 0];
+  return [244, 67, 54];
+}
+
+export async function generateExecutiveSummary(scope?: ScopeSelection): Promise<void> {
   // Fetch all data in parallel
-  const [overall, products, netFlow, rollRates, losMetrics, vintage] = await Promise.all([
-    queries.fetchConsumerOverall(),
-    queries.fetchProductMetrics(),
-    queries.fetchNetFlowRates(),
-    queries.fetchRollRates(),
-    queries.fetchLOSMetrics(),
-    queries.fetchVintagePoints(),
+  const [overall, products, netFlow, rollRates, losMetrics, vintage, allThresholds] = await Promise.all([
+    queries.fetchConsumerOverall(scope),
+    queries.fetchProductMetrics(scope),
+    queries.fetchNetFlowRates(scope),
+    queries.fetchRollRates(scope),
+    queries.fetchLOSMetrics(scope),
+    queries.fetchVintagePoints(undefined, scope),
+    fetchAllThresholds().catch(() => [] as RiskAppetiteRow[]),
   ]);
 
   const data: ExecSummaryData = { overall, products, netFlow, rollRates, losMetrics, vintage };
@@ -489,13 +513,13 @@ export async function generateExecutiveSummary(): Promise<void> {
   drawCoverPage(doc);
 
   // Page 2: Key Metrics
-  drawKeyMetricsPage(doc, data);
+  drawKeyMetricsPage(doc, data, allThresholds);
 
   // Page 3: Composition & Origination
   drawCompositionPage(doc, data);
 
   // Page 4: Risks & Recommendations
-  drawRisksPage(doc, data);
+  drawRisksPage(doc, data, allThresholds);
 
   // Add footers to pages 2-4
   const totalPages = doc.getNumberOfPages();

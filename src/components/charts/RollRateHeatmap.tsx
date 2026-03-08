@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
+import { formatPercent } from '@/lib/format';
 import type { RollRateTimeSeries } from '@/lib/types';
 
 interface Props {
@@ -96,7 +97,7 @@ export function RollRateHeatmap({ data }: Props) {
         .attr('pointer-events', 'none')
         .text((d) => {
           if (x.bandwidth() < 28 || y.bandwidth() < 14) return '';
-          return `${(d.value * 100).toFixed(1)}%`;
+          return formatPercent(d.value, 1);
         });
 
       // Group separator lines

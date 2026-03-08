@@ -4,6 +4,9 @@ import { Card, Typography, Box, Stack } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+import { formatPercent } from '@/lib/format';
+import { BreachBadge } from '@/components/common/BreachBadge';
+import type { ThresholdContext } from '@/lib/types';
 
 interface Props {
   label: string;
@@ -16,6 +19,9 @@ interface Props {
   invertTrend?: boolean;
   benchmark?: number;
   benchmarkLabel?: string;
+  metricKey?: string;
+  rawValue?: number;
+  thresholdContext?: ThresholdContext;
 }
 
 /** Tiny inline SVG sparkline — no D3 dependency */
@@ -54,7 +60,7 @@ function Sparkline({ data, color, height = 24, width = 72 }: { data: number[]; c
   );
 }
 
-export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, invertTrend, benchmark, benchmarkLabel }: Props) {
+export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext }: Props) {
   // For inverted metrics (delinquency, FPD): down is green, up is red
   const getTrendColor = () => {
     if (!trend) return undefined;
@@ -99,13 +105,25 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
         </Stack>
 
         <Stack direction="row" alignItems="flex-end" justifyContent="space-between" spacing={1}>
-          <Typography
-            variant="h5"
-            className="mono"
-            sx={{ fontWeight: 800, color: color || 'text.primary', lineHeight: 1, fontSize: '1.25rem' }}
-          >
-            {value}
-          </Typography>
+          {metricKey != null && rawValue != null ? (
+            <BreachBadge metricKey={metricKey} value={rawValue} context={thresholdContext}>
+              <Typography
+                variant="h5"
+                className="mono"
+                sx={{ fontWeight: 800, color: color || 'text.primary', lineHeight: 1, fontSize: '1.25rem' }}
+              >
+                {value}
+              </Typography>
+            </BreachBadge>
+          ) : (
+            <Typography
+              variant="h5"
+              className="mono"
+              sx={{ fontWeight: 800, color: color || 'text.primary', lineHeight: 1, fontSize: '1.25rem' }}
+            >
+              {value}
+            </Typography>
+          )}
 
           {sparkline && sparkline.length >= 2 && (
             <Box sx={{ flexShrink: 0, opacity: 0.85 }}>
@@ -130,7 +148,7 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
             >
               <TrendIcon sx={{ fontSize: 12, color: trendColor }} />
               <Typography variant="caption" sx={{ color: trendColor, fontWeight: 700, fontSize: '0.65rem', lineHeight: 1 }}>
-                {trend.value >= 0 ? '+' : ''}{trend.value.toFixed(1)}%
+                {trend.value >= 0 ? '+' : ''}{formatPercent(trend.value, 1)}
               </Typography>
             </Box>
           )}
@@ -141,7 +159,7 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
           )}
           {benchmark != null && (
             <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.disabled', ml: 'auto' }}>
-              {benchmarkLabel || 'BM'}: {typeof benchmark === 'number' && benchmark < 1 ? `${(benchmark * 100).toFixed(1)}%` : benchmark}
+              {benchmarkLabel || 'BM'}: {typeof benchmark === 'number' ? formatPercent(benchmark, 1) : benchmark}
             </Typography>
           )}
         </Stack>

@@ -68,6 +68,8 @@ async function clearAll() {
     'los_credit_bureau_pulls',
     'los_applications',
     'los_customers',
+    // Risk appetite
+    'risk_appetite_settings',
     // Dimension tables
     'product_catalog',
     'data_sources',
@@ -1346,6 +1348,28 @@ async function main() {
 
   console.log('Seeding los_daily...');
   await batchInsert('los_daily', buildLosDaily());
+
+  // -----------------------------------------------------------
+  // Risk Appetite Settings (14 global defaults)
+  // -----------------------------------------------------------
+  console.log('\n--- Risk Appetite Settings ---');
+  console.log('Seeding risk_appetite_settings...');
+  await batchInsert('risk_appetite_settings', [
+    { metric_key: 'fpd_pct', scope_level: 'global', appetite: 0.03, tolerance: 0.035 },
+    { metric_key: 'dpd_30_plus', scope_level: 'global', appetite: 0.05, tolerance: 0.06 },
+    { metric_key: 'dpd_90_plus', scope_level: 'global', appetite: 0.015, tolerance: 0.02 },
+    { metric_key: 'net_credit_loss', scope_level: 'global', appetite: 0.01, tolerance: 0.015 },
+    { metric_key: 'non_starter_rate', scope_level: 'global', appetite: 0.02, tolerance: 0.04 },
+    { metric_key: 'roll_forward_rate', scope_level: 'global', appetite: 0.1, tolerance: 0.2 },
+    { metric_key: 'resolution_rate', scope_level: 'global', appetite: 0.2, tolerance: 0.1 },
+    { metric_key: 'approval_rate', scope_level: 'global', appetite: 0.5, tolerance: 0.35 },
+    { metric_key: 'los_achievement', scope_level: 'global', appetite: 0.45, tolerance: 0.35 },
+    { metric_key: 'npl_ratio', scope_level: 'global', appetite: 0.03, tolerance: 0.05 },
+    { metric_key: 'stage_2_3_pct', scope_level: 'global', appetite: 0.07, tolerance: 0.1 },
+    { metric_key: 'avg_ews_score', scope_level: 'global', appetite: 1.0, tolerance: 2.0 },
+    { metric_key: 'collection_efficiency', scope_level: 'global', appetite: 0.9, tolerance: 0.75 },
+    { metric_key: 'provision_coverage', scope_level: 'global', appetite: 0.8, tolerance: 0.6 },
+  ]);
 
   console.log('\n=== Seeding complete! ===');
 }

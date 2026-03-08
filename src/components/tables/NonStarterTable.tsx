@@ -32,7 +32,7 @@ function formatNonStarterValue(value: number | null | undefined, metric: string)
   if (/Count|#/i.test(metric)) return formatNumber(value, 0);
   if (/Amount|\$/i.test(metric)) return formatCurrencyMM(value);
   if (/DPD/i.test(metric)) return formatNumber(value, 0);
-  return String(value);
+  return parseFloat(value.toFixed(2)).toString();
 }
 
 /* ── component ───────────────────────────────────────────────────── */

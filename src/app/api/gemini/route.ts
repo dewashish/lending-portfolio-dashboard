@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchTradeEntityPerformance, fetchTradeExecutiveSummary, fetchTradeWatchlist, fetchTradeConcentrations } from '@/lib/queries/trade';
 import { fetchEWSEntitySummary, fetchFXRisk, fetchCountryRisk } from '@/lib/queries/risk';
 import { fetchCorporateWatchlist } from '@/lib/queries/corporate';
+import { formatCurrencyMM, formatPercent, formatRating } from '@/lib/format';
 
 async function buildPortfolioContext(): Promise<string> {
   const [summary, entityPerf, watchlist, concentrations, ewsSummary, fxRisk, countryRisk, corpWatchlist] = await Promise.all([
@@ -18,11 +19,11 @@ async function buildPortfolioContext(): Promise<string> {
   const lines: string[] = ['Portfolio Context Summary:'];
 
   if (summary) {
-    lines.push(`- Total AUM: $${summary.totalAUM?.toFixed(2) ?? 'N/A'}mm`);
+    lines.push(`- Total AUM: ${summary.totalAUM != null ? formatCurrencyMM(summary.totalAUM) : 'N/A'}`);
     lines.push(`- Total Facilities: ${summary.totalFacilities ?? 'N/A'}`);
-    lines.push(`- NPL Ratio: ${summary.nplRatio != null ? (summary.nplRatio * 100).toFixed(2) + '%' : 'N/A'}`);
-    lines.push(`- Stage 2+3%: ${summary.stage2Plus3Pct != null ? (summary.stage2Plus3Pct * 100).toFixed(2) + '%' : 'N/A'}`);
-    lines.push(`- Provision Coverage: ${summary.provisionCoverage != null ? (summary.provisionCoverage * 100).toFixed(2) + '%' : 'N/A'}`);
+    lines.push(`- NPL Ratio: ${summary.nplRatio != null ? formatPercent(summary.nplRatio, 2) : 'N/A'}`);
+    lines.push(`- Stage 2+3%: ${summary.stage2Plus3Pct != null ? formatPercent(summary.stage2Plus3Pct, 2) : 'N/A'}`);
+    lines.push(`- Provision Coverage: ${summary.provisionCoverage != null ? formatPercent(summary.provisionCoverage, 2) : 'N/A'}`);
     lines.push(`- Watchlist Count: ${summary.watchlistCount ?? 0}`);
   }
 
@@ -30,7 +31,7 @@ async function buildPortfolioContext(): Promise<string> {
     lines.push('\nEntity Performance:');
     entityPerf.forEach((e) => {
       lines.push(
-        `  - ${e.entity}: Outstanding $${e.outstanding.toFixed(2)}mm, Utilization ${(e.utilization * 100).toFixed(1)}%, RAG: ${e.ragStatus}`,
+        `  - ${e.entity}: Outstanding ${formatCurrencyMM(e.outstanding)}, Utilization ${formatPercent(e.utilization, 1)}, RAG: ${e.ragStatus}`,
       );
     });
   }
@@ -39,7 +40,7 @@ async function buildPortfolioContext(): Promise<string> {
     lines.push(`\nWatchlist Accounts: ${watchlist.length} flagged facilities`);
     watchlist.slice(0, 10).forEach((w) => {
       lines.push(
-        `  - ${w.obligorName}: $${w.outstanding.toFixed(2)}mm, DPD ${w.dpd}, EWS ${w.ewsScore}, ${w.stage}`,
+        `  - ${w.obligorName}: ${formatCurrencyMM(w.outstanding)}, DPD ${w.dpd}, EWS ${w.ewsScore}, ${w.stage}`,
       );
     });
   }
@@ -48,7 +49,7 @@ async function buildPortfolioContext(): Promise<string> {
     lines.push('\nEWS Entity Summary:');
     ewsSummary.forEach((e) => {
       lines.push(
-        `  - ${e.entity}: Avg EWS ${e.avgEWSScore.toFixed(1)}, Score 4+: ${e.score4Plus}, Flagged Exposure $${e.flaggedExposure.toFixed(2)}mm, RAG: ${e.rag}`,
+        `  - ${e.entity}: Avg EWS ${formatRating(e.avgEWSScore)}, Score 4+: ${e.score4Plus}, Flagged Exposure ${formatCurrencyMM(e.flaggedExposure)}, RAG: ${e.rag}`,
       );
     });
   }
@@ -60,7 +61,7 @@ async function buildPortfolioContext(): Promise<string> {
       .slice(0, 10)
       .forEach((c) => {
         lines.push(
-          `  - ${c.name} (${c.category}): $${c.value.toFixed(2)}mm, ${(c.portfolioShare * 100).toFixed(1)}% share`,
+          `  - ${c.name} (${c.category}): ${formatCurrencyMM(c.value)}, ${formatPercent(c.portfolioShare, 1)} share`,
         );
       });
   }
@@ -69,7 +70,7 @@ async function buildPortfolioContext(): Promise<string> {
     lines.push('\nFX Risk:');
     fxRisk.forEach((f) => {
       lines.push(
-        `  - ${f.entity} (${f.primaryCurrency}): Vol30D ${(f.volatility30Day * 100).toFixed(1)}%, YTD Deprec ${(f.ytdDepreciation * 100).toFixed(1)}%, RAG: ${f.rag}`,
+        `  - ${f.entity} (${f.primaryCurrency}): Vol30D ${formatPercent(f.volatility30Day, 1)}, YTD Deprec ${formatPercent(f.ytdDepreciation, 1)}, RAG: ${f.rag}`,
       );
     });
   }
@@ -78,7 +79,7 @@ async function buildPortfolioContext(): Promise<string> {
     lines.push('\nCountry Risk:');
     countryRisk.forEach((r) => {
       lines.push(
-        `  - ${r.entity}: Composite ${r.compositeScore.toFixed(1)}, Exposure $${r.exposure.toFixed(2)}mm, RAG: ${r.rag}`,
+        `  - ${r.entity}: Composite ${formatRating(r.compositeScore)}, Exposure ${formatCurrencyMM(r.exposure)}, RAG: ${r.rag}`,
       );
     });
   }
@@ -107,31 +108,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.KIE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({
         answer:
-          'The Gemini API key is not configured. Please set the GEMINI_API_KEY environment variable in your .env.local file to enable AI-powered portfolio analysis.\n\nExample:\nGEMINI_API_KEY=your_api_key_here',
+          'The AI API key is not configured. Please set the KIE_API_KEY environment variable to enable AI-powered portfolio analysis.',
       });
     }
 
     const context = await buildPortfolioContext();
 
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const systemPrompt = `You are a senior credit risk analyst reviewing a lending portfolio dashboard. Use the following portfolio data context to answer the user's question accurately and concisely. If the data doesn't contain enough information to answer, say so clearly.\n\n${context}\n\nProvide a clear, data-driven response. Use specific numbers from the context when available. Keep the answer concise but informative.`;
 
-    const prompt = `You are a senior credit risk analyst reviewing a lending portfolio dashboard. Use the following portfolio data context to answer the user's question accurately and concisely. If the data doesn't contain enough information to answer, say so clearly.
+    const res = await fetch('https://api.kie.ai/gemini-3-flash/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gemini-3-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: question },
+        ],
+      }),
+    });
 
-${context}
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`Kie API error (${res.status}): ${errText}`);
+    }
 
-User Question: ${question}
-
-Provide a clear, data-driven response. Use specific numbers from the context when available. Keep the answer concise but informative.`;
-
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const answer = response.text();
+    const data = await res.json();
+    const answer = data.choices?.[0]?.message?.content ?? 'No response received.';
 
     return NextResponse.json({ answer });
   } catch (err: unknown) {

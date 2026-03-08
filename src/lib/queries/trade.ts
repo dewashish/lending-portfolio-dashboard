@@ -13,6 +13,9 @@ import type {
   ScopeSelection,
   RAGStatus,
   IFRSStage,
+  TradeStageMigrationRow,
+  TradeDPDRollRateRow,
+  TradeDPDAgingRow,
 } from '../types';
 import { applyScopeAsync } from './shared';
 
@@ -270,4 +273,58 @@ export async function fetchTradeExecutiveSummary(scope?: ScopeSelection): Promis
     watchlistCount: 0,
     watchlistExposure: 0,
   };
+}
+
+export async function fetchTradeStageMigration(scope?: ScopeSelection): Promise<TradeStageMigrationRow[]> {
+  let query = supabase
+    .from('trade_stage_migration')
+    .select('*')
+    .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    period: r.period,
+    priorStage: r.prior_stage as IFRSStage,
+    currentStage: r.current_stage as IFRSStage,
+    facilityCount: r.facility_count ?? 0,
+    balance: r.balance_usd ?? r.balance ?? 0,
+  }));
+}
+
+export async function fetchTradeDPDRollRates(scope?: ScopeSelection): Promise<TradeDPDRollRateRow[]> {
+  let query = supabase
+    .from('trade_dpd_roll_rates')
+    .select('*')
+    .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    period: r.period,
+    fromBucket: r.from_bucket,
+    toBucket: r.to_bucket,
+    facilityCount: r.facility_count ?? 0,
+    balance: r.balance_usd ?? r.balance ?? 0,
+    transitionPct: r.transition_pct ?? 0,
+  }));
+}
+
+export async function fetchTradeDPDAgingByEntity(scope?: ScopeSelection): Promise<TradeDPDAgingRow[]> {
+  let query = supabase
+    .from('trade_dpd_aging_by_entity')
+    .select('*, subsidiaries!inner(name)')
+    .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    subsidiaryName: r.subsidiaries?.name ?? '',
+    dpdBucket: r.dpd_bucket,
+    facilityCount: r.facility_count ?? 0,
+    balance: r.balance_usd ?? r.balance ?? 0,
+  }));
 }

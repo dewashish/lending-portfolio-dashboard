@@ -5,15 +5,18 @@ import { KPIRow } from '@/components/cards/KPIRow';
 import type { KPIItem } from '@/components/cards/KPIRow';
 import { formatCurrency, formatCurrencyMM, formatPercent, formatNumber } from '@/lib/format';
 import { RAG_COLORS } from '@/lib/constants';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import type { ScopeSelection, RAGStatus } from '@/lib/types';
 import { useSubsidiaryScorecard } from '@/hooks/useConsumerData';
 import { useConsolidatedScorecard } from '@/hooks/useOverviewData';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 
 interface Props {
   scope?: ScopeSelection;
 }
 
 export function GroupOverviewView({ scope }: Props) {
+  const { getColor } = useRiskAppetite();
   const { data: scorecard, isLoading: scorecardLoading } = useConsolidatedScorecard(scope);
   const { data: consumerScorecard, isLoading: consumerLoading } = useSubsidiaryScorecard(scope);
 
@@ -29,7 +32,7 @@ export function GroupOverviewView({ scope }: Props) {
     { label: 'Consumer AUM', value: formatCurrencyMM(totalConsumerAum) },
     { label: 'Trade Outstanding', value: formatCurrencyMM(totalTradeOutstanding) },
     { label: 'Corp Watchlist', value: formatNumber(totalWatchlist), color: totalWatchlist > 0 ? '#ff9800' : '#4caf50' },
-    { label: 'Avg EWS Score', value: formatNumber(avgEws, 1), color: avgEws > 2 ? '#f44336' : avgEws > 1 ? '#ff9800' : '#4caf50' },
+    { label: 'Avg EWS Score', value: formatNumber(avgEws, 1), color: getColor('avg_ews_score', avgEws), metricKey: 'avg_ews_score', rawValue: avgEws },
     { label: 'Subsidiaries', value: formatNumber((scorecard ?? []).length) },
   ];
 
@@ -79,15 +82,23 @@ export function GroupOverviewView({ scope }: Props) {
                     </TableCell>
                     <TableCell align="right" sx={{
                       fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
-                      color: (row.consumerDelinquency30Plus ?? 0) > 5 ? '#f44336' : (row.consumerDelinquency30Plus ?? 0) > 3 ? '#ff9800' : '#4caf50',
+                      color: getColor('dpd_30_plus', row.consumerDelinquency30Plus ?? 0),
                     }}>
-                      {row.consumerDelinquency30Plus != null ? `${row.consumerDelinquency30Plus.toFixed(2)}%` : '—'}
+                      {row.consumerDelinquency30Plus != null ? (
+                        <BreachBadge metricKey="dpd_30_plus" value={row.consumerDelinquency30Plus}>
+                          {formatPercent(row.consumerDelinquency30Plus, 2)}
+                        </BreachBadge>
+                      ) : '—'}
                     </TableCell>
                     <TableCell align="right" sx={{
                       fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
-                      color: (row.tradeNplRatio ?? 0) > 0.05 ? '#f44336' : '#4caf50',
+                      color: getColor('npl_ratio', row.tradeNplRatio ?? 0),
                     }}>
-                      {row.tradeNplRatio != null ? formatPercent(row.tradeNplRatio) : '—'}
+                      {row.tradeNplRatio != null ? (
+                        <BreachBadge metricKey="npl_ratio" value={row.tradeNplRatio}>
+                          {formatPercent(row.tradeNplRatio)}
+                        </BreachBadge>
+                      ) : '—'}
                     </TableCell>
                     <TableCell align="right" sx={{
                       fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
@@ -97,9 +108,13 @@ export function GroupOverviewView({ scope }: Props) {
                     </TableCell>
                     <TableCell align="right" sx={{
                       fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
-                      color: (row.avgEwsScore ?? 0) > 2 ? '#f44336' : (row.avgEwsScore ?? 0) > 1 ? '#ff9800' : '#4caf50',
+                      color: getColor('avg_ews_score', row.avgEwsScore ?? 0),
                     }}>
-                      {row.avgEwsScore != null ? formatNumber(row.avgEwsScore, 1) : '—'}
+                      {row.avgEwsScore != null ? (
+                        <BreachBadge metricKey="avg_ews_score" value={row.avgEwsScore}>
+                          {formatNumber(row.avgEwsScore, 1)}
+                        </BreachBadge>
+                      ) : '—'}
                     </TableCell>
                     <TableCell align="right" sx={{
                       fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
@@ -168,17 +183,29 @@ export function GroupOverviewView({ scope }: Props) {
                     <TableCell align="right" sx={{ fontSize: '0.75rem' }}>
                       {row.aumLocal != null ? `${row.currencyCode} ${formatNumber(row.aumLocal)}` : '—'}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontSize: '0.75rem', color: (row.delinquency30Plus ?? 0) > 5 ? '#f44336' : (row.delinquency30Plus ?? 0) > 3 ? '#ff9800' : '#4caf50' }}>
-                      {row.delinquency30Plus != null ? `${row.delinquency30Plus.toFixed(2)}%` : '—'}
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', color: getColor('dpd_30_plus', row.delinquency30Plus ?? 0) }}>
+                      {row.delinquency30Plus != null ? (
+                        <BreachBadge metricKey="dpd_30_plus" value={row.delinquency30Plus}>
+                          {formatPercent(row.delinquency30Plus, 2)}
+                        </BreachBadge>
+                      ) : '—'}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontSize: '0.75rem', color: (row.delinquency90Plus ?? 0) > 3 ? '#f44336' : (row.delinquency90Plus ?? 0) > 1.5 ? '#ff9800' : '#4caf50' }}>
-                      {row.delinquency90Plus != null ? `${row.delinquency90Plus.toFixed(2)}%` : '—'}
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', color: getColor('dpd_90_plus', row.delinquency90Plus ?? 0) }}>
+                      {row.delinquency90Plus != null ? (
+                        <BreachBadge metricKey="dpd_90_plus" value={row.delinquency90Plus}>
+                          {formatPercent(row.delinquency90Plus, 2)}
+                        </BreachBadge>
+                      ) : '—'}
                     </TableCell>
                     <TableCell align="right" sx={{ fontSize: '0.75rem' }}>
-                      {row.netCreditLoss != null ? `${row.netCreditLoss.toFixed(2)}%` : '—'}
+                      {row.netCreditLoss != null ? formatPercent(row.netCreditLoss, 2) : '—'}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontSize: '0.75rem', color: (row.fpdPct ?? 0) > 5 ? '#f44336' : '#4caf50' }}>
-                      {row.fpdPct != null ? `${row.fpdPct.toFixed(1)}%` : '—'}
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', color: getColor('fpd_pct', row.fpdPct ?? 0) }}>
+                      {row.fpdPct != null ? (
+                        <BreachBadge metricKey="fpd_pct" value={row.fpdPct}>
+                          {formatPercent(row.fpdPct, 1)}
+                        </BreachBadge>
+                      ) : '—'}
                     </TableCell>
                   </TableRow>
                 ))}

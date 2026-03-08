@@ -1,3 +1,20 @@
+/** Auto-scale a number so the integer part has at most 3 digits. */
+function compactNumber(abs: number, decimals: number): [number, string] {
+  const tiers: [number, string][] = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K'], [1, '']];
+  for (let i = 0; i < tiers.length; i++) {
+    const [threshold, suffix] = tiers[i];
+    if (abs >= threshold || i === tiers.length - 1) {
+      const scaled = abs / threshold;
+      // If rounding pushes to 4 digits, bump to the next larger tier
+      if (parseFloat(scaled.toFixed(decimals)) >= 1000 && i > 0) {
+        return [abs / tiers[i - 1][0], tiers[i - 1][1]];
+      }
+      return [scaled, suffix];
+    }
+  }
+  return [abs, ''];
+}
+
 export function formatCurrency(
   value: number | null | undefined,
   decimals = 1,
@@ -5,15 +22,14 @@ export function formatCurrency(
   if (value == null || isNaN(value)) return '—';
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
-  if (abs >= 1_000_000_000) return `${sign}$${(abs / 1_000_000_000).toFixed(decimals)}B`;
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(decimals)}M`;
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(decimals)}K`;
-  return `${sign}$${abs.toFixed(decimals)}`;
+  const [scaled, suffix] = compactNumber(abs, decimals);
+  return `${sign}$${scaled.toFixed(decimals)}${suffix}`;
 }
 
+/** Alias for formatCurrency with 2-decimal default. All DB values are in raw units. */
 export function formatCurrencyMM(value: number | null | undefined, decimals = 2): string {
   if (value == null || isNaN(value)) return '—';
-  return `$${value.toFixed(decimals)}mm`;
+  return formatCurrency(value, decimals);
 }
 
 export function formatPercent(
@@ -31,6 +47,12 @@ export function formatNumber(
   decimals = 0,
 ): string {
   if (value == null || isNaN(value)) return '—';
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    const sign = value < 0 ? '-' : '';
+    const [scaled, suffix] = compactNumber(abs, decimals);
+    return `${sign}${scaled.toFixed(decimals)}${suffix}`;
+  }
   return value.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

@@ -27,7 +27,7 @@ import {
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
-import { formatPercent, formatCurrencyMM } from '@/lib/format';
+import { formatPercent, formatCurrency } from '@/lib/format';
 import type { ConsumerProductData, ConsumerMetricRow } from '@/lib/types';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
@@ -47,11 +47,11 @@ function isInverseMetric(metric: string): boolean {
 }
 
 function isPercentMetric(metric: string): boolean {
-  return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio)/i.test(metric);
+  return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio|ROI|Credit Loss|Bounce)/i.test(metric);
 }
 
 function isCurrencyMetric(metric: string): boolean {
-  return /\b(AUM|Bookings|Disbursement|Write-off|Recoveries|NCL|Outstanding|Amount|Balance|POS)\b/i.test(metric);
+  return /\b(AUM|Bookings|Disbursement|Write-offs?|Recoveries|NCL|Outstanding|Amount|Balance|POS)\b/i.test(metric);
 }
 
 function formatMetricValue(
@@ -62,8 +62,8 @@ function formatMetricValue(
   if (typeof value === 'string') return value;
   if (isNaN(value)) return '—';
   if (isPercentMetric(metric)) return formatPercent(value);
-  if (isCurrencyMetric(metric) && Math.abs(value) > 1) return formatCurrencyMM(value);
-  return String(value);
+  if (isCurrencyMetric(metric) && Math.abs(value) > 1) return formatCurrency(value);
+  return parseFloat(value.toFixed(2)).toString();
 }
 
 /** Heatmap color based on where value sits in the min-max range for a metric row */
@@ -209,7 +209,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
 
           return (
             <Tooltip
-              title={`${delta.pct >= 0 ? '+' : ''}${delta.pct.toFixed(1)}% (${formatMetricValue(delta.value, row.metric)})`}
+              title={`${delta.pct >= 0 ? '+' : ''}${formatPercent(delta.pct, 1)} (${formatMetricValue(delta.value, row.metric)})`}
               arrow
               placement="top"
             >
@@ -231,7 +231,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
                   component="span"
                   sx={{ fontSize: '0.65rem', fontWeight: 700, color, lineHeight: 1 }}
                 >
-                  {Math.abs(delta.pct).toFixed(1)}%
+                  {formatPercent(Math.abs(delta.pct), 1)}
                 </Typography>
               </Box>
             </Tooltip>

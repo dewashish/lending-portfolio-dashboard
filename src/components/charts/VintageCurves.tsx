@@ -6,6 +6,7 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { Box, Chip } from '@mui/material';
+import { formatPercent } from '@/lib/format';
 import type { VintagePoint } from '@/lib/types';
 
 interface Props {
@@ -70,7 +71,7 @@ export function VintageCurves({ data, metricType }: Props) {
           d3
             .axisLeft(y)
             .ticks(5)
-            .tickFormat((d) => `${(+d * 100).toFixed(1)}%`)
+            .tickFormat((d) => formatPercent(+d, 1))
             .tickSize(-w),
         )
         .selectAll('text')

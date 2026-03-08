@@ -7,11 +7,14 @@ import { RollRateHeatmap } from '@/components/charts/RollRateHeatmap';
 import { RollRateSankey } from '@/components/charts/RollRateSankey';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useNetFlowRates, useRollRates, useConsumerOverall } from '@/hooks/useConsumerData';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent } from '@/lib/format';
-import type { ScopeSelection, ConsumerMetricRow } from '@/lib/types';
+import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
 function getLatest(data: ConsumerMetricRow[], name: string): number | null {
@@ -35,6 +38,8 @@ interface DKpi {
   value: string;
   delta: number | null;
   color: string;
+  metricKey?: string;
+  rawValue?: number;
 }
 
 function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
@@ -58,19 +63,31 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
             >
               {k.label}
             </Typography>
-            <Typography
-              variant="h6"
-              className="mono"
-              sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
-            >
-              {k.value}
-            </Typography>
+            {k.metricKey != null && k.rawValue != null ? (
+              <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+                <Typography
+                  variant="h6"
+                  className="mono"
+                  sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+                >
+                  {k.value}
+                </Typography>
+              </BreachBadge>
+            ) : (
+              <Typography
+                variant="h6"
+                className="mono"
+                sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+              >
+                {k.value}
+              </Typography>
+            )}
             {k.delta != null && (
               <Typography
                 variant="caption"
                 sx={{ fontSize: '0.6rem', fontWeight: 700, color: deltaColor, mt: 0.3, display: 'block' }}
               >
-                {k.delta >= 0 ? '+' : ''}{k.delta.toFixed(1)}% MoM
+                {k.delta >= 0 ? '+' : ''}{formatPercent(k.delta, 1)} MoM
               </Typography>
             )}
           </Card>
@@ -80,27 +97,28 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
   );
 }
 
-export function ConsumerDelinquencySection({ scope }: Props) {
-  const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope);
-  const { data: rollRates, isLoading: l2 } = useRollRates(scope);
-  const { data: overall } = useConsumerOverall(scope);
+export function ConsumerDelinquencySection({ scope, filters }: Props) {
+  const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, filters);
+  const { data: rollRates, isLoading: l2 } = useRollRates(scope, filters);
+  const { data: overall } = useConsumerOverall(scope, filters);
+  const { getColor } = useRiskAppetite();
 
   const kpis = useMemo<DKpi[]>(() => {
     if (!overall || overall.length === 0) return [];
     const defs = [
-      { name: 'FPD%', label: 'FPD Rate', t: [0.03, 0.035] },
-      { name: '30+ Amt%', label: '30+ DPD', t: [0.05, 0.06] },
-      { name: '90+ Amt%', label: '90+ DPD', t: [0.015, 0.02] },
-      { name: 'Net Credit Loss', label: 'NCL Rate', t: [0.01, 0.015] },
+      { name: 'FPD%', label: 'FPD Rate', metricKey: 'fpd_pct' },
+      { name: '30+ Amt%', label: '30+ DPD', metricKey: 'dpd_30_plus' },
+      { name: '90+ Amt%', label: '90+ DPD', metricKey: 'dpd_90_plus' },
+      { name: 'Net Credit Loss', label: 'NCL Rate', metricKey: 'net_credit_loss' },
     ];
-    return defs.map(({ name, label, t }) => {
+    return defs.map(({ name, label, metricKey }) => {
       const curr = getLatest(overall, name);
       const prev = getPrevious(overall, name);
       const delta = curr != null && prev != null && prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : null;
-      const color = curr == null ? '#78909c' : curr <= t[0] ? '#66bb6a' : curr <= t[1] ? '#ffa726' : '#ef5350';
-      return { label, value: curr != null ? formatPercent(curr) : '—', delta, color };
+      const color = curr == null ? '#78909c' : getColor(metricKey, curr);
+      return { label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey, rawValue: curr ?? undefined };
     });
-  }, [overall]);
+  }, [overall, getColor]);
 
   if (l1 || l2) return <ChartGridSkeleton />;
 

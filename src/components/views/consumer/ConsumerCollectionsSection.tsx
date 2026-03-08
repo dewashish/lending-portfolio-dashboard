@@ -6,17 +6,22 @@ import { CollectionMetricsTable } from '@/components/tables/CollectionMetricsTab
 import { CollectionTrend } from '@/components/charts/CollectionTrend';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useCollectionMetrics } from '@/hooks/useConsumerData';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent } from '@/lib/format';
-import type { ScopeSelection, CollectionMetricRow } from '@/lib/types';
+import type { ScopeSelection, CollectionMetricRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
 interface CollectionKPI {
   label: string;
   value: string;
   color: string;
+  metricKey?: string;
+  rawValue?: number;
 }
 
 function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
@@ -30,20 +35,35 @@ function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
           >
             {k.label}
           </Typography>
-          <Typography
-            variant="h6"
-            className="mono"
-            sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
-          >
-            {k.value}
-          </Typography>
+          {k.metricKey != null && k.rawValue != null ? (
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+              <Typography
+                variant="h6"
+                className="mono"
+                sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+              >
+                {k.value}
+              </Typography>
+            </BreachBadge>
+          ) : (
+            <Typography
+              variant="h6"
+              className="mono"
+              sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+            >
+              {k.value}
+            </Typography>
+          )}
         </Card>
       ))}
     </Stack>
   );
 }
 
-function computeCollectionKPIs(data: CollectionMetricRow[]): CollectionKPI[] {
+function computeCollectionKPIs(
+  data: CollectionMetricRow[],
+  getColor: (metricKey: string, value: number) => string,
+): CollectionKPI[] {
   if (data.length === 0) return [];
 
   // Average roll backward (resolution rate) across all buckets
@@ -64,14 +84,18 @@ function computeCollectionKPIs(data: CollectionMetricRow[]): CollectionKPI[] {
     kpis.push({
       label: 'Avg Resolution Rate',
       value: formatPercent(avgRollBack),
-      color: avgRollBack > 0.2 ? '#66bb6a' : avgRollBack > 0.1 ? '#ffa726' : '#ef5350',
+      color: getColor('resolution_rate', avgRollBack),
+      metricKey: 'resolution_rate',
+      rawValue: avgRollBack,
     });
   }
   if (avgRollFwd != null) {
     kpis.push({
       label: 'Avg Roll Forward',
       value: formatPercent(avgRollFwd),
-      color: avgRollFwd <= 0.1 ? '#66bb6a' : avgRollFwd <= 0.2 ? '#ffa726' : '#ef5350',
+      color: getColor('roll_forward_rate', avgRollFwd),
+      metricKey: 'roll_forward_rate',
+      rawValue: avgRollFwd,
     });
   }
   if (avgStab != null) {
@@ -85,10 +109,11 @@ function computeCollectionKPIs(data: CollectionMetricRow[]): CollectionKPI[] {
   return kpis;
 }
 
-export function ConsumerCollectionsSection({ scope }: Props) {
-  const { data: metrics, isLoading } = useCollectionMetrics(scope);
+export function ConsumerCollectionsSection({ scope, filters }: Props) {
+  const { data: metrics, isLoading } = useCollectionMetrics(scope, filters);
+  const { getColor } = useRiskAppetite();
 
-  const kpis = useMemo(() => computeCollectionKPIs(metrics ?? []), [metrics]);
+  const kpis = useMemo(() => computeCollectionKPIs(metrics ?? [], getColor), [metrics, getColor]);
 
   if (isLoading) return <LoadingSkeleton />;
 

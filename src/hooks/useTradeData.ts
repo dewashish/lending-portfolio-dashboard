@@ -39,3 +39,15 @@ export function useTradeWatchlist(scope?: ScopeSelection) {
 export function useTradeExecutiveSummary(scope?: ScopeSelection) {
   return useSWR(scopeKey('trade-exec-summary', scope), () => queries.fetchTradeExecutiveSummary(scope));
 }
+
+export function useTradeStageMigration(scope?: ScopeSelection) {
+  return useSWR(scopeKey('trade-stage-migration', scope), () => queries.fetchTradeStageMigration(scope));
+}
+
+export function useTradeDPDRollRates(scope?: ScopeSelection) {
+  return useSWR(scopeKey('trade-dpd-roll-rates', scope), () => queries.fetchTradeDPDRollRates(scope));
+}
+
+export function useTradeDPDAgingByEntity(scope?: ScopeSelection) {
+  return useSWR(scopeKey('trade-dpd-aging', scope), () => queries.fetchTradeDPDAgingByEntity(scope));
+}

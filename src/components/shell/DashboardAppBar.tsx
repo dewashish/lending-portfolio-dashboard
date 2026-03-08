@@ -1,83 +1,157 @@
 'use client';
 
+import { useState } from 'react';
 import {
-  AppBar, Toolbar, Typography, Box, IconButton, Chip, Tooltip, Avatar, Button,
+  AppBar, Toolbar, Typography, Box, IconButton, Tooltip, Avatar, Button,
+  ToggleButtonGroup, ToggleButton, Select, MenuItem,
 } from '@mui/material';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { ExcelExportButton } from '@/components/export/ExcelExportButton';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import SettingsIcon from '@mui/icons-material/Settings';
+import PublicIcon from '@mui/icons-material/Public';
+import MapIcon from '@mui/icons-material/Map';
+import BusinessIcon from '@mui/icons-material/Business';
 import { useThemeMode } from '@/lib/theme-context';
 import { ExecutiveSummaryButton } from '@/components/export/ExecutiveSummaryButton';
-import type { ScopeSelection } from '@/lib/types';
+import { useAllBreachAlerts } from '@/hooks/useBreachAlerts';
+import { BreachTickerBar } from '@/components/shell/BreachTickerBar';
+import { BreachAlertsPopover } from '@/components/shell/BreachAlertsPopover';
+import type { ScopeSelection, ScopeLevel } from '@/lib/types';
 import { useSubsidiaries, useRegions } from '@/hooks/useConsumerData';
+import { useUser } from '@/lib/user-context';
+import { ProfileMenu } from '@/components/shell/ProfileMenu';
 
 interface Props {
   onToggleAI: () => void;
-  onExportPDF: () => void;
+  onToggleSettings: () => void;
   aiOpen: boolean;
   activeTab?: number;
-  scope?: ScopeSelection;
+  scope: ScopeSelection;
+  onScopeChange: (scope: ScopeSelection) => void;
 }
 
-export function DashboardAppBar({ onToggleAI, onExportPDF, aiOpen, activeTab, scope }: Props) {
+export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTab, scope, onScopeChange }: Props) {
   const { mode, toggleMode } = useThemeMode();
   const { data: subsidiaries } = useSubsidiaries();
   const { data: regions } = useRegions();
+  const { alerts } = useAllBreachAlerts(scope);
+  const { profile } = useUser();
+  const [alertsAnchorEl, setAlertsAnchorEl] = useState<HTMLElement | null>(null);
+  const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
 
-  const scopeLabel = (() => {
-    if (!scope || scope.level === 'group') return 'Group';
-    if (scope.level === 'region') {
-      const r = regions?.find((r) => r.id === scope.regionId);
-      return r ? r.name : 'Region';
+  const initials = profile?.displayName
+    ? profile.displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    : 'U';
+
+  const handleLevelChange = (_: unknown, newLevel: ScopeLevel | null) => {
+    if (!newLevel) return;
+    if (newLevel === 'group') {
+      onScopeChange({ level: 'group' });
+    } else if (newLevel === 'region') {
+      onScopeChange({ level: 'region', regionId: regions?.[0]?.id });
+    } else if (newLevel === 'subsidiary') {
+      onScopeChange({ level: 'subsidiary', subsidiaryId: subsidiaries?.[0]?.id });
     }
-    if (scope.level === 'subsidiary') {
-      const s = subsidiaries?.find((s) => s.id === scope.subsidiaryId);
-      return s ? `${s.shortCode} · ${s.currencyCode}` : 'Subsidiary';
-    }
-    return 'Group';
-  })();
+  };
 
   return (
     <AppBar position="static" elevation={0}>
-      <Toolbar sx={{ gap: 2 }}>
+      <Toolbar sx={{ gap: 1.5 }}>
+        {/* Company branding */}
         <Box
           sx={{
-            width: 36, height: 36, borderRadius: 2,
+            width: 28, height: 28, borderRadius: 1.5,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'linear-gradient(135deg, #00897b 0%, #004d40 100%)',
+            '@keyframes spin': { '0%': { transform: 'rotateY(0deg)' }, '100%': { transform: 'rotateY(360deg)' } },
+            animation: 'spin 4s ease-in-out infinite',
           }}
         >
-          <ShowChartIcon sx={{ fontSize: 20, color: '#fff' }} />
+          <AccountBalanceIcon sx={{ fontSize: 16, color: '#fff' }} />
         </Box>
+        <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary', letterSpacing: '0.02em' }}>
+          Avaloura Portfolio Monitor
+        </Typography>
 
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h6" sx={{ fontSize: '1.05rem', lineHeight: 1.2, color: 'text.primary' }}>
-            Portfolio Monitor
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-            Group Credit Risk Dashboard
-          </Typography>
-        </Box>
+        <Box sx={{ flex: 1 }} />
 
-        <Chip
+        {/* Scope toggle */}
+        <ToggleButtonGroup
+          value={scope.level}
+          exclusive
+          onChange={handleLevelChange}
           size="small"
-          label={scopeLabel}
-          sx={{ bgcolor: 'rgba(0,137,123,0.15)', color: 'primary.light', fontWeight: 600 }}
+          sx={{
+            '& .MuiToggleButton-root': {
+              px: 1, py: 0.25, fontSize: '0.68rem', fontWeight: 600, textTransform: 'none',
+            },
+          }}
+        >
+          <ToggleButton value="group">
+            <Tooltip title="Group (All)"><PublicIcon sx={{ fontSize: 16 }} /></Tooltip>
+          </ToggleButton>
+          <ToggleButton value="region">
+            <Tooltip title="By Region"><MapIcon sx={{ fontSize: 16 }} /></Tooltip>
+          </ToggleButton>
+          <ToggleButton value="subsidiary">
+            <Tooltip title="By Subsidiary"><BusinessIcon sx={{ fontSize: 16 }} /></Tooltip>
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        {/* Scope selector dropdown */}
+        {scope.level === 'region' && regions && regions.length > 0 && (
+          <Select
+            size="small"
+            value={scope.regionId ?? ''}
+            onChange={(e) => onScopeChange({ level: 'region', regionId: e.target.value as number })}
+            sx={{ minWidth: 130, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.5 } }}
+          >
+            {regions.map((r) => (
+              <MenuItem key={r.id} value={r.id} sx={{ fontSize: '0.72rem' }}>{r.name}</MenuItem>
+            ))}
+          </Select>
+        )}
+        {scope.level === 'subsidiary' && subsidiaries && subsidiaries.length > 0 && (
+          <Select
+            size="small"
+            value={scope.subsidiaryId ?? ''}
+            onChange={(e) => onScopeChange({ level: 'subsidiary', subsidiaryId: e.target.value as number })}
+            sx={{ minWidth: 160, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.5 } }}
+          >
+            {subsidiaries.map((s) => (
+              <MenuItem key={s.id} value={s.id} sx={{ fontSize: '0.72rem' }}>
+                {s.shortCode} · {s.currencyCode}
+              </MenuItem>
+            ))}
+          </Select>
+        )}
+
+        {alerts.length > 0 && (
+          <BreachTickerBar alerts={alerts} onClick={(e) => setAlertsAnchorEl(e.currentTarget)} />
+        )}
+        <BreachAlertsPopover
+          anchorEl={alertsAnchorEl}
+          open={Boolean(alertsAnchorEl)}
+          onClose={() => setAlertsAnchorEl(null)}
+          alerts={alerts}
         />
 
-        {activeTab === 1 && <ExecutiveSummaryButton />}
+        <ExecutiveSummaryButton activeTab={activeTab ?? 0} scope={scope} />
 
-        <Tooltip title="Export PDF">
-          <IconButton size="small" onClick={onExportPDF} sx={{ color: 'text.secondary' }}>
-            <PictureAsPdfIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <ExcelExportButton activeTab={activeTab ?? 0} scope={scope} />
 
         <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           <IconButton size="small" onClick={toggleMode} sx={{ color: 'text.secondary' }}>
             {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Risk Appetite Settings">
+          <IconButton size="small" onClick={onToggleSettings} sx={{ color: 'text.secondary' }}>
+            <SettingsIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 
@@ -98,9 +172,22 @@ export function DashboardAppBar({ onToggleAI, onExportPDF, aiOpen, activeTab, sc
           AI Query
         </Button>
 
-        <Avatar sx={{ width: 32, height: 32, bgcolor: mode === 'dark' ? '#1e293b' : '#e2e8f0', color: 'text.primary', fontSize: '0.75rem', fontWeight: 700 }}>
-          U
+        <Avatar
+          onClick={(e) => setProfileAnchor(e.currentTarget)}
+          sx={{
+            width: 32, height: 32, cursor: 'pointer',
+            bgcolor: mode === 'dark' ? '#1e293b' : '#e2e8f0',
+            color: 'text.primary', fontSize: '0.75rem', fontWeight: 700,
+            '&:hover': { opacity: 0.8 },
+          }}
+        >
+          {initials}
         </Avatar>
+        <ProfileMenu
+          anchorEl={profileAnchor}
+          open={Boolean(profileAnchor)}
+          onClose={() => setProfileAnchor(null)}
+        />
       </Toolbar>
     </AppBar>
   );

@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
+import { formatNumber, formatPercent } from '@/lib/format';
 import type { LOSFunnelStep } from '@/lib/types';
 
 interface Props {
@@ -97,7 +98,7 @@ export function LOSFunnelChart({ data }: Props) {
             .attr('fill', d3Tokens.textMuted)
             .attr('font-size', '10px')
             .attr('font-family', 'IBM Plex Mono, monospace')
-            .text(bar.value.toLocaleString());
+            .text(formatNumber(bar.value));
 
           // Bar key label (small)
           if (i === 0) {
@@ -116,7 +117,7 @@ export function LOSFunnelChart({ data }: Props) {
             .attr('fill', d3Tokens.textMuted)
             .attr('font-size', '10px')
             .attr('font-style', 'italic')
-            .text(`${(convRate * 100).toFixed(1)}% conversion`);
+            .text(`${formatPercent(convRate, 1)} conversion`);
 
           // Small arrow indicator
           g.append('text')

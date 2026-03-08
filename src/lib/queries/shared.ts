@@ -1,6 +1,6 @@
 import { supabase } from '../supabase';
 import type { Database } from '../database.types';
-import type { ScopeSelection, Subsidiary, Region } from '../types';
+import type { ScopeSelection, Subsidiary, Region, ConsumerFilters } from '../types';
 
 // ── Type aliases ─────────────────────────────────────────────────
 type SubsidiaryRow = Database['public']['Tables']['subsidiaries']['Row'];
@@ -55,6 +55,16 @@ export function scopeKey(base: string, scope?: ScopeSelection): string {
   if (scope.level === 'subsidiary') return `${base}-sub-${scope.subsidiaryId}`;
   if (scope.level === 'region') return `${base}-reg-${scope.regionId}`;
   return base;
+}
+
+// ── Consumer Filter Key ─────────────────────────────────────────
+
+export function consumerFilterKey(base: string, filters?: ConsumerFilters): string {
+  if (!filters) return base;
+  let key = base;
+  if (filters.period) key += `|p:${filters.period}`;
+  if (filters.products.length > 0) key += `|pr:${filters.products.sort().join(',')}`;
+  return key;
 }
 
 // ── Region / Subsidiary Fetch ────────────────────────────────────

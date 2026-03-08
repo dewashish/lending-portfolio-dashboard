@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
+import { formatPercent } from '@/lib/format';
 import type { VintagePoint } from '@/lib/types';
 
 interface Props {
@@ -120,8 +121,8 @@ export function VintageHeatmap({ data, metricType }: Props) {
         .attr('pointer-events', 'none')
         .text((d) => {
           if (x.bandwidth() < 30) return '';
-          const pct = d.rate <= 1 ? d.rate * 100 : d.rate;
-          return `${pct.toFixed(1)}%`;
+          
+          return formatPercent(d.rate, 1);
         });
 
       // Y axis (vintage labels)

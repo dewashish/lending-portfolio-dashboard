@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
+import { formatPercent } from '@/lib/format';
 import type { CollectionMetricRow } from '@/lib/types';
 
 interface Props {
@@ -84,7 +85,7 @@ export function CollectionTrend({ data }: Props) {
         .call(
           d3.axisLeft(y)
             .ticks(6)
-            .tickFormat((d) => `${(+d * 100).toFixed(0)}%`)
+            .tickFormat((d) => formatPercent(+d, 0))
             .tickSize(-w),
         )
         .selectAll('text')

@@ -1,6 +1,6 @@
 {
   "name": "lending-portfolio-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,12 +14,16 @@
     "@google/generative-ai": "^0.21.0",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
+    "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
     "@tanstack/react-table": "^8.17.0",
+    "bcryptjs": "^3.0.3",
     "d3": "^7.9.0",
     "d3-sankey": "^0.12.3",
     "date-fns": "^3.6.0",
+    "exceljs": "^4.4.0",
     "html2canvas": "^1.4.1",
+    "jose": "^6.2.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^5.0.7",
     "next": "14.2.35",
@@ -29,6 +33,7 @@
     "swr": "^2.2.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/d3": "^7.4.0",
     "@types/d3-sankey": "^0.12.0",
     "@types/node": "^20",

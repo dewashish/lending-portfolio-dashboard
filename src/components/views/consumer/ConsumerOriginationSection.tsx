@@ -8,11 +8,14 @@ import { MTDComparisonBar } from '@/components/charts/MTDComparisonBar';
 import { DailyDisbursementTrend } from '@/components/charts/DailyDisbursementTrend';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useLOSMetrics, useLOSFunnel, useLOSDaily } from '@/hooks/useConsumerData';
-import { formatCurrencyMM, formatPercent, formatNumber } from '@/lib/format';
-import type { ScopeSelection, LOSComparisonMetric } from '@/lib/types';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
+import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import type { ScopeSelection, LOSComparisonMetric, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
 interface OriginationKPI {
@@ -23,6 +26,8 @@ interface OriginationKPI {
 }
 
 function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
+  const { getColor } = useRiskAppetite();
+
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       <Stack
@@ -34,11 +39,7 @@ function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
           const achColor =
             k.achievement == null
               ? undefined
-              : k.achievement >= 0.45
-                ? '#66bb6a'
-                : k.achievement >= 0.35
-                  ? '#ffa726'
-                  : '#ef5350';
+              : getColor('los_achievement', k.achievement);
 
           return (
             <Box key={k.label} sx={{ flex: 1, py: 1.5, px: 1.5, textAlign: 'center' }}>
@@ -64,23 +65,25 @@ function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
               </Typography>
               <Stack direction="row" justifyContent="center" spacing={0.5} sx={{ mt: 0.5 }}>
                 {k.achievement != null && (
-                  <Chip
-                    size="small"
-                    label={`${formatPercent(k.achievement)} ach.`}
-                    sx={{
-                      height: 18,
-                      fontSize: '0.58rem',
-                      fontWeight: 700,
-                      bgcolor: achColor ? `${achColor}18` : undefined,
-                      color: achColor,
-                      '& .MuiChip-label': { px: 0.75 },
-                    }}
-                  />
+                  <BreachBadge metricKey="los_achievement" value={k.achievement}>
+                    <Chip
+                      size="small"
+                      label={`${formatPercent(k.achievement)} ach.`}
+                      sx={{
+                        height: 18,
+                        fontSize: '0.58rem',
+                        fontWeight: 700,
+                        bgcolor: achColor ? `${achColor}18` : undefined,
+                        color: achColor,
+                        '& .MuiChip-label': { px: 0.75 },
+                      }}
+                    />
+                  </BreachBadge>
                 )}
                 {k.momPct != null && Math.abs(k.momPct) > 0.1 && (
                   <Chip
                     size="small"
-                    label={`${k.momPct >= 0 ? '+' : ''}${k.momPct.toFixed(1)}%`}
+                    label={`${k.momPct >= 0 ? '+' : ''}${formatPercent(k.momPct, 1)}`}
                     sx={{
                       height: 18,
                       fontSize: '0.58rem',
@@ -121,7 +124,7 @@ function extractKPIs(metrics: LOSComparisonMetric[]): OriginationKPI[] {
   if (disbursed) {
     kpis.push({
       label: 'Disbursed (MTD)',
-      value: disbursed.mtd != null ? formatCurrencyMM(disbursed.mtd) : '—',
+      value: disbursed.mtd != null ? formatCurrency(disbursed.mtd) : '—',
       achievement: disbursed.achievement ?? undefined,
       momPct: disbursed.momChange ?? undefined,
     });
@@ -137,7 +140,7 @@ function extractKPIs(metrics: LOSComparisonMetric[]): OriginationKPI[] {
   if (tat) {
     kpis.push({
       label: 'Avg TAT (days)',
-      value: tat.mtd != null ? tat.mtd.toFixed(1) : '—',
+      value: tat.mtd != null ? formatNumber(tat.mtd, 1) : '—',
       momPct: tat.momChange != null ? -tat.momChange : undefined,
     });
   }
@@ -145,10 +148,10 @@ function extractKPIs(metrics: LOSComparisonMetric[]): OriginationKPI[] {
   return kpis;
 }
 
-export function ConsumerOriginationSection({ scope }: Props) {
-  const { data: metrics, isLoading: l1 } = useLOSMetrics(scope);
-  const { data: funnel, isLoading: l2 } = useLOSFunnel(undefined, scope);
-  const { data: daily, isLoading: l3 } = useLOSDaily(scope);
+export function ConsumerOriginationSection({ scope, filters }: Props) {
+  const { data: metrics, isLoading: l1 } = useLOSMetrics(scope, filters);
+  const { data: funnel, isLoading: l2 } = useLOSFunnel(undefined, scope, filters);
+  const { data: daily, isLoading: l3 } = useLOSDaily(scope, filters);
 
   const kpis = useMemo(() => extractKPIs(metrics ?? []), [metrics]);
 

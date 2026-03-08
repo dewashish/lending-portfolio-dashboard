@@ -5,17 +5,22 @@ import { Box, Card, Typography, Stack } from '@mui/material';
 import { BusinessSupportTable } from '@/components/tables/BusinessSupportTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useApprovedBase, useRejectedBase } from '@/hooks/useConsumerData';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatNumber, formatPercent } from '@/lib/format';
-import type { ScopeSelection, ApprovedBaseRow, RejectedBaseRow } from '@/lib/types';
+import type { ScopeSelection, ApprovedBaseRow, RejectedBaseRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
+  filters?: ConsumerFilters;
 }
 
 interface RiskKPI {
   label: string;
   value: string;
   color: string;
+  metricKey?: string;
+  rawValue?: number;
 }
 
 function RiskKPIStrip({ kpis }: { kpis: RiskKPI[] }) {
@@ -29,20 +34,36 @@ function RiskKPIStrip({ kpis }: { kpis: RiskKPI[] }) {
           >
             {k.label}
           </Typography>
-          <Typography
-            variant="h6"
-            className="mono"
-            sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
-          >
-            {k.value}
-          </Typography>
+          {k.metricKey != null && k.rawValue != null ? (
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+              <Typography
+                variant="h6"
+                className="mono"
+                sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+              >
+                {k.value}
+              </Typography>
+            </BreachBadge>
+          ) : (
+            <Typography
+              variant="h6"
+              className="mono"
+              sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1, color: k.color }}
+            >
+              {k.value}
+            </Typography>
+          )}
         </Card>
       ))}
     </Stack>
   );
 }
 
-function computeRiskKPIs(approved: ApprovedBaseRow[], rejected: RejectedBaseRow[]): RiskKPI[] {
+function computeRiskKPIs(
+  approved: ApprovedBaseRow[],
+  rejected: RejectedBaseRow[],
+  getColor: (metricKey: string, value: number) => string,
+): RiskKPI[] {
   const kpis: RiskKPI[] = [];
 
   const totalApproved = approved.length;
@@ -54,7 +75,9 @@ function computeRiskKPIs(approved: ApprovedBaseRow[], rejected: RejectedBaseRow[
     kpis.push({
       label: 'Approval Rate',
       value: formatPercent(approvalRate),
-      color: approvalRate >= 0.5 ? '#66bb6a' : approvalRate >= 0.35 ? '#ffa726' : '#ef5350',
+      color: getColor('approval_rate', approvalRate),
+      metricKey: 'approval_rate',
+      rawValue: approvalRate,
     });
   }
 
@@ -83,11 +106,13 @@ function computeRiskKPIs(approved: ApprovedBaseRow[], rejected: RejectedBaseRow[
   return kpis;
 }
 
-export function ConsumerRiskAnalyticsSection({ scope }: Props) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ConsumerRiskAnalyticsSection({ scope, filters }: Props) {
   const { data: approved, isLoading: l1 } = useApprovedBase(scope);
   const { data: rejected, isLoading: l2 } = useRejectedBase(scope);
+  const { getColor } = useRiskAppetite();
 
-  const kpis = useMemo(() => computeRiskKPIs(approved ?? [], rejected ?? []), [approved, rejected]);
+  const kpis = useMemo(() => computeRiskKPIs(approved ?? [], rejected ?? [], getColor), [approved, rejected, getColor]);
 
   if (l1 || l2) return <LoadingSkeleton />;
 

@@ -22,27 +22,9 @@ import {
   TableSortLabel,
 } from '@mui/material';
 import { formatPercent, formatCurrencyMM } from '@/lib/format';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import type { CollectionMetricRow } from '@/lib/types';
-
-/* ── helpers ─────────────────────────────────────────────────────── */
-
-function rollForwardColor(value: number | null): string | undefined {
-  if (value == null) return undefined;
-  if (value > 0.3) return '#c62828'; // deep red
-  if (value > 0.2) return '#e53935'; // red
-  if (value > 0.1) return '#ff7043'; // orange
-  if (value > 0.05) return '#ffa726'; // light orange
-  return undefined;
-}
-
-function rollBackwardColor(value: number | null): string | undefined {
-  if (value == null) return undefined;
-  if (value > 0.3) return '#2e7d32'; // deep green
-  if (value > 0.2) return '#43a047'; // green
-  if (value > 0.1) return '#66bb6a'; // light green
-  if (value > 0.05) return '#a5d6a7'; // pale green
-  return undefined;
-}
 
 /* ── component ───────────────────────────────────────────────────── */
 
@@ -55,6 +37,7 @@ export function CollectionMetricsTable({
   data,
   title = 'Collection & Roll-Rate Metrics',
 }: Props) {
+  const { getColor } = useRiskAppetite();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   /* group rows by portfolio */
@@ -133,8 +116,8 @@ export function CollectionMetricsTable({
         header: 'Roll Backward',
         cell: (info) => {
           const val = info.getValue() as number | null;
-          const color = rollBackwardColor(val);
-          return (
+          const color = val != null ? getColor('resolution_rate', val) : undefined;
+          const content = (
             <Box
               component="span"
               sx={{
@@ -147,6 +130,9 @@ export function CollectionMetricsTable({
               {formatPercent(val)}
             </Box>
           );
+          return val != null ? (
+            <BreachBadge metricKey="resolution_rate" value={val}>{content}</BreachBadge>
+          ) : content;
         },
       },
       {
@@ -168,8 +154,8 @@ export function CollectionMetricsTable({
         header: 'Roll Forward',
         cell: (info) => {
           const val = info.getValue() as number | null;
-          const color = rollForwardColor(val);
-          return (
+          const color = val != null ? getColor('roll_forward_rate', val) : undefined;
+          const content = (
             <Box
               component="span"
               sx={{
@@ -182,11 +168,14 @@ export function CollectionMetricsTable({
               {formatPercent(val)}
             </Box>
           );
+          return val != null ? (
+            <BreachBadge metricKey="roll_forward_rate" value={val}>{content}</BreachBadge>
+          ) : content;
         },
       },
     ];
     return cols;
-  }, []);
+  }, [getColor]);
 
   const table = useReactTable({
     data: flatRows,

@@ -834,7 +834,33 @@ FROM fx_rates
 ORDER BY from_currency, to_currency, effective_date DESC;
 
 -- ============================================================================
--- PHASE 7: Row Level Security
+-- PHASE 7: Risk Appetite Settings
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS risk_appetite_settings (
+  id SERIAL PRIMARY KEY,
+  metric_key TEXT NOT NULL,
+  scope_level TEXT NOT NULL CHECK (scope_level IN ('global','region','subsidiary','business_line','product')),
+  region_id INTEGER REFERENCES regions(id),
+  subsidiary_id INTEGER REFERENCES subsidiaries(id),
+  business_line TEXT CHECK (business_line IN ('consumer_finance','trade_finance','corporate_finance')),
+  product_name TEXT,
+  appetite NUMERIC NOT NULL,
+  tolerance NUMERIC NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now(),
+
+  CONSTRAINT scope_consistency CHECK (
+    (scope_level = 'global' AND region_id IS NULL AND subsidiary_id IS NULL AND business_line IS NULL AND product_name IS NULL) OR
+    (scope_level = 'region' AND region_id IS NOT NULL AND subsidiary_id IS NULL AND business_line IS NULL AND product_name IS NULL) OR
+    (scope_level = 'subsidiary' AND subsidiary_id IS NOT NULL AND business_line IS NULL AND product_name IS NULL) OR
+    (scope_level = 'business_line' AND subsidiary_id IS NOT NULL AND business_line IS NOT NULL AND product_name IS NULL) OR
+    (scope_level = 'product' AND subsidiary_id IS NOT NULL AND business_line IS NOT NULL AND product_name IS NOT NULL)
+  ),
+  UNIQUE(metric_key, scope_level, region_id, subsidiary_id, business_line, product_name)
+);
+
+-- ============================================================================
+-- PHASE 8: Row Level Security
 -- ============================================================================
 
 DO $$
@@ -860,7 +886,9 @@ BEGIN
       'net_flow_rates', 'roll_rate_series', 'collection_metrics',
       'vintage_points', 'non_starters', 'tdd_pre_disbursal',
       'tdd_post_disbursal', 'approved_base', 'rejected_base',
-      'los_metrics', 'los_funnel', 'los_daily'
+      'los_metrics', 'los_funnel', 'los_daily',
+      -- Risk appetite
+      'risk_appetite_settings'
     ])
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);

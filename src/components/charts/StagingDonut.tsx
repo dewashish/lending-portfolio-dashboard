@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatPercent } from '@/lib/format';
 import type { AssetQualityByEntity } from '@/lib/types';
 
 interface Props {
@@ -92,8 +92,8 @@ export function StagingDonut({ data }: Props) {
         .attr('font-weight', 600)
         .attr('pointer-events', 'none')
         .text((d) => {
-          const pct = ((d.data.balance / total) * 100).toFixed(1);
-          return `${d.data.stage.replace('Stage ', 'S')} ${pct}%`;
+          const pct = formatPercent(d.data.balance / total, 1);
+          return `${d.data.stage.replace('Stage ', 'S')} ${pct}`;
         });
 
       // Center text — total

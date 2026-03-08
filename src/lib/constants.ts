@@ -52,6 +52,8 @@ export type TabName = (typeof TAB_NAMES)[number];
 
 export const DEFAULT_SCOPE = { level: 'group' as const };
 
+export const DEFAULT_CONSUMER_FILTERS = { period: null, products: [] as string[] };
+
 export const DEFAULT_FILTERS: FilterState = {
   dateRange: { from: null, to: null },
   portfolioTypes: [],

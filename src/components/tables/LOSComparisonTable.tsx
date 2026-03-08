@@ -22,6 +22,8 @@ import {
   TableSortLabel,
 } from '@mui/material';
 import { formatPercent, formatCurrencyMM } from '@/lib/format';
+import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { BreachBadge } from '@/components/common/BreachBadge';
 import type { LOSComparisonMetric } from '@/lib/types';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
@@ -34,7 +36,7 @@ function isTATMetric(metric: string): boolean {
 function formatLosValue(value: number | null): string {
   if (value == null || isNaN(value)) return '—';
   if (Math.abs(value) > 1) return formatCurrencyMM(value);
-  return String(value);
+  return parseFloat(value.toFixed(2)).toString();
 }
 
 function momChangeColor(value: number, metric: string): string {
@@ -48,20 +50,6 @@ function momChangeColor(value: number, metric: string): string {
   return value > 0 ? '#66bb6a' : '#ef5350';
 }
 
-function achievementColor(value: number | null): string {
-  if (value == null) return 'text.secondary';
-  if (value >= 0.45) return '#66bb6a';  // on track — green
-  if (value >= 0.35) return '#ffa726';  // caution — amber
-  return '#ef5350';                      // behind — red
-}
-
-function achievementBgColor(value: number | null): string | undefined {
-  if (value == null) return undefined;
-  if (value >= 0.45) return 'rgba(102, 187, 106, 0.12)';
-  if (value >= 0.35) return 'rgba(255, 167, 38, 0.12)';
-  return 'rgba(239, 83, 80, 0.12)';
-}
-
 /* ── component ───────────────────────────────────────────────────── */
 
 interface Props {
@@ -73,6 +61,7 @@ export function LOSComparisonTable({
   data,
   title = 'LOS Comparison — MTD vs Targets',
 }: Props) {
+  const { getColor } = useRiskAppetite();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns = useMemo<ColumnDef<LOSComparisonMetric, unknown>[]>(() => {
@@ -203,9 +192,9 @@ export function LOSComparisonTable({
         header: 'Achievement %',
         cell: (info) => {
           const val = info.getValue() as number | null;
-          const color = achievementColor(val);
-          const bg = achievementBgColor(val);
-          return (
+          const color = val != null ? getColor('los_achievement', val) : 'text.secondary';
+          const bg = val != null ? `${getColor('los_achievement', val)}18` : undefined;
+          const content = (
             <Box
               component="span"
               sx={{
@@ -223,11 +212,14 @@ export function LOSComparisonTable({
               {val != null ? formatPercent(val) : '—'}
             </Box>
           );
+          return val != null ? (
+            <BreachBadge metricKey="los_achievement" value={val}>{content}</BreachBadge>
+          ) : content;
         },
       },
     ];
     return cols;
-  }, []);
+  }, [getColor]);
 
   const table = useReactTable({
     data,
