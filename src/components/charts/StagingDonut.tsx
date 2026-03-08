@@ -141,8 +141,8 @@ export function StagingDonut({ data }: Props) {
   );
 
   return (
-    <ChartContainer title="IFRS 9 Staging Distribution" empty={!data.length}>
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+    <ChartContainer title="IFRS 9 Staging Distribution" height={340} empty={!data.length}>
+      <svg ref={ref} width="100%" height={340} style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
 }
