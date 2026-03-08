@@ -1,7 +1,21 @@
 import { supabase } from '../supabase';
 import type { Database } from '../database.types';
-import type { ScopeSelection } from '../types';
+import type {
+  ScopeSelection,
+  ConsumerMetricRow,
+  EWSEntitySummary,
+  FXRiskRow,
+  CountryRiskRow,
+  AssetQualityByEntity,
+  EntityPerformance,
+  PortfolioSummary,
+  CorporatePortfolioSummary,
+} from '../types';
 import { applyScopeAsync } from './shared';
+import { fetchConsumerOverall } from './consumer';
+import { fetchTradeExecutiveSummary, fetchTradeAssetQuality, fetchTradeEntityPerformance } from './trade';
+import { fetchCorporateExecutiveSummary } from './corporate';
+import { fetchEWSEntitySummary, fetchFXRisk, fetchCountryRisk } from './risk';
 
 // ── Consolidated Scorecard Row ───────────────────────────────────
 type ScorecardViewRow = Database['public']['Views']['v_group_consolidated_scorecard']['Row'];
@@ -64,4 +78,52 @@ export async function fetchConsolidatedScorecard(scope?: ScopeSelection): Promis
     countryRiskScore: r.country_risk_score,
     countryRiskRagStatus: r.country_risk_rag_status,
   }));
+}
+
+// ── Group Overview Composite Summary ─────────────────────────────
+export interface GroupOverviewSummary {
+  scorecard: ConsolidatedScorecardRow[];
+  tradeSummary: PortfolioSummary | null;
+  corporateSummary: CorporatePortfolioSummary | null;
+  consumerOverall: ConsumerMetricRow[];
+  ewsSummary: EWSEntitySummary[];
+  fxRisk: FXRiskRow[];
+  countryRisk: CountryRiskRow[];
+  tradeAssetQuality: AssetQualityByEntity[];
+  tradeEntityPerf: EntityPerformance[];
+}
+
+export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise<GroupOverviewSummary> {
+  const [
+    scorecard,
+    tradeSummary,
+    corporateSummary,
+    consumerOverall,
+    ewsSummary,
+    fxRisk,
+    countryRisk,
+    tradeAssetQuality,
+    tradeEntityPerf,
+  ] = await Promise.all([
+    fetchConsolidatedScorecard(scope),
+    fetchTradeExecutiveSummary(scope).catch(() => null),
+    fetchCorporateExecutiveSummary(scope).catch(() => null),
+    fetchConsumerOverall(scope).catch(() => [] as ConsumerMetricRow[]),
+    fetchEWSEntitySummary(scope).catch(() => [] as EWSEntitySummary[]),
+    fetchFXRisk(scope).catch(() => [] as FXRiskRow[]),
+    fetchCountryRisk(scope).catch(() => [] as CountryRiskRow[]),
+    fetchTradeAssetQuality(scope).catch(() => [] as AssetQualityByEntity[]),
+    fetchTradeEntityPerformance(scope).catch(() => [] as EntityPerformance[]),
+  ]);
+  return {
+    scorecard,
+    tradeSummary,
+    corporateSummary,
+    consumerOverall,
+    ewsSummary,
+    fxRisk,
+    countryRisk,
+    tradeAssetQuality,
+    tradeEntityPerf,
+  };
 }

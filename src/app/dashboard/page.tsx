@@ -33,7 +33,7 @@ function DashboardContent() {
 
   const renderView = () => {
     switch (activeTab) {
-      case 0: return <GroupOverviewView key="tab-0" scope={scope} />;
+      case 0: return <GroupOverviewView key="tab-0" scope={scope} onTabChange={handleTabChange} onScopeChange={setScope} />;
       case 1: return <ConsumerFinanceView key="tab-1" scope={scope} filters={consumerFilters} />;
       case 2: return <TradeFinanceView key="tab-2" scope={scope} />;
       case 3: return <CorporateFinanceView key="tab-3" scope={scope} />;
