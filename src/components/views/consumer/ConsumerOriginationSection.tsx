@@ -3,11 +3,10 @@
 import { useMemo } from 'react';
 import { Box, Grid, Card, Typography, Stack, Chip } from '@mui/material';
 import { LOSComparisonTable } from '@/components/tables/LOSComparisonTable';
-import { LOSFunnelChart } from '@/components/charts/LOSFunnelChart';
-import { MTDComparisonBar } from '@/components/charts/MTDComparisonBar';
+import { MTDFunnelComparison } from '@/components/charts/MTDFunnelComparison';
 import { DailyDisbursementTrend } from '@/components/charts/DailyDisbursementTrend';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
-import { useLOSMetrics, useLOSFunnel, useLOSDaily } from '@/hooks/useConsumerData';
+import { useLOSMetrics, useLOSDaily } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
@@ -152,25 +151,21 @@ function extractKPIs(metrics: LOSComparisonMetric[], formatCurrency: (v: number 
 export function ConsumerOriginationSection({ scope, filters }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { data: metrics, isLoading: l1 } = useLOSMetrics(scope, filters);
-  const { data: funnel, isLoading: l2 } = useLOSFunnel(undefined, scope, filters);
-  const { data: daily, isLoading: l3 } = useLOSDaily(scope, filters);
+  const { data: daily, isLoading: l2 } = useLOSDaily(scope, filters);
 
   const kpis = useMemo(() => extractKPIs(metrics ?? [], formatCurrency), [metrics, formatCurrency]);
 
-  if (l1 || l2 || l3) return <ChartGridSkeleton />;
+  if (l1 || l2) return <ChartGridSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       {kpis.length > 0 && <OriginationKPIBanner kpis={kpis} />}
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={5}>
-          <LOSFunnelChart data={funnel ?? []} />
+        <Grid item xs={12} md={6}>
+          <MTDFunnelComparison data={metrics ?? []} />
         </Grid>
-        <Grid item xs={12} md={4}>
-          <MTDComparisonBar data={metrics ?? []} />
-        </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={6}>
           <DailyDisbursementTrend data={daily ?? []} />
         </Grid>
       </Grid>
