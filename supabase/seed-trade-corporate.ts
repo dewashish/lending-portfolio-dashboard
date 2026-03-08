@@ -16,13 +16,15 @@ type Row = Record<string, unknown>;
 // Helpers (identical to seed.ts)
 // =============================================================================
 
-/** Insert rows in batches to avoid hitting request-size limits */
-async function batchInsert(table: string, rows: Row[], batchSize = 500) {
+/** Insert (or upsert) rows in batches to avoid hitting request-size limits */
+async function batchInsert(table: string, rows: Row[], batchSize = 500, upsert = false) {
   if (rows.length === 0) return;
   let inserted = 0;
   for (let i = 0; i < rows.length; i += batchSize) {
     const chunk = rows.slice(i, i + batchSize);
-    const { error } = await supabase.from(table).insert(chunk);
+    const { error } = upsert
+      ? await supabase.from(table).upsert(chunk)
+      : await supabase.from(table).insert(chunk);
     if (error) {
       console.error(`  ERROR inserting into ${table} (batch ${Math.floor(i / batchSize) + 1}):`, error.message);
       throw error;
@@ -1377,7 +1379,7 @@ async function main() {
   await batchInsert('trade_facilities', buildTradeFacilities());
 
   console.log('Seeding trade_entity_performance...');
-  await batchInsert('trade_entity_performance', buildTradeEntityPerformance());
+  await batchInsert('trade_entity_performance', buildTradeEntityPerformance(), 500, true);
 
   console.log('Seeding trade_product_mix...');
   await batchInsert('trade_product_mix', buildTradeProductMix());
