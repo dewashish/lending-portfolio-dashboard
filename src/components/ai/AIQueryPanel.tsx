@@ -14,9 +14,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { QueryInput } from './QueryInput';
 
+import type { ScopeSelection } from '@/lib/types';
+
 interface Props {
   open: boolean;
   onClose: () => void;
+  scope?: ScopeSelection;
   portfolio?: unknown;
 }
 
@@ -33,7 +36,7 @@ const SUGGESTED_QUESTIONS = [
   'How is the EWS score trending?',
 ];
 
-export function AIQueryPanel({ open, onClose }: Props) {
+export function AIQueryPanel({ open, onClose, scope }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,7 +56,7 @@ export function AIQueryPanel({ open, onClose }: Props) {
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, scope }),
       });
 
       const data = await res.json();

@@ -75,7 +75,7 @@ function DashboardContent() {
       <AIQueryPanel
         open={aiOpen}
         onClose={() => setAiOpen(false)}
-        portfolio={null}
+        scope={scope}
       />
 
       <RiskAppetiteDrawer
