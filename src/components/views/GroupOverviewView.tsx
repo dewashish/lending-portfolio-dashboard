@@ -284,7 +284,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       {/* Section 4: Subsidiary Risk Heatmap */}
       {heatmapSubs.length > 0 && (
         <Paper sx={{ p: 2 }}>
-          <Box sx={{ height: Math.max(220, heatmapSubs.length * 52 + 70) }}>
+          <Box sx={{ minHeight: Math.max(320, heatmapSubs.length * 56 + 120) }}>
             <SubsidiaryRiskHeatmap
               cells={heatmapCells}
               subsidiaries={heatmapSubs}

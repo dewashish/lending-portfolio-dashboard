@@ -41,7 +41,7 @@ export function GroupPortfolioComposition({
 
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2.5 }}>
-      <Box sx={{ height: 280 }}>
+      <Box sx={{ minHeight: 360 }}>
         <BusinessLineDonut
           consumer={consumerAum}
           trade={tradeOutstanding}
@@ -49,13 +49,13 @@ export function GroupPortfolioComposition({
           onSegmentClick={segmentToTab}
         />
       </Box>
-      <Box sx={{ height: 280 }}>
+      <Box sx={{ minHeight: 360 }}>
         <SubsidiaryAUMBar
           data={subsidiaryBars}
           onBarClick={(subId) => onScopeChange?.({ level: 'subsidiary', subsidiaryId: subId })}
         />
       </Box>
-      <Box sx={{ height: 280 }}>
+      <Box sx={{ minHeight: 360 }}>
         <StagingDonut data={tradeAssetQuality} />
       </Box>
     </Box>
