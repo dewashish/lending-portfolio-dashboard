@@ -32,10 +32,39 @@ async function batchInsert(table: string, rows: Row[], batchSize = 500) {
   console.log(`  ✓ ${table}: ${inserted} rows`);
 }
 
+/** Upsert rows in batches — used for dimension tables that may already exist */
+async function batchUpsert(table: string, rows: Row[], batchSize = 500) {
+  if (rows.length === 0) return;
+  let upserted = 0;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    const { error } = await supabase.from(table).upsert(chunk);
+    if (error) {
+      console.error(`  ERROR upserting into ${table} (batch ${Math.floor(i / batchSize) + 1}):`, error.message);
+      throw error;
+    }
+    upserted += chunk.length;
+  }
+  console.log(`  ✓ ${table}: ${upserted} rows (upsert)`);
+}
+
 /** Delete from all tables in correct FK order */
 async function clearAll() {
   const tables = [
-    // PQR summary tables (FK -> subsidiaries)
+    // Trade & Corporate tables (FK -> data_sources, subsidiaries)
+    'corporate_portfolio_metrics',
+    'corporate_delinquency',
+    'corporate_covenants',
+    'corporate_watchlist',
+    'corporate_executive_summary',
+    'corporate_facilities',
+    'trade_concentrations',
+    'trade_asset_quality',
+    'trade_top_exposures',
+    'trade_maturity_profile',
+    'trade_product_mix',
+    'trade_facilities',
+    // Consumer PQR summary tables (FK -> subsidiaries)
     'los_daily',
     'los_funnel',
     'los_metrics',
@@ -50,6 +79,8 @@ async function clearAll() {
     'net_flow_rates',
     'consumer_product_metrics',
     'consumer_overall_metrics',
+    // Consolidated scorecard
+    'consolidated_scorecard',
     // Operational tables (FK -> lms_accounts, los_customers etc.)
     'col_legal_cases',
     'col_recovery_payments',
@@ -1284,23 +1315,24 @@ async function main() {
   // -----------------------------------------------------------
   console.log('--- Dimension Tables ---');
 
-  console.log('Seeding regions...');
-  await batchInsert('regions', buildRegions());
-
-  console.log('Seeding subsidiaries...');
-  await batchInsert('subsidiaries', buildSubsidiaries());
-
-  console.log('Seeding currencies...');
-  await batchInsert('currencies', buildCurrencies());
-
-  console.log('Seeding fx_rates...');
-  await batchInsert('fx_rates', buildFxRates());
-
-  console.log('Seeding data_sources...');
-  await batchInsert('data_sources', buildDataSources());
-
-  console.log('Seeding product_catalog...');
-  await batchInsert('product_catalog', buildProductCatalog());
+  // Check if dimension tables already have data (RLS may block writes on these)
+  const { count: regCount } = await supabase.from('regions').select('*', { count: 'exact', head: true });
+  if (!regCount) {
+    console.log('Seeding regions...');
+    await batchUpsert('regions', buildRegions());
+    console.log('Seeding subsidiaries...');
+    await batchUpsert('subsidiaries', buildSubsidiaries());
+    console.log('Seeding currencies...');
+    await batchUpsert('currencies', buildCurrencies());
+    console.log('Seeding fx_rates...');
+    await batchUpsert('fx_rates', buildFxRates());
+    console.log('Seeding data_sources...');
+    await batchUpsert('data_sources', buildDataSources());
+    console.log('Seeding product_catalog...');
+    await batchUpsert('product_catalog', buildProductCatalog());
+  } else {
+    console.log(`Dimension tables already populated (${regCount} regions found) — skipping.`);
+  }
 
   // -----------------------------------------------------------
   // 2. PQR Summary tables (14 tables)
@@ -1354,7 +1386,7 @@ async function main() {
   // -----------------------------------------------------------
   console.log('\n--- Risk Appetite Settings ---');
   console.log('Seeding risk_appetite_settings...');
-  await batchInsert('risk_appetite_settings', [
+  try { await batchInsert('risk_appetite_settings', [
     { metric_key: 'fpd_pct', scope_level: 'global', appetite: 0.03, tolerance: 0.035 },
     { metric_key: 'dpd_30_plus', scope_level: 'global', appetite: 0.05, tolerance: 0.06 },
     { metric_key: 'dpd_90_plus', scope_level: 'global', appetite: 0.015, tolerance: 0.02 },
@@ -1369,7 +1401,7 @@ async function main() {
     { metric_key: 'avg_ews_score', scope_level: 'global', appetite: 1.0, tolerance: 2.0 },
     { metric_key: 'collection_efficiency', scope_level: 'global', appetite: 0.9, tolerance: 0.75 },
     { metric_key: 'provision_coverage', scope_level: 'global', appetite: 0.8, tolerance: 0.6 },
-  ]);
+  ]); } catch { console.log('  ⚠ risk_appetite_settings table not found — skipping.'); }
 
   console.log('\n=== Seeding complete! ===');
 }
