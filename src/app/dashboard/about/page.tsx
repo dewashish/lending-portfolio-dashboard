@@ -31,12 +31,7 @@ export default function AboutPage() {
 
           <Divider sx={{ width: '100%' }} />
 
-          <Stack spacing={0.5}>
-            <Typography variant="body2" color="text.secondary">Version {APP_VERSION}</Typography>
-            <Typography variant="caption" color="text.disabled">
-              Built with Next.js, MUI, D3.js, TanStack Table & Supabase
-            </Typography>
-          </Stack>
+          <Typography variant="body2" color="text.secondary">Version {APP_VERSION}</Typography>
 
           <Divider sx={{ width: '100%' }} />
 
