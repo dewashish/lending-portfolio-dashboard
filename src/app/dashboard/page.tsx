@@ -4,9 +4,8 @@ import { useState, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { DashboardAppBar } from '@/components/shell/DashboardAppBar';
 import { TabBar } from '@/components/shell/TabBar';
-import { ConsumerFilterBar } from '@/components/shell/ConsumerFilterBar';
-import type { ScopeSelection, ConsumerFilters } from '@/lib/types';
-import { DEFAULT_SCOPE, DEFAULT_CONSUMER_FILTERS } from '@/lib/constants';
+import type { ScopeSelection } from '@/lib/types';
+import { DEFAULT_SCOPE } from '@/lib/constants';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { AdminProvider } from '@/lib/admin-context';
 import { RiskAppetiteDrawer } from '@/components/admin/RiskAppetiteDrawer';
@@ -27,17 +26,15 @@ function DashboardContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
   const [scope, setScope] = useState<ScopeSelection>(DEFAULT_SCOPE);
-  const [consumerFilters, setConsumerFilters] = useState<ConsumerFilters>(DEFAULT_CONSUMER_FILTERS);
 
   const handleTabChange = useCallback((tab: number) => {
     setActiveTab(tab);
-    if (tab !== 1) setConsumerFilters(DEFAULT_CONSUMER_FILTERS);
   }, []);
 
   const renderView = () => {
     switch (activeTab) {
       case 0: return <GroupOverviewView key="tab-0" scope={scope} onTabChange={handleTabChange} onScopeChange={setScope} />;
-      case 1: return <ConsumerFinanceView key="tab-1" scope={scope} filters={consumerFilters} />;
+      case 1: return <ConsumerFinanceView key="tab-1" scope={scope} />;
       case 2: return <TradeFinanceView key="tab-2" scope={scope} />;
       case 3: return <CorporateFinanceView key="tab-3" scope={scope} />;
       case 4: return <RiskConcentrationsView key="tab-4" scope={scope} />;
@@ -56,9 +53,6 @@ function DashboardContent() {
         onScopeChange={setScope}
       />
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
-      {activeTab === 1 && (
-        <ConsumerFilterBar filters={consumerFilters} onChange={setConsumerFilters} scope={scope} />
-      )}
       <Box
         id="dashboard-view-content"
         sx={{
