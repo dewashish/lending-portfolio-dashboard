@@ -68,7 +68,7 @@ interface Sub {
 
 const SUBS: Sub[] = [
   { id: 1, name: 'Samman Capital', currencyCode: 'INR', aumBase: 18000000000 },
-  { id: 2, name: 'Bank Limited', currencyCode: 'PKR', aumBase: 35000000000 },
+  { id: 2, name: 'First Woman Bank Limited', currencyCode: 'PKR', aumBase: 35000000000 },
   { id: 3, name: 'Mirabank', currencyCode: 'RSD', aumBase: 6000000000 },
   { id: 4, name: 'LuloBank', currencyCode: 'COP', aumBase: 900000000000 },
   { id: 5, name: 'Beltone', currencyCode: 'EGP', aumBase: 9000000000 },

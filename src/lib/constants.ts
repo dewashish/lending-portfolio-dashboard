@@ -68,7 +68,7 @@ export const DEFAULT_FILTERS: FilterState = {
 
 export const ENTITIES = [
   'Samman Capital',
-  'Bank Limited',
+  'First Woman Bank Limited',
   'Beltone',
   'Mirabank',
   'LuloBank',

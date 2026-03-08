@@ -98,7 +98,7 @@ const SUBSIDIARIES: SubsidiaryProfile[] = [
     dsOffset: 1,
   },
   {
-    id: 2, name: 'Bank Limited', shortCode: 'BNK',
+    id: 2, name: 'First Woman Bank Limited', shortCode: 'FWBL',
     country: 'Pakistan', countryCode: 'PK', regionId: 1,
     currencyCode: 'PKR', institutionType: 'Bank',
     delinqMult: 1.1, aumLocal: 45000000000,
@@ -165,7 +165,7 @@ const TRADE_POOLS: Record<number, TradeSectorPool> = {
     ],
     counterpartyBanks: ['SBI', 'ICICI Bank', 'HDFC Bank', 'Axis Bank', 'Kotak Mahindra'],
   },
-  // Pakistan — Bank Limited
+  // Pakistan — First Woman Bank Limited
   2: {
     sectors: ['Textiles', 'Agriculture', 'Leather', 'Surgical Instruments', 'Chemicals', 'Cement', 'Rice Trading', 'Sports Goods'],
     commodities: {
