@@ -9,9 +9,11 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ExploreIcon from '@mui/icons-material/Explore';
 import { useUser, type UserRole } from '@/lib/user-context';
 import { useRouter } from 'next/navigation';
 import { APP_VERSION } from '@/lib/version';
+import { useTour } from '@/lib/tour-context';
 
 interface Props {
   anchorEl: HTMLElement | null;
@@ -36,10 +38,16 @@ const ROLE_COLORS: Record<UserRole, string> = {
 export function ProfileMenu({ anchorEl, open, onClose }: Props) {
   const { profile } = useUser();
   const router = useRouter();
+  const { startTour } = useTour();
 
   const handleNavigate = (path: string) => {
     router.push(path);
     onClose();
+  };
+
+  const handleStartTour = () => {
+    onClose();
+    setTimeout(() => startTour(), 300);
   };
 
   const handleSignOut = async () => {
@@ -99,6 +107,11 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
       >
         <ListItemIcon><SupportAgentIcon fontSize="small" /></ListItemIcon>
         <ListItemText primaryTypographyProps={{ fontSize: '0.85rem' }}>Support</ListItemText>
+      </MenuItem>
+
+      <MenuItem onClick={handleStartTour} sx={{ fontSize: '0.85rem' }}>
+        <ListItemIcon><ExploreIcon fontSize="small" /></ListItemIcon>
+        <ListItemText primaryTypographyProps={{ fontSize: '0.85rem' }}>Take a Tour</ListItemText>
       </MenuItem>
 
       <Divider />

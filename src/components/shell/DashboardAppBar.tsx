@@ -80,6 +80,7 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
 
         {/* Scope toggle */}
         <ToggleButtonGroup
+          id="tour-scope-selector"
           value={scope.level}
           exclusive
           onChange={handleLevelChange}
@@ -129,9 +130,11 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           </Select>
         )}
 
-        {alerts.length > 0 && (
-          <BreachTickerBar alerts={alerts} onClick={(e) => setAlertsAnchorEl(e.currentTarget)} />
-        )}
+        <Box id="tour-breach-ticker" sx={{ display: 'flex', alignItems: 'center' }}>
+          {alerts.length > 0 && (
+            <BreachTickerBar alerts={alerts} onClick={(e) => setAlertsAnchorEl(e.currentTarget)} />
+          )}
+        </Box>
         <BreachAlertsPopover
           anchorEl={alertsAnchorEl}
           open={Boolean(alertsAnchorEl)}
@@ -139,23 +142,25 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           alerts={alerts}
         />
 
-        <ExecutiveSummaryButton activeTab={activeTab ?? 0} scope={scope} />
-
-        <ExcelExportButton activeTab={activeTab ?? 0} scope={scope} />
+        <Box id="tour-export-area" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <ExecutiveSummaryButton activeTab={activeTab ?? 0} scope={scope} />
+          <ExcelExportButton activeTab={activeTab ?? 0} scope={scope} />
+        </Box>
 
         <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-          <IconButton size="small" onClick={toggleMode} sx={{ color: 'text.secondary' }}>
+          <IconButton id="tour-theme-toggle" size="small" onClick={toggleMode} sx={{ color: 'text.secondary' }}>
             {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
 
         <Tooltip title="Risk Appetite Settings">
-          <IconButton size="small" onClick={onToggleSettings} sx={{ color: 'text.secondary' }}>
+          <IconButton id="tour-settings-button" size="small" onClick={onToggleSettings} sx={{ color: 'text.secondary' }}>
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 
         <Button
+          id="tour-ai-button"
           size="small"
           variant={aiOpen ? 'contained' : 'outlined'}
           startIcon={<SmartToyOutlinedIcon />}
@@ -173,6 +178,7 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
         </Button>
 
         <Avatar
+          id="tour-profile-avatar"
           onClick={(e) => setProfileAnchor(e.currentTarget)}
           sx={{
             width: 32, height: 32, cursor: 'pointer',

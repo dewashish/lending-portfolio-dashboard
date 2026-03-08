@@ -23,7 +23,7 @@ interface Props {
 
 export function TabBar({ activeTab, onTabChange }: Props) {
   return (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'background.default' }}>
+    <Box id="tour-tab-bar" sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'background.default' }}>
       <Tabs
         value={activeTab}
         onChange={(_, v) => onTabChange(v)}

@@ -18,6 +18,8 @@ import { TradeFinanceView } from '@/components/views/TradeFinanceView';
 import { CorporateFinanceView } from '@/components/views/CorporateFinanceView';
 import { RiskConcentrationsView } from '@/components/views/RiskConcentrationsView';
 import { AIQueryPanel } from '@/components/ai/AIQueryPanel';
+import { TourProvider } from '@/lib/tour-context';
+import { DashboardTour } from '@/components/common/DashboardTour';
 function DashboardContent() {
   const [activeTab, setActiveTab] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
@@ -88,6 +90,8 @@ function DashboardContent() {
         open={pinOpen}
         onClose={() => setPinOpen(false)}
       />
+
+      <DashboardTour />
     </Box>
   );
 }
@@ -95,7 +99,9 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <AdminProvider>
-      <DashboardContent />
+      <TourProvider>
+        <DashboardContent />
+      </TourProvider>
     </AdminProvider>
   );
 }
