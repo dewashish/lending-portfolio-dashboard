@@ -131,6 +131,9 @@ export interface D3Tokens {
   treemapLabel: string;
   hoverBg: string;
   cardBorder: string;
+  tooltipBg: string;
+  tooltipBorder: string;
+  tooltipText: string;
 }
 
 export const D3_TOKENS: Record<'dark' | 'light', D3Tokens> = {
@@ -145,6 +148,9 @@ export const D3_TOKENS: Record<'dark' | 'light', D3Tokens> = {
     treemapLabel: '#0a0f1a',
     hoverBg: 'rgba(255,255,255,0.03)',
     cardBorder: 'rgba(255,255,255,0.06)',
+    tooltipBg: 'rgba(15, 23, 42, 0.95)',
+    tooltipBorder: 'rgba(255,255,255,0.12)',
+    tooltipText: '#e2e8f0',
   },
   light: {
     text: '#1e293b',
@@ -157,5 +163,8 @@ export const D3_TOKENS: Record<'dark' | 'light', D3Tokens> = {
     treemapLabel: '#ffffff',
     hoverBg: 'rgba(0,0,0,0.02)',
     cardBorder: 'rgba(0,0,0,0.08)',
+    tooltipBg: 'rgba(255, 255, 255, 0.95)',
+    tooltipBorder: 'rgba(0,0,0,0.12)',
+    tooltipText: '#1e293b',
   },
 };
