@@ -64,13 +64,13 @@ export function DPDBucketDistribution({ data }: Props) {
       // Clean up any stale tooltips
       d3.selectAll('.dpd-tooltip').remove();
 
-      const margin = { top: 24, right: 20, bottom: 40, left: 60 };
+      const margin = { top: 24, right: 20, bottom: 60, left: 60 };
       const w = width - margin.left - margin.right;
-      const gap = 12;
+      const gap = 20;
       const legendH = 28;
       const innerH = height - margin.top - margin.bottom - legendH;
-      const topH = innerH * 0.55 - gap / 2;
-      const botH = innerH * 0.35 - gap / 2;
+      const topH = innerH * 0.52 - gap / 2;
+      const botH = innerH * 0.42 - gap / 2;
       const botTop = margin.top + topH + gap;
 
       const x = d3.scaleBand<string>().domain(periods).range([0, w]).padding(0.2);
@@ -338,7 +338,7 @@ export function DPDBucketDistribution({ data }: Props) {
     <ChartContainer
       title="DPD Bucket Distribution"
       subtitle="Proportional distribution with late-stage detail"
-      height={520}
+      height={680}
       empty={!processed.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
