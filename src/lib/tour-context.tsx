@@ -27,6 +27,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     const key = TOUR_KEY_PREFIX + profile.id;
     const completed = localStorage.getItem(key);
     if (!completed) {
+      setChecked(true);
       const timer = setTimeout(() => setIsTourRunning(true), 800);
       return () => clearTimeout(timer);
     }

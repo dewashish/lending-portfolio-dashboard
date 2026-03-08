@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from './ChartContainer';
-import { useCurrencyFormat } from '@/lib/currency-context';
+import { useCurrencyFormat, useCurrency } from '@/lib/currency-context';
 import type { RAGStatus } from '@/lib/types';
 
 const RAG_BAR_COLORS: Record<RAGStatus, string> = {
@@ -28,6 +28,7 @@ interface Props {
 
 export function SubsidiaryAUMBar({ data, onBarClick }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { currency } = useCurrency();
   const { formatCurrency } = useCurrencyFormat();
   const sorted = [...data].sort((a, b) => b.aum - a.aum);
 
@@ -88,7 +89,7 @@ export function SubsidiaryAUMBar({ data, onBarClick }: Props) {
   }, [sorted, d3Tokens, onBarClick, formatCurrency]);
 
   return (
-    <ChartContainer title="Subsidiary AUM" subtitle="Consumer + Trade (USD)" empty={!sorted.length}>
+    <ChartContainer title="Subsidiary AUM" subtitle={`Consumer + Trade (${currency})`} empty={!sorted.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

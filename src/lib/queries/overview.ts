@@ -105,7 +105,7 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     tradeAssetQuality,
     tradeEntityPerf,
   ] = await Promise.all([
-    fetchConsolidatedScorecard(scope),
+    fetchConsolidatedScorecard(scope).catch(() => [] as ConsolidatedScorecardRow[]),
     fetchTradeExecutiveSummary(scope).catch(() => null),
     fetchCorporateExecutiveSummary(scope).catch(() => null),
     fetchConsumerOverall(scope).catch(() => [] as ConsumerMetricRow[]),

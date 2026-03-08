@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from './ChartContainer';
-import { useCurrencyFormat } from '@/lib/currency-context';
+import { useCurrencyFormat, useCurrency } from '@/lib/currency-context';
 import type { EntityPerformance } from '@/lib/types';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export function EntityBreakdownBar({ data, onEntityClick }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { currency } = useCurrency();
   const { formatCurrencyMM } = useCurrencyFormat();
   const filtered = data.filter(d => d.entity !== 'GROUP TOTAL');
 
@@ -86,7 +87,7 @@ export function EntityBreakdownBar({ data, onEntityClick }: Props) {
   }, [filtered, d3Tokens, formatCurrencyMM]);
 
   return (
-    <ChartContainer title="Entity Outstanding Breakdown" subtitle="USD mm" height={chartHeight} empty={!filtered.length}>
+    <ChartContainer title="Entity Outstanding Breakdown" subtitle={`${currency} mm`} height={chartHeight} empty={!filtered.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

@@ -10,7 +10,8 @@ import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useLOSMetrics, useLOSFunnel, useLOSDaily } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection, LOSComparisonMetric, ConsumerFilters } from '@/lib/types';
 
 interface Props {
@@ -103,7 +104,7 @@ function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
   );
 }
 
-function extractKPIs(metrics: LOSComparisonMetric[]): OriginationKPI[] {
+function extractKPIs(metrics: LOSComparisonMetric[], formatCurrency: (v: number | null | undefined, d?: number) => string): OriginationKPI[] {
   const find = (name: string) => metrics.find((m) => m.metric.toLowerCase().includes(name.toLowerCase()));
 
   const logins = find('Login');
@@ -149,11 +150,12 @@ function extractKPIs(metrics: LOSComparisonMetric[]): OriginationKPI[] {
 }
 
 export function ConsumerOriginationSection({ scope, filters }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: metrics, isLoading: l1 } = useLOSMetrics(scope, filters);
   const { data: funnel, isLoading: l2 } = useLOSFunnel(undefined, scope, filters);
   const { data: daily, isLoading: l3 } = useLOSDaily(scope, filters);
 
-  const kpis = useMemo(() => extractKPIs(metrics ?? []), [metrics]);
+  const kpis = useMemo(() => extractKPIs(metrics ?? [], formatCurrency), [metrics, formatCurrency]);
 
   if (l1 || l2 || l3) return <ChartGridSkeleton />;
 

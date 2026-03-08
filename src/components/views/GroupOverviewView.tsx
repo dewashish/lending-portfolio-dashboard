@@ -92,7 +92,9 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
   const tradeNPL = tradeSummary?.nplRatio ?? null;
   const corpNPA = corporateSummary?.npaRate ?? null;
   const blendedNPL = tradeNPL != null && corpNPA != null
-    ? (tradeNPL + corpNPA) / 2
+    ? (totalTradeOutstanding + corporatePOS) > 0
+      ? (tradeNPL * totalTradeOutstanding + corpNPA * corporatePOS) / (totalTradeOutstanding + corporatePOS)
+      : (tradeNPL + corpNPA) / 2
     : tradeNPL ?? corpNPA;
 
   const ewsCriticalCount = ewsSummary.reduce((s, e) => s + (e.score4Plus > 0 ? 1 : 0), 0);
@@ -100,7 +102,9 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
   const tradePCR = tradeSummary?.provisionCoverage ?? null;
   const corpPCR = corporateSummary?.provisionCoverageRatio ?? null;
   const blendedPCR = tradePCR != null && corpPCR != null
-    ? (tradePCR + corpPCR) / 2
+    ? (totalTradeOutstanding + corporatePOS) > 0
+      ? (tradePCR * totalTradeOutstanding + corpPCR * corporatePOS) / (totalTradeOutstanding + corporatePOS)
+      : (tradePCR + corpPCR) / 2
     : tradePCR ?? corpPCR;
 
   const kpis: KPIItem[] = [
@@ -249,20 +253,25 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
   }
 
   // ── Scorecard totals row ────────────────────────────────────────
-  const groupTotals = {
-    consumerAumUsd: totalConsumerAum,
-    tradeOutstandingUsd: totalTradeOutstanding,
-    consumerDelinquency30Plus: scorecard.length > 0
-      ? scorecard.reduce((s, r) => s + (r.consumerDelinquency30Plus ?? 0), 0) / scorecard.length
-      : null,
-    tradeNplRatio: scorecard.length > 0
-      ? scorecard.reduce((s, r) => s + (r.tradeNplRatio ?? 0), 0) / scorecard.length
-      : null,
-    corporateWatchlistCount: scorecard.reduce((s, r) => s + r.corporateWatchlistCount, 0),
-    avgEwsScore: scorecard.length > 0
-      ? scorecard.reduce((s, r) => s + (r.avgEwsScore ?? 0), 0) / scorecard.length
-      : null,
-  };
+  const groupTotals = (() => {
+    const dpdEntries = scorecard.filter(r => r.consumerDelinquency30Plus != null);
+    const nplEntries = scorecard.filter(r => r.tradeNplRatio != null);
+    const ewsEntries = scorecard.filter(r => r.avgEwsScore != null);
+    return {
+      consumerAumUsd: totalConsumerAum,
+      tradeOutstandingUsd: totalTradeOutstanding,
+      consumerDelinquency30Plus: dpdEntries.length > 0
+        ? dpdEntries.reduce((s, r) => s + r.consumerDelinquency30Plus!, 0) / dpdEntries.length
+        : null,
+      tradeNplRatio: nplEntries.length > 0
+        ? nplEntries.reduce((s, r) => s + r.tradeNplRatio!, 0) / nplEntries.length
+        : null,
+      corporateWatchlistCount: scorecard.reduce((s, r) => s + r.corporateWatchlistCount, 0),
+      avgEwsScore: ewsEntries.length > 0
+        ? ewsEntries.reduce((s, r) => s + r.avgEwsScore!, 0) / ewsEntries.length
+        : null,
+    };
+  })();
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
