@@ -8,4 +8,4 @@
  *
  * After changing this value, also update package.json to match.
  */
-export const APP_VERSION = '0.3.16';
+export const APP_VERSION = '0.3.17';

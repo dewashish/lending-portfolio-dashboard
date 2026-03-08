@@ -341,7 +341,7 @@ export function DPDBucketDistribution({ data }: Props) {
       height={680}
       empty={!processed.length}
     >
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+      <svg ref={ref} width="100%" height={680} style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
 }
