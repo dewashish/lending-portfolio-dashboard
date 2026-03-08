@@ -35,6 +35,12 @@ const ALL_STEPS: Step[] = [
     title: 'Export Reports',
   },
   {
+    target: '#tour-currency-toggle',
+    content: 'Toggle between US Dollar ($) and UAE Dirham (AED) display. All monetary values across the dashboard convert instantly.',
+    disableBeacon: true,
+    title: 'Currency Toggle',
+  },
+  {
     target: '#tour-theme-toggle',
     content: 'Switch between dark and light mode.',
     disableBeacon: true,
