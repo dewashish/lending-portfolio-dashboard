@@ -177,13 +177,17 @@ export function MTDComparisonBar({ data }: Props) {
     [filtered, d3Tokens, getColor],
   );
 
+  // Dynamic height: each metric needs ~40px for two bars + spacing, plus margins
+  const chartHeight = Math.max(320, filtered.length * 40 + 50);
+
   return (
     <ChartContainer
       title="MTD vs LMTD Comparison"
       subtitle="All Products \u2014 with achievement traffic light"
+      height={chartHeight}
       empty={!filtered.length}
     >
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+      <svg ref={ref} width="100%" height={chartHeight} style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
 }
