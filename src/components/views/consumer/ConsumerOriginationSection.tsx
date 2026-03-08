@@ -6,7 +6,7 @@ import { LOSComparisonTable } from '@/components/tables/LOSComparisonTable';
 import { MTDFunnelComparison } from '@/components/charts/MTDFunnelComparison';
 import { DailyDisbursementTrend } from '@/components/charts/DailyDisbursementTrend';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
-import { useLOSMetrics, useLOSDaily } from '@/hooks/useConsumerData';
+import { useLOSMetrics, useLOSDaily, useLOSFunnel } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
@@ -152,10 +152,11 @@ export function ConsumerOriginationSection({ scope, filters }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { data: metrics, isLoading: l1 } = useLOSMetrics(scope, filters);
   const { data: daily, isLoading: l2 } = useLOSDaily(scope, filters);
+  const { data: funnel, isLoading: l3 } = useLOSFunnel(undefined, scope, filters);
 
   const kpis = useMemo(() => extractKPIs(metrics ?? [], formatCurrency), [metrics, formatCurrency]);
 
-  if (l1 || l2) return <ChartGridSkeleton />;
+  if (l1 || l2 || l3) return <ChartGridSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -163,7 +164,7 @@ export function ConsumerOriginationSection({ scope, filters }: Props) {
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <MTDFunnelComparison data={metrics ?? []} />
+          <MTDFunnelComparison data={funnel ?? []} />
         </Grid>
         <Grid item xs={12} md={6}>
           <DailyDisbursementTrend data={daily ?? []} />

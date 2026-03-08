@@ -6,99 +6,53 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { formatNumber, formatPercent } from '@/lib/format';
-import { useCurrencyFormat } from '@/lib/currency-context';
-import { useRiskAppetite } from '@/hooks/useRiskAppetite';
-import type { LOSComparisonMetric } from '@/lib/types';
+import type { LOSFunnelStep } from '@/lib/types';
 
 interface Props {
-  data: LOSComparisonMetric[];
+  data: LOSFunnelStep[];
 }
 
 const TEAL = '#00897b';
 const GRAY = '#94a3b8';
 
-/** Funnel metrics in natural conversion order (top → bottom) */
-const FUNNEL_ORDER = [
-  'Applications Received',
-  'Login Count',
-  'Sanctions Count',
-  'Sanctions Amount',
-  'Disbursements Count',
-  'Disbursements Amount',
-];
-
-/** Non-funnel operational metrics */
-const ANNOTATION_METRICS = ['Rejections', 'Avg Ticket Size', 'TAT (days)'];
-
 export function MTDFunnelComparison({ data }: Props) {
   const { d3Tokens } = useThemeMode();
-  const { formatCurrency } = useCurrencyFormat();
-  const { getColor } = useRiskAppetite();
 
-  const { funnelMetrics, annotationMetrics } = useMemo(() => {
-    // Filter to "All Products" only
-    const allProducts = data.filter((d) =>
-      d.product.toLowerCase().includes('all'),
-    );
-    const source = allProducts.length > 0 ? allProducts : data;
-
-    // Order funnel metrics
-    const funnel = FUNNEL_ORDER
-      .map((name) => source.find((m) => m.metric === name))
-      .filter(Boolean) as LOSComparisonMetric[];
-
-    // Annotation metrics
-    const annotations = ANNOTATION_METRICS
-      .map((name) => source.find((m) => m.metric === name))
-      .filter(Boolean) as LOSComparisonMetric[];
-
-    return { funnelMetrics: funnel, annotationMetrics: annotations };
+  const stages = useMemo(() => {
+    if (!data.length) return [];
+    // Filter to "All Products"
+    const products = Array.from(new Set(data.map((d) => d.product)));
+    const selectedProduct =
+      products.find((p) => p.toLowerCase().includes('all')) ?? products[0] ?? '';
+    return data.filter((d) => d.product === selectedProduct);
   }, [data]);
 
   const ref = useD3Chart(
     (svg, width, height) => {
       d3.selectAll('.mtd-funnel-tooltip').remove();
 
-      const margin = { top: 10, right: 16, bottom: 40, left: 16 };
+      const margin = { top: 10, right: 16, bottom: 36, left: 16 };
       const w = width - margin.left - margin.right;
-      const funnelCount = funnelMetrics.length;
-      const annotCount = annotationMetrics.length;
-
-      // Reserve space for annotations below funnel
-      const annotH = annotCount > 0 ? 60 : 0;
-      const legendH = 30;
-      const availH = height - margin.top - margin.bottom - annotH - legendH;
-      const stepH = availH / Math.max(funnelCount, 1);
+      const stageCount = stages.length;
+      const legendH = 28;
+      const availH = height - margin.top - margin.bottom - legendH;
+      const stepH = availH / Math.max(stageCount, 1);
 
       // Center gap for labels
-      const centerGap = 120;
+      const centerGap = Math.min(140, w * 0.22);
       const funnelW = (w - centerGap) / 2;
 
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-      // Scales: width proportional to value within each funnel's own max
-      const mtdMax = d3.max(funnelMetrics, (m) => m.mtd) ?? 1;
-      const lmtdMax = d3.max(funnelMetrics, (m) => m.lmtd) ?? 1;
+      // Scale: width proportional to value (top stage = widest)
+      const mtdMax = d3.max(stages, (s) => s.mtd) ?? 1;
+      const lmtdMax = d3.max(stages, (s) => s.lmtd) ?? 1;
 
-      // Width scale for each funnel (min 20% width so smallest step is visible)
-      const mtdScale = (v: number) => Math.max(funnelW * 0.15, (v / mtdMax) * funnelW);
-      const lmtdScale = (v: number) => Math.max(funnelW * 0.15, (v / lmtdMax) * funnelW);
+      const mtdScale = (v: number) => Math.max(funnelW * 0.12, (v / mtdMax) * funnelW);
+      const lmtdScale = (v: number) => Math.max(funnelW * 0.12, (v / lmtdMax) * funnelW);
 
-      // MTD funnel center-x (left half, right-aligned to center gap)
       const mtdCenterX = funnelW / 2;
-      // LMTD funnel center-x (right half, left-aligned from center gap)
       const lmtdCenterX = funnelW + centerGap + funnelW / 2;
-
-      // Format value based on metric name
-      const fmtValue = (metric: string, value: number) => {
-        if (metric.toLowerCase().includes('amount') || metric.toLowerCase().includes('ticket')) {
-          return formatCurrency(value);
-        }
-        if (metric.toLowerCase().includes('tat')) {
-          return formatNumber(value, 1);
-        }
-        return formatNumber(value, 0);
-      };
 
       // Tooltip
       const tooltip = d3
@@ -120,108 +74,93 @@ export function MTDFunnelComparison({ data }: Props) {
         .style('line-height', '1.6');
 
       // Draw funnel steps
-      funnelMetrics.forEach((metric, i) => {
+      stages.forEach((stage, i) => {
         const y = i * stepH;
-        const nextI = Math.min(i + 1, funnelCount - 1);
-        const nextMetric = funnelMetrics[nextI];
+        const nextStage = i < stageCount - 1 ? stages[i + 1] : null;
 
-        const mtdW = mtdScale(metric.mtd);
-        const lmtdW = lmtdScale(metric.lmtd);
-        const nextMtdW = i < funnelCount - 1 ? mtdScale(nextMetric.mtd) : mtdW * 0.85;
-        const nextLmtdW = i < funnelCount - 1 ? lmtdScale(nextMetric.lmtd) : lmtdW * 0.85;
+        const mtdW = mtdScale(stage.mtd);
+        const lmtdW = lmtdScale(stage.lmtd);
+        const nextMtdW = nextStage ? mtdScale(nextStage.mtd) : mtdW * 0.85;
+        const nextLmtdW = nextStage ? lmtdScale(nextStage.lmtd) : lmtdW * 0.85;
 
-        const trapGap = 2; // Small gap between trapezoids
+        const gap = 2;
 
-        // ── MTD trapezoid (left side, right-aligned toward center) ──
-        const mtdPoints = [
-          [mtdCenterX - mtdW / 2, y + trapGap],                     // top-left
-          [mtdCenterX + mtdW / 2, y + trapGap],                     // top-right
-          [mtdCenterX + nextMtdW / 2, y + stepH - trapGap],         // bottom-right
-          [mtdCenterX - nextMtdW / 2, y + stepH - trapGap],         // bottom-left
+        // ── MTD trapezoid ──
+        const mtdPts = [
+          [mtdCenterX - mtdW / 2, y + gap],
+          [mtdCenterX + mtdW / 2, y + gap],
+          [mtdCenterX + nextMtdW / 2, y + stepH - gap],
+          [mtdCenterX - nextMtdW / 2, y + stepH - gap],
         ];
         g.append('polygon')
-          .attr('points', mtdPoints.map((p) => p.join(',')).join(' '))
+          .attr('points', mtdPts.map((p) => p.join(',')).join(' '))
           .attr('fill', TEAL)
           .attr('opacity', 0.85)
           .attr('stroke', d3Tokens.bg)
           .attr('stroke-width', 1);
 
-        // MTD value inside trapezoid
+        // MTD value
         g.append('text')
           .attr('x', mtdCenterX)
           .attr('y', y + stepH / 2)
           .attr('dy', '0.35em')
           .attr('text-anchor', 'middle')
           .attr('fill', '#fff')
-          .attr('font-size', '10px')
+          .attr('font-size', stepH > 40 ? '11px' : '9px')
           .attr('font-weight', 600)
           .attr('font-family', 'IBM Plex Mono, monospace')
-          .text(fmtValue(metric.metric, metric.mtd));
+          .text(formatNumber(stage.mtd, 0));
 
-        // ── LMTD trapezoid (right side, left-aligned from center) ──
-        const lmtdPoints = [
-          [lmtdCenterX - lmtdW / 2, y + trapGap],
-          [lmtdCenterX + lmtdW / 2, y + trapGap],
-          [lmtdCenterX + nextLmtdW / 2, y + stepH - trapGap],
-          [lmtdCenterX - nextLmtdW / 2, y + stepH - trapGap],
+        // ── LMTD trapezoid ──
+        const lmtdPts = [
+          [lmtdCenterX - lmtdW / 2, y + gap],
+          [lmtdCenterX + lmtdW / 2, y + gap],
+          [lmtdCenterX + nextLmtdW / 2, y + stepH - gap],
+          [lmtdCenterX - nextLmtdW / 2, y + stepH - gap],
         ];
         g.append('polygon')
-          .attr('points', lmtdPoints.map((p) => p.join(',')).join(' '))
+          .attr('points', lmtdPts.map((p) => p.join(',')).join(' '))
           .attr('fill', GRAY)
           .attr('opacity', 0.85)
           .attr('stroke', d3Tokens.bg)
           .attr('stroke-width', 1);
 
-        // LMTD value inside trapezoid
+        // LMTD value
         g.append('text')
           .attr('x', lmtdCenterX)
           .attr('y', y + stepH / 2)
           .attr('dy', '0.35em')
           .attr('text-anchor', 'middle')
           .attr('fill', '#fff')
-          .attr('font-size', '10px')
+          .attr('font-size', stepH > 40 ? '11px' : '9px')
           .attr('font-weight', 600)
           .attr('font-family', 'IBM Plex Mono, monospace')
-          .text(fmtValue(metric.metric, metric.lmtd));
+          .text(formatNumber(stage.lmtd, 0));
 
         // ── Center label ──
         const labelX = funnelW + centerGap / 2;
+        const shortName = stage.stage.length > 16 ? stage.stage.slice(0, 16) + '…' : stage.stage;
         g.append('text')
           .attr('x', labelX)
           .attr('y', y + stepH / 2 - 6)
           .attr('dy', '0.35em')
           .attr('text-anchor', 'middle')
           .attr('fill', d3Tokens.text)
-          .attr('font-size', '10px')
+          .attr('font-size', '9px')
           .attr('font-weight', 600)
-          .text(metric.metric.length > 18 ? metric.metric.slice(0, 18) + '…' : metric.metric);
+          .text(shortName);
 
-        // MoM change below label
-        const delta = metric.momChange;
-        if (delta != null && !isNaN(delta)) {
-          const sign = delta >= 0 ? '+' : '';
-          const color = delta >= 0 ? '#4caf50' : '#f44336';
+        // Conversion rate below label
+        if (stage.conversionRate < 1) {
           g.append('text')
             .attr('x', labelX)
-            .attr('y', y + stepH / 2 + 8)
+            .attr('y', y + stepH / 2 + 7)
             .attr('dy', '0.35em')
             .attr('text-anchor', 'middle')
-            .attr('fill', color)
-            .attr('font-size', '9px')
+            .attr('fill', d3Tokens.textMuted)
+            .attr('font-size', '8px')
             .attr('font-family', 'IBM Plex Mono, monospace')
-            .text(`${sign}${formatPercent(delta, 1)}`);
-        }
-
-        // Achievement traffic light
-        const ach = metric.achievement;
-        if (ach != null) {
-          const achColor = getColor('los_achievement', ach);
-          g.append('circle')
-            .attr('cx', w - 8)
-            .attr('cy', y + stepH / 2)
-            .attr('r', 5)
-            .attr('fill', achColor)
-            .attr('opacity', 0.9);
+            .text(`↓ ${formatPercent(stage.conversionRate, 1)}`);
         }
 
         // ── Hover overlay ──
@@ -233,21 +172,22 @@ export function MTDFunnelComparison({ data }: Props) {
           .attr('fill', 'transparent')
           .attr('cursor', 'pointer')
           .on('mouseenter', (event: MouseEvent) => {
-            let html = `<div style="font-weight:600;margin-bottom:4px">${metric.metric}</div>`;
+            // Compute MoM change for this stage
+            const momPct = stage.lmtd > 0 ? (stage.mtd - stage.lmtd) / stage.lmtd : 0;
+            const momSign = momPct >= 0 ? '+' : '';
+            const momColor = momPct >= 0 ? '#4caf50' : '#f44336';
+
+            let html = `<div style="font-weight:600;margin-bottom:4px">${stage.stage}</div>`;
             html += `<table style="border-collapse:collapse;width:100%">`;
             html += `<tr><td style="padding:2px 8px 2px 0"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${TEAL};margin-right:6px;vertical-align:middle"></span>MTD</td>`;
-            html += `<td style="text-align:right;font-family:monospace;font-size:11px">${fmtValue(metric.metric, metric.mtd)}</td></tr>`;
+            html += `<td style="text-align:right;font-family:monospace;font-size:11px">${formatNumber(stage.mtd, 0)}</td></tr>`;
             html += `<tr><td style="padding:2px 8px 2px 0"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${GRAY};margin-right:6px;vertical-align:middle"></span>LMTD</td>`;
-            html += `<td style="text-align:right;font-family:monospace;font-size:11px">${fmtValue(metric.metric, metric.lmtd)}</td></tr>`;
-            if (delta != null && !isNaN(delta)) {
-              const sign = delta >= 0 ? '+' : '';
-              const color = delta >= 0 ? '#4caf50' : '#f44336';
-              html += `<tr style="border-top:1px solid ${d3Tokens.tooltipBorder}"><td style="padding:4px 8px 0 0">MoM</td>`;
-              html += `<td style="text-align:right;font-family:monospace;font-size:11px;color:${color}">${sign}${formatPercent(delta, 1)}</td></tr>`;
-            }
-            if (ach != null) {
-              html += `<tr><td style="padding:2px 8px 2px 0">Achievement</td>`;
-              html += `<td style="text-align:right;font-family:monospace;font-size:11px">${formatPercent(ach)}</td></tr>`;
+            html += `<td style="text-align:right;font-family:monospace;font-size:11px">${formatNumber(stage.lmtd, 0)}</td></tr>`;
+            html += `<tr style="border-top:1px solid ${d3Tokens.tooltipBorder}"><td style="padding:4px 8px 0 0">MoM</td>`;
+            html += `<td style="text-align:right;font-family:monospace;font-size:11px;color:${momColor}">${momSign}${formatPercent(momPct, 1)}</td></tr>`;
+            if (stage.conversionRate < 1) {
+              html += `<tr><td style="padding:2px 8px 2px 0">Conv. Rate</td>`;
+              html += `<td style="text-align:right;font-family:monospace;font-size:11px">${formatPercent(stage.conversionRate, 1)}</td></tr>`;
             }
             html += `</table>`;
             tooltip.html(html).style('opacity', '1');
@@ -271,68 +211,6 @@ export function MTDFunnelComparison({ data }: Props) {
           });
       });
 
-      // ── Annotation metrics below funnel ──
-      if (annotationMetrics.length > 0) {
-        const annotY = funnelCount * stepH + 16;
-        const annotG = g.append('g').attr('transform', `translate(0,${annotY})`);
-
-        // Separator
-        annotG.append('line')
-          .attr('x1', 0).attr('x2', w)
-          .attr('y1', 0).attr('y2', 0)
-          .attr('stroke', d3Tokens.gridStroke)
-          .attr('stroke-dasharray', '4,3');
-
-        const annotRowH = 20;
-        annotationMetrics.forEach((metric, i) => {
-          const rowY = 12 + i * annotRowH;
-
-          // Label
-          annotG.append('text')
-            .attr('x', w / 2)
-            .attr('y', rowY)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', 'middle')
-            .attr('fill', d3Tokens.textMuted)
-            .attr('font-size', '10px')
-            .text(`${metric.metric}:  `);
-
-          // MTD value
-          annotG.append('text')
-            .attr('x', w / 2 - 60)
-            .attr('y', rowY)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', 'end')
-            .attr('fill', TEAL)
-            .attr('font-size', '10px')
-            .attr('font-weight', 600)
-            .attr('font-family', 'IBM Plex Mono, monospace')
-            .text(fmtValue(metric.metric, metric.mtd));
-
-          // LMTD value
-          annotG.append('text')
-            .attr('x', w / 2 + 60)
-            .attr('y', rowY)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', 'start')
-            .attr('fill', GRAY)
-            .attr('font-size', '10px')
-            .attr('font-weight', 600)
-            .attr('font-family', 'IBM Plex Mono, monospace')
-            .text(fmtValue(metric.metric, metric.lmtd));
-
-          // Achievement dot
-          if (metric.achievement != null) {
-            annotG.append('circle')
-              .attr('cx', w - 8)
-              .attr('cy', rowY)
-              .attr('r', 4)
-              .attr('fill', getColor('los_achievement', metric.achievement))
-              .attr('opacity', 0.9);
-          }
-        });
-      }
-
       // ── Legend ──
       const legendG = svg.append('g').attr('transform', `translate(${margin.left},${height - legendH})`);
       let lx = 0;
@@ -349,24 +227,20 @@ export function MTDFunnelComparison({ data }: Props) {
           .text(key);
         lx += (label.node()?.getComputedTextLength() ?? 30) + 24;
       });
-      legendG.append('circle')
-        .attr('cx', lx + 6).attr('cy', 5).attr('r', 5).attr('fill', '#4caf50');
-      legendG.append('text')
-        .attr('x', lx + 16).attr('y', 9)
-        .attr('fill', d3Tokens.textMuted).attr('font-size', '10px')
-        .text('Achievement');
     },
-    [funnelMetrics, annotationMetrics, d3Tokens, formatCurrency, getColor],
+    [stages, d3Tokens],
   );
+
+  const chartHeight = Math.max(400, stages.length * 56 + 80);
 
   return (
     <ChartContainer
       title="MTD vs LMTD Funnel"
-      subtitle="Origination flow — Applications to Disbursements"
-      height={480}
-      empty={!funnelMetrics.length}
+      subtitle="Origination flow — Clicks to Disbursement"
+      height={chartHeight}
+      empty={!stages.length}
     >
-      <svg ref={ref} width="100%" height={480} style={{ overflow: 'visible' }} />
+      <svg ref={ref} width="100%" height={chartHeight} style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
 }

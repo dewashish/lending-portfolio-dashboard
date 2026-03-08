@@ -1186,10 +1186,14 @@ function buildLosFunnel(): Row[] {
   }
 
   const baseFunnel: FunnelDef[] = [
-    { stage: 'Leads', ftd: 120, mtd: 1800, lmtd: 1720, conversion_rate: 1.0 },
-    { stage: 'Applications', ftd: 52, mtd: 780, lmtd: 745, conversion_rate: 0.433 },
-    { stage: 'Sanctioned', ftd: 38, mtd: 570, lmtd: 535, conversion_rate: 0.731 },
-    { stage: 'Disbursed', ftd: 32, mtd: 480, lmtd: 458, conversion_rate: 0.842 },
+    { stage: 'Website Clicks',          ftd: 360, mtd: 5400, lmtd: 5150, conversion_rate: 1.0 },
+    { stage: 'Leads Created',           ftd: 120, mtd: 1800, lmtd: 1720, conversion_rate: 0.333 },
+    { stage: 'Applications Submitted',  ftd: 52,  mtd: 780,  lmtd: 745,  conversion_rate: 0.433 },
+    { stage: 'Documents Submitted',     ftd: 43,  mtd: 650,  lmtd: 615,  conversion_rate: 0.833 },
+    { stage: 'KYC Verified',            ftd: 39,  mtd: 590,  lmtd: 558,  conversion_rate: 0.908 },
+    { stage: 'Credit Sanctioned',       ftd: 38,  mtd: 570,  lmtd: 535,  conversion_rate: 0.966 },
+    { stage: 'Disbursement Initiated',  ftd: 34,  mtd: 510,  lmtd: 485,  conversion_rate: 0.895 },
+    { stage: 'Disbursement Completed',  ftd: 32,  mtd: 480,  lmtd: 458,  conversion_rate: 0.941 },
   ];
 
   const rows: Row[] = [];
