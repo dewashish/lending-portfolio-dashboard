@@ -4,7 +4,8 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ConcentrationNode } from '@/lib/types';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 export function ConcentrationTreemap({ data, groupBy }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
   const filtered = data.filter((d) => d.category === groupBy && d.value > 0);
 
   const chartHeight = Math.max(360, filtered.length * 28 + 8);
@@ -103,7 +105,7 @@ export function ConcentrationTreemap({ data, groupBy }: Props) {
           return `${formatCurrency(node.value)} (${formatPercent(node.portfolioShare)})`;
         });
     },
-    [filtered, groupBy, d3Tokens],
+    [filtered, groupBy, d3Tokens, formatCurrency],
   );
 
   return (

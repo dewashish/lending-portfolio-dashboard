@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { LOSDisbursementDaily } from '@/lib/types';
 
 interface Props {
@@ -17,6 +17,7 @@ const TEAL_FILL = 'rgba(0, 137, 123, 0.15)';
 
 export function DailyDisbursementTrend({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   const sorted = useMemo(() => {
     // Aggregate across products if needed, or just sort by date
@@ -129,7 +130,7 @@ export function DailyDisbursementTrend({ data }: Props) {
         .attr('font-family', 'IBM Plex Mono, monospace')
         .text((d) => d.date.getDate().toString());
     },
-    [sorted, d3Tokens],
+    [sorted, d3Tokens, formatCurrency],
   );
 
   return (

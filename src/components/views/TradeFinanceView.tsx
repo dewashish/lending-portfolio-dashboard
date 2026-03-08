@@ -13,7 +13,8 @@ import { TradeMacroRiskSection } from '@/components/views/trade/TradeMacroRiskSe
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton';
 import { useTradeExecutiveSummary } from '@/hooks/useTradeData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
-import { formatCurrencyMM, formatPercent, formatNumber, formatCurrency } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
 
 const SUB_TABS = ['Overview', 'Product Mix', 'Concentrations', 'Watchlist', 'EWS & Migration', 'Macro Risk'] as const;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function TradeFinanceView({ scope }: Props) {
+  const { formatCurrency, formatCurrencyMM } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
   const [subTab, setSubTab] = useState(0);
 

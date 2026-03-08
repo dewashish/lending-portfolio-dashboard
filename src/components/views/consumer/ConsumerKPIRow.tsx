@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import { KPIRow, type KPIItem } from '@/components/cards/KPIRow';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import type { ConsumerMetricRow, ScopeSelection } from '@/lib/types';
 
@@ -43,6 +44,7 @@ function getBenchmark(data: ConsumerMetricRow[], metricName: string): number | u
 }
 
 export function ConsumerKPIRow({ data }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
 
   const items = useMemo<KPIItem[]>(() => {
@@ -126,7 +128,7 @@ export function ConsumerKPIRow({ data }: Props) {
         benchmark: getBenchmark(data, 'Net Credit Loss'),
       },
     ];
-  }, [data, getColor]);
+  }, [data, getColor, formatCurrency]);
 
   return <KPIRow items={items} />;
 }

@@ -27,7 +27,8 @@ import {
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
-import { formatPercent, formatCurrency } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ConsumerProductData, ConsumerMetricRow } from '@/lib/types';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
@@ -57,12 +58,13 @@ function isCurrencyMetric(metric: string): boolean {
 function formatMetricValue(
   value: number | string | null,
   metric: string,
+  fmtCurrency: (v: number) => string,
 ): string {
   if (value == null) return '—';
   if (typeof value === 'string') return value;
   if (isNaN(value)) return '—';
   if (isPercentMetric(metric)) return formatPercent(value);
-  if (isCurrencyMetric(metric) && Math.abs(value) > 1) return formatCurrency(value);
+  if (isCurrencyMetric(metric) && Math.abs(value) > 1) return fmtCurrency(value);
   return parseFloat(value.toFixed(2)).toString();
 }
 
@@ -110,6 +112,7 @@ interface Props {
 }
 
 export function ConsumerProductTable({ data, selectedProduct }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [internalProduct, setInternalProduct] = useState<string>(
     selectedProduct ?? data[0]?.productName ?? '',
@@ -183,7 +186,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
                 bgcolor: heatBg,
               }}
             >
-              {formatMetricValue(raw, row.metric)}
+              {formatMetricValue(raw, row.metric, formatCurrency)}
             </Box>
           );
         },
@@ -209,7 +212,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
 
           return (
             <Tooltip
-              title={`${delta.pct >= 0 ? '+' : ''}${formatPercent(delta.pct, 1)} (${formatMetricValue(delta.value, row.metric)})`}
+              title={`${delta.pct >= 0 ? '+' : ''}${formatPercent(delta.pct, 1)} (${formatMetricValue(delta.value, row.metric, formatCurrency)})`}
               arrow
               placement="top"
             >
@@ -254,14 +257,14 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
                 color: 'text.secondary',
               }}
             >
-              {formatMetricValue(row.benchmark, row.metric)}
+              {formatMetricValue(row.benchmark, row.metric, formatCurrency)}
             </Box>
           );
         },
       },
     ];
     return cols;
-  }, [periodKeys, latestPeriodKey]);
+  }, [periodKeys, latestPeriodKey, formatCurrency]);
 
   const table = useReactTable({
     data: flatRows,

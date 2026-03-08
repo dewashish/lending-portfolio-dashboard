@@ -16,7 +16,8 @@ import {
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { useCorporateDelinquency } from '@/hooks/useCorporateData';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function CorporateDelinquencySection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: delinquency, isLoading } = useCorporateDelinquency(scope);
 
   const rows = useMemo(() => delinquency ?? [], [delinquency]);

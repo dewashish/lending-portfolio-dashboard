@@ -3,7 +3,8 @@
 import { Box, Card, Typography, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Chip } from '@mui/material';
 import { CompositeRiskHeatmap } from '@/components/charts/CompositeRiskHeatmap';
 import { useFXRisk, useCountryRisk, useEWSEntitySummary } from '@/hooks/useRiskData';
-import { formatPercent, formatCurrencyMM, formatRating } from '@/lib/format';
+import { formatPercent, formatRating } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { RAG_COLORS } from '@/lib/constants';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import type { ScopeSelection } from '@/lib/types';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function TradeMacroRiskSection({ scope }: Props) {
+  const { formatCurrencyMM } = useCurrencyFormat();
   const { data: fxData, isLoading: loadingFX } = useFXRisk(scope);
   const { data: countryData, isLoading: loadingCountry } = useCountryRisk(scope);
   const { data: ewsData, isLoading: loadingEWS } = useEWSEntitySummary(scope);

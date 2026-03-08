@@ -4,7 +4,8 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { AssetQualityByEntity } from '@/lib/types';
 
 interface Props {
@@ -19,6 +20,7 @@ const STAGE_COLORS: Record<string, string> = {
 
 export function StagingDonut({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   // Aggregate balances across all entities
   const aggregated = data.reduce(
@@ -135,7 +137,7 @@ export function StagingDonut({ data }: Props) {
           .text(d.stage);
       });
     },
-    [pieData, total, d3Tokens],
+    [pieData, total, d3Tokens, formatCurrency],
   );
 
   return (

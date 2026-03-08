@@ -21,7 +21,8 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
-import { formatPercent, formatCurrencyMM } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import type { LOSComparisonMetric } from '@/lib/types';
@@ -33,9 +34,9 @@ function isTATMetric(metric: string): boolean {
   return /TAT/i.test(metric);
 }
 
-function formatLosValue(value: number | null): string {
+function formatLosValue(value: number | null, fmtCurrencyMM: (v: number) => string): string {
   if (value == null || isNaN(value)) return '—';
-  if (Math.abs(value) > 1) return formatCurrencyMM(value);
+  if (Math.abs(value) > 1) return fmtCurrencyMM(value);
   return parseFloat(value.toFixed(2)).toString();
 }
 
@@ -61,6 +62,7 @@ export function LOSComparisonTable({
   data,
   title = 'LOS Comparison — MTD vs Targets',
 }: Props) {
+  const { formatCurrencyMM } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -95,7 +97,7 @@ export function LOSComparisonTable({
             component="span"
             sx={{ fontFamily: '"Roboto Mono", monospace', fontSize: '0.75rem' }}
           >
-            {formatLosValue(info.getValue() as number)}
+            {formatLosValue(info.getValue() as number, formatCurrencyMM)}
           </Box>
         ),
       },
@@ -112,7 +114,7 @@ export function LOSComparisonTable({
               fontWeight: 700,
             }}
           >
-            {formatLosValue(info.getValue() as number)}
+            {formatLosValue(info.getValue() as number, formatCurrencyMM)}
           </Box>
         ),
       },
@@ -125,7 +127,7 @@ export function LOSComparisonTable({
             component="span"
             sx={{ fontFamily: '"Roboto Mono", monospace', fontSize: '0.75rem' }}
           >
-            {formatLosValue(info.getValue() as number)}
+            {formatLosValue(info.getValue() as number, formatCurrencyMM)}
           </Box>
         ),
       },
@@ -138,7 +140,7 @@ export function LOSComparisonTable({
             component="span"
             sx={{ fontFamily: '"Roboto Mono", monospace', fontSize: '0.75rem' }}
           >
-            {formatLosValue(info.getValue() as number)}
+            {formatLosValue(info.getValue() as number, formatCurrencyMM)}
           </Box>
         ),
       },
@@ -181,7 +183,7 @@ export function LOSComparisonTable({
                 color: 'text.secondary',
               }}
             >
-              {val != null ? formatLosValue(val) : '—'}
+              {val != null ? formatLosValue(val, formatCurrencyMM) : '—'}
             </Box>
           );
         },
@@ -219,7 +221,7 @@ export function LOSComparisonTable({
       },
     ];
     return cols;
-  }, [getColor]);
+  }, [getColor, formatCurrencyMM]);
 
   const table = useReactTable({
     data,

@@ -22,7 +22,8 @@ import {
   useCorporateCollateralAnalysis,
   useCorporateLTVDistribution,
 } from '@/hooks/useCorporateData';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection, CorporateCollateralRow } from '@/lib/types';
 
 interface Props {
@@ -30,6 +31,7 @@ interface Props {
 }
 
 function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
+  const { formatCurrency } = useCurrencyFormat();
   const { d3Tokens } = useThemeMode();
 
   const ref = useD3Chart(
@@ -122,6 +124,7 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
 }
 
 export function CorporateCollateralSection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: collateral, isLoading: loadingCollateral } = useCorporateCollateralAnalysis(scope);
   const { data: ltv, isLoading: loadingLTV } = useCorporateLTVDistribution(scope);
 

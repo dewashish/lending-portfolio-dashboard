@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrencyMM } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { CorporateIndustryConcentrationRow } from '@/lib/types';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 
 export function IndustryConcentrationChart({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrencyMM } = useCurrencyFormat();
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -141,7 +142,7 @@ export function IndustryConcentrationChart({ data }: Props) {
           .text(sector.length > 16 ? sector.slice(0, 15) + '...' : sector);
       });
     },
-    [data, d3Tokens],
+    [data, d3Tokens, formatCurrencyMM],
   );
 
   return (

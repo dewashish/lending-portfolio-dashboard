@@ -6,7 +6,8 @@ import { StagingDonut } from '@/components/charts/StagingDonut';
 import { EntityPerformanceTable } from '@/components/tables/EntityPerformanceTable';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { useTradeEntityPerformance, useTradeAssetQuality, useTradeCollectionEfficiency } from '@/hooks/useTradeData';
-import { formatPercent, formatCurrency, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { RAG_COLORS } from '@/lib/constants';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import type { ScopeSelection } from '@/lib/types';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function TradeOverviewSection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: entityPerf, isLoading: loadingPerf } = useTradeEntityPerformance(scope);
   const { data: assetQuality, isLoading: loadingAQ } = useTradeAssetQuality(scope);
   const { data: collEff, isLoading: loadingColl } = useTradeCollectionEfficiency(scope);

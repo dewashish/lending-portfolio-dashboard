@@ -15,21 +15,31 @@ function compactNumber(abs: number, decimals: number): [number, string] {
   return [abs, ''];
 }
 
+export function formatCurrencyBase(
+  value: number | null | undefined,
+  decimals = 1,
+  symbol = '$',
+  rate = 1,
+): string {
+  if (value == null || isNaN(value)) return '—';
+  const converted = value * rate;
+  const abs = Math.abs(converted);
+  const sign = converted < 0 ? '-' : '';
+  const [scaled, suffix] = compactNumber(abs, decimals);
+  return `${sign}${symbol}${scaled.toFixed(decimals)}${suffix}`;
+}
+
+/** Default USD formatter — used by server-side code (PDF, API routes). */
 export function formatCurrency(
   value: number | null | undefined,
   decimals = 1,
 ): string {
-  if (value == null || isNaN(value)) return '—';
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  const [scaled, suffix] = compactNumber(abs, decimals);
-  return `${sign}$${scaled.toFixed(decimals)}${suffix}`;
+  return formatCurrencyBase(value, decimals);
 }
 
 /** Alias for formatCurrency with 2-decimal default. All DB values are in raw units. */
 export function formatCurrencyMM(value: number | null | undefined, decimals = 2): string {
-  if (value == null || isNaN(value)) return '—';
-  return formatCurrency(value, decimals);
+  return formatCurrencyBase(value, decimals);
 }
 
 export function formatPercent(

@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from './ChartContainer';
-import { formatCurrencyMM } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { EntityPerformance } from '@/lib/types';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export function EntityBreakdownBar({ data, onEntityClick }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrencyMM } = useCurrencyFormat();
   const filtered = data.filter(d => d.entity !== 'GROUP TOTAL');
 
   const chartHeight = Math.max(320, filtered.length * 48 + 40);
@@ -82,7 +83,7 @@ export function EntityBreakdownBar({ data, onEntityClick }: Props) {
 
     g.selectAll('.domain').attr('stroke', d3Tokens.axisDomain);
     g.selectAll('.tick line').attr('stroke', d3Tokens.gridLine);
-  }, [filtered, d3Tokens]);
+  }, [filtered, d3Tokens, formatCurrencyMM]);
 
   return (
     <ChartContainer title="Entity Outstanding Breakdown" subtitle="USD mm" height={chartHeight} empty={!filtered.length}>

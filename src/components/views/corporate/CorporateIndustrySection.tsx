@@ -16,7 +16,8 @@ import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { ConcentrationTreemap } from '@/components/charts/ConcentrationTreemap';
 import { IndustryConcentrationChart } from '@/components/charts/IndustryConcentrationChart';
 import { useCorporateIndustryConcentration } from '@/hooks/useCorporateData';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection, ConcentrationNode } from '@/lib/types';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function CorporateIndustrySection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: industryData, isLoading } = useCorporateIndustryConcentration(scope);
 
   if (isLoading) return <LoadingSkeleton />;

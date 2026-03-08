@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { RatingDistribution } from '@/lib/types';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 
 export function RatingDistributionBar({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -102,7 +103,7 @@ export function RatingDistributionBar({ data }: Props) {
         .attr('font-size', '10px')
         .text('Rating Band');
     },
-    [data, d3Tokens],
+    [data, d3Tokens, formatCurrency],
   );
 
   return (

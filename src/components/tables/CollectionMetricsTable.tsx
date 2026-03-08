@@ -21,7 +21,8 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
-import { formatPercent, formatCurrencyMM } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import type { CollectionMetricRow } from '@/lib/types';
@@ -37,6 +38,7 @@ export function CollectionMetricsTable({
   data,
   title = 'Collection & Roll-Rate Metrics',
 }: Props) {
+  const { formatCurrencyMM } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -175,7 +177,7 @@ export function CollectionMetricsTable({
       },
     ];
     return cols;
-  }, [getColor]);
+  }, [getColor, formatCurrencyMM]);
 
   const table = useReactTable({
     data: flatRows,

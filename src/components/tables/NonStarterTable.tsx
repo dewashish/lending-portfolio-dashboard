@@ -21,16 +21,21 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
-import { formatPercent, formatCurrencyMM, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { NonStarterRow } from '@/lib/types';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
 
-function formatNonStarterValue(value: number | null | undefined, metric: string): string {
+function formatNonStarterValue(
+  value: number | null | undefined,
+  metric: string,
+  fmtCurrencyMM: (v: number) => string,
+): string {
   if (value == null || isNaN(value as number)) return '—';
   if (/%/.test(metric)) return formatPercent(value);
   if (/Count|#/i.test(metric)) return formatNumber(value, 0);
-  if (/Amount|\$/i.test(metric)) return formatCurrencyMM(value);
+  if (/Amount|\$/i.test(metric)) return fmtCurrencyMM(value);
   if (/DPD/i.test(metric)) return formatNumber(value, 0);
   return parseFloat(value.toFixed(2)).toString();
 }
@@ -46,6 +51,7 @@ export function NonStarterTable({
   data,
   title = 'Non-Starter Analysis',
 }: Props) {
+  const { formatCurrencyMM } = useCurrencyFormat();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   /* dynamically extract period column keys from monthlyValues of the first row */
@@ -112,14 +118,14 @@ export function NonStarterTable({
                 fontSize: '0.75rem',
               }}
             >
-              {formatNonStarterValue(val, row.metric)}
+              {formatNonStarterValue(val, row.metric, formatCurrencyMM)}
             </Box>
           );
         },
       })),
     ];
     return cols;
-  }, [monthlyKeys]);
+  }, [monthlyKeys, formatCurrencyMM]);
 
   const table = useReactTable({
     data: flatRows,

@@ -18,7 +18,8 @@ import {
   useCorporateRatingAnalysis,
   useCorporateRatingMigration,
 } from '@/hooks/useCorporateData';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection, RatingDistribution } from '@/lib/types';
 
 interface Props {
@@ -46,6 +47,7 @@ function directionChip(direction: string) {
 }
 
 export function CorporateRatingSection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: ratingData, isLoading: loadingRating } = useCorporateRatingAnalysis(scope);
   const { data: migrationData, isLoading: loadingMigration } = useCorporateRatingMigration(scope);
 

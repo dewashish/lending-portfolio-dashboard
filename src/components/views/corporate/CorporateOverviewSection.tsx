@@ -18,7 +18,8 @@ import {
   useCorporateTopCustomers,
   useCorporateExecutiveSummary,
 } from '@/hooks/useCorporateData';
-import { formatCurrency, formatCurrencyMM, formatNumber } from '@/lib/format';
+import { formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -51,6 +52,7 @@ function stageChip(stage: string) {
 }
 
 export function CorporateOverviewSection({ scope }: Props) {
+  const { formatCurrency, formatCurrencyMM } = useCurrencyFormat();
   const { data: portfolio, isLoading: loadingPortfolio } = useCorporatePortfolioMetrics(scope);
   const { data: topCustomers, isLoading: loadingCustomers } = useCorporateTopCustomers(scope);
   const { data: summary, isLoading: loadingSummary } = useCorporateExecutiveSummary(scope);

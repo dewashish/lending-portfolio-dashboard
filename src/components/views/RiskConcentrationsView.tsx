@@ -21,7 +21,8 @@ import type { KPIItem } from '@/components/cards/KPIRow';
 import { EWSRadar } from '@/components/charts/EWSRadar';
 import { EWSAlertTable } from '@/components/tables/EWSAlertTable';
 import { ConcentrationTreemap } from '@/components/charts/ConcentrationTreemap';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { RAG_COLORS } from '@/lib/constants';
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton';
 import {
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export function RiskConcentrationsView({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const [subTab, setSubTab] = useState(0);
 
   const { data: ewsSummary, isLoading: ewsLoading } = useEWSEntitySummary(scope);

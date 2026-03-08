@@ -17,7 +17,8 @@ import {
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { useCorporateCovenants } from '@/hooks/useCorporateData';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function CorporateCovenantSection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: covenants, isLoading } = useCorporateCovenants(scope);
 
   const rows = useMemo(() => covenants ?? [], [covenants]);

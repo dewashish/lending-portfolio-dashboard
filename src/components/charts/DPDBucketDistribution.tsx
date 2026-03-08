@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { BUCKET_COLORS, DPD_BUCKETS } from '@/lib/constants';
 import type { NetFlowRow, DPDBucket } from '@/lib/types';
 
@@ -15,6 +15,7 @@ interface Props {
 
 export function DPDBucketDistribution({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   // Filter to only DPD / Current / FWOF amount buckets
   const { bucketRows, periods, bucketKeys } = useMemo(() => {
@@ -136,7 +137,7 @@ export function DPDBucketDistribution({ data }: Props) {
         legendX += (label.node()?.getComputedTextLength() ?? 30) + 24;
       });
     },
-    [bucketRows, periods, bucketKeys, d3Tokens],
+    [bucketRows, periods, bucketKeys, d3Tokens, formatCurrency],
   );
 
   return (

@@ -5,7 +5,8 @@ import {
   TableContainer, TableHead, TableRow,
 } from '@mui/material';
 import { BreachBadge } from '@/components/common/BreachBadge';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary } from '@/lib/types';
 
@@ -39,6 +40,7 @@ export function BusinessLineComparisonTable({
   consumerAum,
   onTabChange,
 }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
 
   const dpd30 = getLatest(consumerOverall, '30+ Amt%');

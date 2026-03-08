@@ -15,6 +15,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import MapIcon from '@mui/icons-material/Map';
 import BusinessIcon from '@mui/icons-material/Business';
 import { useThemeMode } from '@/lib/theme-context';
+import { useCurrency } from '@/lib/currency-context';
 import { ExecutiveSummaryButton } from '@/components/export/ExecutiveSummaryButton';
 import { useAllBreachAlerts } from '@/hooks/useBreachAlerts';
 import { BreachTickerBar } from '@/components/shell/BreachTickerBar';
@@ -35,6 +36,7 @@ interface Props {
 
 export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTab, scope, onScopeChange }: Props) {
   const { mode, toggleMode } = useThemeMode();
+  const { currency, toggleCurrency } = useCurrency();
   const { data: subsidiaries } = useSubsidiaries();
   const { data: regions } = useRegions();
   const { alerts } = useAllBreachAlerts(scope);
@@ -146,6 +148,25 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           <ExecutiveSummaryButton activeTab={activeTab ?? 0} scope={scope} />
           <ExcelExportButton activeTab={activeTab ?? 0} scope={scope} />
         </Box>
+
+        <Tooltip title="Switch currency display">
+          <ToggleButtonGroup
+            id="tour-currency-toggle"
+            value={currency}
+            exclusive
+            onChange={(_, v) => { if (v) toggleCurrency(); }}
+            size="small"
+            sx={{
+              '& .MuiToggleButton-root': {
+                px: 0.75, py: 0.2, fontSize: '0.65rem', fontWeight: 700, textTransform: 'none',
+                minWidth: 36,
+              },
+            }}
+          >
+            <ToggleButton value="USD">$</ToggleButton>
+            <ToggleButton value="AED">AED</ToggleButton>
+          </ToggleButtonGroup>
+        </Tooltip>
 
         <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           <IconButton id="tour-theme-toggle" size="small" onClick={toggleMode} sx={{ color: 'text.secondary' }}>

@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrencyMM } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { TradeStageMigrationRow } from '@/lib/types';
 
 interface Props {
@@ -36,6 +36,7 @@ interface MatrixCell {
 
 export function StageMigrationMatrix({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrencyMM } = useCurrencyFormat();
 
   // Aggregate into 3x3 matrix using the latest period
   const matrix = useMemo<MatrixCell[]>(() => {
@@ -173,7 +174,7 @@ export function StageMigrationMatrix({ data }: Props) {
         .attr('font-weight', '600')
         .text('Prior Stage');
     },
-    [matrix, d3Tokens],
+    [matrix, d3Tokens, formatCurrencyMM],
   );
 
   return (

@@ -16,7 +16,8 @@ import { CorporateDelinquencySection } from '@/components/views/corporate/Corpor
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton';
 import { useCorporateExecutiveSummary } from '@/hooks/useCorporateData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
-import { formatCurrencyMM, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
 
 const SUB_TABS = [
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function CorporateFinanceView({ scope }: Props) {
+  const { formatCurrencyMM } = useCurrencyFormat();
   const [subTab, setSubTab] = useState(0);
   const { data: summary, isLoading } = useCorporateExecutiveSummary(scope);
   const { getColor } = useRiskAppetite();
@@ -81,7 +83,7 @@ export function CorporateFinanceView({ scope }: Props) {
         rawValue: summary.provisionCoverageRatio,
       },
     ];
-  }, [summary, getColor]);
+  }, [summary, getColor, formatCurrencyMM]);
 
   const renderSection = () => {
     switch (subTab) {

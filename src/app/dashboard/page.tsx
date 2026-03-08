@@ -19,6 +19,7 @@ import { CorporateFinanceView } from '@/components/views/CorporateFinanceView';
 import { RiskConcentrationsView } from '@/components/views/RiskConcentrationsView';
 import { AIQueryPanel } from '@/components/ai/AIQueryPanel';
 import { TourProvider } from '@/lib/tour-context';
+import { CurrencyProvider } from '@/lib/currency-context';
 import { DashboardTour } from '@/components/common/DashboardTour';
 function DashboardContent() {
   const [activeTab, setActiveTab] = useState(0);
@@ -100,7 +101,9 @@ export default function DashboardPage() {
   return (
     <AdminProvider>
       <TourProvider>
-        <DashboardContent />
+        <CurrencyProvider>
+          <DashboardContent />
+        </CurrencyProvider>
       </TourProvider>
     </AdminProvider>
   );

@@ -25,7 +25,8 @@ import {
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
-import { formatPercent, formatCurrency } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ConsumerMetricRow } from '@/lib/types';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
@@ -56,12 +57,13 @@ function isCurrencyMetric(metric: string): boolean {
 function formatMetricValue(
   value: number | string | null,
   metric: string,
+  fmtCurrency: (v: number) => string,
 ): string {
   if (value == null) return '—';
   if (typeof value === 'string') return value;
   if (isNaN(value)) return '—';
   if (isPercentMetric(metric)) return formatPercent(value);
-  if (isCurrencyMetric(metric) && Math.abs(value) > 1) return formatCurrency(value);
+  if (isCurrencyMetric(metric) && Math.abs(value) > 1) return fmtCurrency(value);
   return parseFloat(value.toFixed(2)).toString();
 }
 
@@ -133,6 +135,7 @@ interface Props {
 }
 
 export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overall Metrics' }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   /* dynamically extract period column keys from the first row */
@@ -196,7 +199,7 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
                 fontWeight: isLatest ? 700 : (color ? 700 : 400),
               }}
             >
-              {formatMetricValue(raw, row.metric)}
+              {formatMetricValue(raw, row.metric, formatCurrency)}
             </Box>
           );
         },
@@ -223,7 +226,7 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
 
           return (
             <Tooltip
-              title={`${delta.pct >= 0 ? '+' : ''}${formatPercent(delta.pct, 1)} (${formatMetricValue(delta.value, row.metric)})`}
+              title={`${delta.pct >= 0 ? '+' : ''}${formatPercent(delta.pct, 1)} (${formatMetricValue(delta.value, row.metric, formatCurrency)})`}
               arrow
               placement="top"
             >
@@ -268,7 +271,7 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
                 color: 'text.secondary',
               }}
             >
-              {formatMetricValue(row.benchmark, row.metric)}
+              {formatMetricValue(row.benchmark, row.metric, formatCurrency)}
             </Box>
           );
         },
@@ -302,7 +305,7 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
       },
     ];
     return cols;
-  }, [periodKeys, latestPeriodKey]);
+  }, [periodKeys, latestPeriodKey, formatCurrency]);
 
   /* build flat rows for TanStack, but we render grouped manually */
   const flatRows = useMemo(() => Array.from(groups.values()).flat(), [groups]);

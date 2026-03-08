@@ -7,7 +7,8 @@ import {
 } from '@mui/material';
 import { KPIRow } from '@/components/cards/KPIRow';
 import type { KPIItem } from '@/components/cards/KPIRow';
-import { formatCurrency, formatCurrencyMM, formatPercent, formatNumber } from '@/lib/format';
+import { formatPercent, formatNumber } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { RAG_COLORS } from '@/lib/constants';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import type { ScopeSelection, RAGStatus } from '@/lib/types';
@@ -65,6 +66,7 @@ const HEATMAP_DIMENSIONS = [
 
 // ── Component ─────────────────────────────────────────────────────
 export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) {
+  const { formatCurrency, formatCurrencyMM } = useCurrencyFormat();
   const { getColor, getStatus } = useRiskAppetite();
   const { data, isLoading } = useGroupOverviewSummary(scope);
 

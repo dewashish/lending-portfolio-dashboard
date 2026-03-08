@@ -15,7 +15,8 @@ import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { ProvisioningTrendChart } from '@/components/charts/ProvisioningTrendChart';
 import { useCorporateProvisioningECL } from '@/hooks/useCorporateData';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function CorporateProvisioningSection({ scope }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: provisionData, isLoading } = useCorporateProvisioningECL(scope);
 
   if (isLoading) return <LoadingSkeleton />;

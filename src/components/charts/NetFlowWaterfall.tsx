@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import { BUCKET_COLORS, DPD_BUCKETS } from '@/lib/constants';
 import type { NetFlowRow, DPDBucket } from '@/lib/types';
 
@@ -19,6 +19,7 @@ const BUCKET_PATTERNS = ['Current', '1-30', '31-60', '61-90', '91-120', '120+', 
 
 export function NetFlowWaterfall({ data, selectedPeriod }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   const { bars, period } = useMemo(() => {
     if (!data.length) return { bars: [], period: '' };
@@ -120,7 +121,7 @@ export function NetFlowWaterfall({ data, selectedPeriod }: Props) {
       g.selectAll('.domain').attr('stroke', d3Tokens.axisDomain);
       g.selectAll('.tick line').attr('stroke', d3Tokens.gridLine);
     },
-    [bars, d3Tokens],
+    [bars, d3Tokens, formatCurrency],
   );
 
   return (

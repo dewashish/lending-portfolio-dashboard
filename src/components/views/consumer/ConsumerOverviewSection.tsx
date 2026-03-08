@@ -8,7 +8,8 @@ import { OverviewSkeleton } from '@/components/common/LoadingSkeleton';
 import { useConsumerOverall, useNetFlowRates } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
-import { formatPercent, formatCurrency } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
@@ -134,6 +135,7 @@ function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
 }
 
 export function ConsumerOverviewSection({ scope, filters }: Props) {
+  const { formatCurrency } = useCurrencyFormat();
   const { data: overall, isLoading: loadingOverall } = useConsumerOverall(scope, filters);
   const { data: netFlow, isLoading: loadingNetFlow } = useNetFlowRates(scope, filters);
   const { getStatus } = useRiskAppetite();
@@ -176,7 +178,7 @@ export function ConsumerOverviewSection({ scope, filters }: Props) {
       computeMetric('90+ Amt%', '90+ DPD', (v) => formatPercent(v), true, 'dpd_90_plus'),
       computeMetric('Net Credit Loss', 'NCL Rate', (v) => formatPercent(v), true, 'net_credit_loss'),
     ];
-  }, [overall, getStatus]);
+  }, [overall, getStatus, formatCurrency]);
 
   if (loadingOverall || loadingNetFlow) return <OverviewSkeleton />;
 

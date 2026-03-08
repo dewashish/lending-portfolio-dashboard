@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrency } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 
 const SEGMENT_COLORS: Record<string, string> = {
   Consumer: '#00897b',
@@ -21,6 +21,7 @@ interface Props {
 
 export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   const pieData = [
     { label: 'Consumer', value: consumer, key: 'consumer' as const },
@@ -107,7 +108,7 @@ export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }
         row.append('text').attr('x', 14).attr('y', 9).attr('fill', d3Tokens.textMuted).attr('font-size', '10px').text(d.label);
       });
     },
-    [pieData, total, d3Tokens, onSegmentClick],
+    [pieData, total, d3Tokens, onSegmentClick, formatCurrency],
   );
 
   return (

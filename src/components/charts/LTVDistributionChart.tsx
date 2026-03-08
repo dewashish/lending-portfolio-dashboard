@@ -4,7 +4,8 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatCurrencyMM, formatPercent } from '@/lib/format';
+import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { CorporateLTVRow } from '@/lib/types';
 
 interface Props {
@@ -32,6 +33,7 @@ function getLTVColor(band: string): string {
 
 export function LTVDistributionChart({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrencyMM } = useCurrencyFormat();
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -116,7 +118,7 @@ export function LTVDistributionChart({ data }: Props) {
 
       g.selectAll('.domain').attr('stroke', d3Tokens.axisDomain);
     },
-    [data, d3Tokens],
+    [data, d3Tokens, formatCurrencyMM],
   );
 
   return (
