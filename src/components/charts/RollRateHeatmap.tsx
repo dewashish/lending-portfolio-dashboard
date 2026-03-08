@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { Box } from '@mui/material';
 import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
@@ -15,7 +16,8 @@ interface Props {
 /** Bucket group prefixes used to insert thicker separator lines */
 const BUCKET_PREFIXES = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
 
-const ROW_H = 40;
+const ROW_H = 48;
+const MIN_CELL_W = 80;
 const MARGIN = { top: 60, right: 20, bottom: 10, left: 170 };
 
 export function RollRateHeatmap({ data }: Props) {
@@ -43,7 +45,8 @@ export function RollRateHeatmap({ data }: Props) {
     return indices;
   }, [metrics]);
 
-  const chartHeight = Math.max(320, metrics.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartHeight = Math.max(400, metrics.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartMinWidth = periods.length * MIN_CELL_W + MARGIN.left + MARGIN.right;
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -97,11 +100,11 @@ export function RollRateHeatmap({ data }: Props) {
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', (d) => (d.value > 0.6 ? '#fff' : '#1e293b'))
-        .attr('font-size', Math.min(10, y.bandwidth() * 0.6) + 'px')
+        .attr('font-size', Math.min(12, y.bandwidth() * 0.55) + 'px')
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('pointer-events', 'none')
         .text((d) => {
-          if (x.bandwidth() < 28 || y.bandwidth() < 14) return '';
+          if (x.bandwidth() < 40 || y.bandwidth() < 18) return '';
           return formatPercent(d.value, 1);
         });
 
@@ -123,7 +126,7 @@ export function RollRateHeatmap({ data }: Props) {
         .call(d3.axisLeft(y).tickSize(0))
         .selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '10px');
+        .attr('font-size', '11px');
 
       g.selectAll('.domain').remove();
 
@@ -146,7 +149,12 @@ export function RollRateHeatmap({ data }: Props) {
 
   return (
     <ChartContainer title="Roll Rate Heatmap" subtitle="Transition rates by period" height={chartHeight} empty={!data.length}>
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+      <Box sx={{ overflowX: 'auto', width: '100%', height: '100%' }}>
+        <svg
+          ref={ref}
+          style={{ minWidth: chartMinWidth, width: '100%', height: '100%', overflow: 'visible' }}
+        />
+      </Box>
     </ChartContainer>
   );
 }
