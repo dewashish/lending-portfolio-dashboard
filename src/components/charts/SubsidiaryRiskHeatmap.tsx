@@ -1,5 +1,6 @@
 'use client';
 
+import { Box } from '@mui/material';
 import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
@@ -28,12 +29,14 @@ interface Props {
   onCellClick?: (subsidiaryId: number, tabIndex: number) => void;
 }
 
-const ROW_H = 48;
+const ROW_H = 52;
+const MIN_CELL_W = 80;
 const MARGIN = { top: 50, right: 20, bottom: 20, left: 160 };
 
 export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellClick }: Props) {
   const { d3Tokens } = useThemeMode();
-  const chartHeight = Math.max(280, subsidiaries.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartHeight = Math.max(320, subsidiaries.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartMinWidth = dimensions.length * MIN_CELL_W + MARGIN.left + MARGIN.right;
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -76,7 +79,7 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', '#fff')
-        .attr('font-size', Math.min(13, x.bandwidth() * 0.18) + 'px')
+        .attr('font-size', Math.min(14, x.bandwidth() * 0.2) + 'px')
         .attr('font-weight', 700)
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('pointer-events', 'none')
@@ -114,7 +117,12 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
       height={chartHeight}
       empty={!cells.length}
     >
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+      <Box sx={{ overflowX: 'auto', width: '100%', height: '100%' }}>
+        <svg
+          ref={ref}
+          style={{ minWidth: chartMinWidth, width: '100%', height: '100%', overflow: 'visible' }}
+        />
+      </Box>
     </ChartContainer>
   );
 }

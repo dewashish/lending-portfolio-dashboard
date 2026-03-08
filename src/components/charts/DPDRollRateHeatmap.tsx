@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { Box } from '@mui/material';
 import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
@@ -22,7 +23,8 @@ interface HeatCell {
   balance: number;
 }
 
-const ROW_H = 56;
+const ROW_H = 64;
+const MIN_CELL_W = 90;
 const MARGIN = { top: 50, right: 20, bottom: 20, left: 90 };
 
 export function DPDRollRateHeatmap({ data }: Props) {
@@ -81,7 +83,8 @@ export function DPDRollRateHeatmap({ data }: Props) {
     return { matrix: cells, bucketRows: fromBuckets, bucketCols: toBuckets };
   }, [data]);
 
-  const chartHeight = Math.max(320, bucketRows.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartHeight = Math.max(400, bucketRows.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartMinWidth = bucketCols.length * MIN_CELL_W + MARGIN.left + MARGIN.right;
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -125,12 +128,12 @@ export function DPDRollRateHeatmap({ data }: Props) {
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', (d) => (d.transitionPct > 0.5 ? '#fff' : '#1e293b'))
-        .attr('font-size', Math.min(13, x.bandwidth() * 0.22) + 'px')
+        .attr('font-size', Math.min(14, x.bandwidth() * 0.22) + 'px')
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('font-weight', '600')
         .attr('pointer-events', 'none')
         .text((d) => {
-          if (x.bandwidth() < 28 || y.bandwidth() < 14) return '';
+          if (x.bandwidth() < 40 || y.bandwidth() < 20) return '';
           return formatPercent(d.transitionPct, 1);
         });
 
@@ -140,7 +143,7 @@ export function DPDRollRateHeatmap({ data }: Props) {
         .call(d3.axisTop(x).tickSize(0))
         .selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '10px')
+        .attr('font-size', '11px')
         .attr('font-weight', '600');
 
       g.selectAll('.domain').remove();
@@ -151,7 +154,7 @@ export function DPDRollRateHeatmap({ data }: Props) {
         .attr('y', -32)
         .attr('text-anchor', 'middle')
         .attr('fill', d3Tokens.textMuted)
-        .attr('font-size', '10px')
+        .attr('font-size', '11px')
         .attr('font-weight', '600')
         .text('To Bucket');
 
@@ -160,7 +163,7 @@ export function DPDRollRateHeatmap({ data }: Props) {
         .call(d3.axisLeft(y).tickSize(0))
         .selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '10px')
+        .attr('font-size', '11px')
         .attr('font-weight', '600');
 
       g.selectAll('.domain').remove();
@@ -172,7 +175,7 @@ export function DPDRollRateHeatmap({ data }: Props) {
         .attr('y', -60)
         .attr('text-anchor', 'middle')
         .attr('fill', d3Tokens.textMuted)
-        .attr('font-size', '10px')
+        .attr('font-size', '11px')
         .attr('font-weight', '600')
         .text('From Bucket');
     },
@@ -181,7 +184,12 @@ export function DPDRollRateHeatmap({ data }: Props) {
 
   return (
     <ChartContainer title="DPD Roll Rate Heatmap" subtitle="DPD bucket transition rates (latest period)" height={chartHeight} empty={!matrix.length}>
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+      <Box sx={{ overflowX: 'auto', width: '100%', height: '100%' }}>
+        <svg
+          ref={ref}
+          style={{ minWidth: chartMinWidth, width: '100%', height: '100%', overflow: 'visible' }}
+        />
+      </Box>
     </ChartContainer>
   );
 }
