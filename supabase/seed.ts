@@ -58,6 +58,9 @@ async function clearAll() {
     'corporate_watchlist',
     'corporate_executive_summary',
     'corporate_facilities',
+    'trade_watchlist',
+    'trade_collection_efficiency',
+    'trade_rating_distribution',
     'trade_concentrations',
     'trade_asset_quality',
     'trade_entity_performance',
@@ -1398,7 +1401,258 @@ function buildTradeEntityPerformance(): Row[] {
 }
 
 // ---------------------------------------------------------------------------
-// 17. corporate_delinquency (customers per subsidiary)
+// 17. trade_product_mix (product types per subsidiary)
+// ---------------------------------------------------------------------------
+const TRADE_PRODUCTS = [
+  { type: 'Import LC', limitMM: 12, outMM: 8, tenor: 180, share: 0.22 },
+  { type: 'Export LC', limitMM: 10, outMM: 6.5, tenor: 120, share: 0.18 },
+  { type: 'Bank Guarantee (Perf)', limitMM: 8, outMM: 5, tenor: 365, share: 0.14 },
+  { type: 'Bank Guarantee (Fin)', limitMM: 6, outMM: 4.2, tenor: 270, share: 0.12 },
+  { type: 'SBLC', limitMM: 5, outMM: 3.5, tenor: 365, share: 0.10 },
+  { type: 'Trade Loan (Pre-Export)', limitMM: 7, outMM: 5.5, tenor: 90, share: 0.11 },
+  { type: 'Trade Loan (Post-Import)', limitMM: 4, outMM: 3, tenor: 60, share: 0.08 },
+  { type: 'Forfaiting', limitMM: 2, outMM: 1.2, tenor: 150, share: 0.03 },
+  { type: 'Documentary Collection', limitMM: 1.5, outMM: 0.8, tenor: 45, share: 0.02 },
+];
+
+function buildTradeProductMix(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const tradeUsd = aumUsd * 0.16;
+    const scale = tradeUsd / 50_000_000; // normalize around 50M
+
+    for (const prod of TRADE_PRODUCTS) {
+      const n = noise(sub.id, prod.type.length, 3);
+      const limit = +(prod.limitMM * 1_000_000 * scale * n).toFixed(2);
+      const outstanding = +(prod.outMM * 1_000_000 * scale * n).toFixed(2);
+      const facilities = Math.max(1, Math.round(prod.outMM * 2 * n));
+      const util = outstanding > 0 && limit > 0 ? +(outstanding / limit).toFixed(4) : 0;
+      const s2s3 = +(0.03 + Math.random() * 0.08).toFixed(4);
+      const avgRating = +(2 + Math.random() * 3).toFixed(1);
+      const wlCount = Math.random() < 0.15 ? Math.round(1 + Math.random() * 2) : 0;
+
+      rows.push({
+        subsidiary_id: sub.id,
+        product_type: prod.type,
+        facilities,
+        facility_limit: limit,
+        facility_limit_usd: limit,
+        outstanding,
+        outstanding_usd: outstanding,
+        portfolio_share: prod.share,
+        avg_tenor: prod.tenor,
+        utilization: util,
+        stage2_plus3_pct: s2s3,
+        avg_rating: avgRating,
+        watchlist_count: wlCount,
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 18. trade_rating_distribution (rating bands per subsidiary)
+// ---------------------------------------------------------------------------
+const RATING_BANDS = [
+  { band: 'AAA', pct: 0.05, provision: 0.002 },
+  { band: 'AA+', pct: 0.08, provision: 0.004 },
+  { band: 'AA', pct: 0.12, provision: 0.006 },
+  { band: 'A+', pct: 0.15, provision: 0.01 },
+  { band: 'A', pct: 0.20, provision: 0.015 },
+  { band: 'BBB+', pct: 0.15, provision: 0.03 },
+  { band: 'BBB', pct: 0.10, provision: 0.05 },
+  { band: 'BB+', pct: 0.07, provision: 0.08 },
+  { band: 'BB', pct: 0.04, provision: 0.12 },
+  { band: 'B+', pct: 0.02, provision: 0.20 },
+  { band: 'B & Below', pct: 0.02, provision: 0.40 },
+];
+
+function buildTradeRatingDistribution(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const tradeUsd = aumUsd * 0.16;
+    const totalFacilities = Math.round(60 * noise(sub.id, 42, 2));
+
+    for (const rb of RATING_BANDS) {
+      const n = noise(sub.id, rb.band.length, 5);
+      const count = Math.max(1, Math.round(totalFacilities * rb.pct * n));
+      const balance = +(tradeUsd * rb.pct * n).toFixed(2);
+
+      rows.push({
+        subsidiary_id: sub.id,
+        rating_band: rb.band,
+        count,
+        balance,
+        balance_usd: balance,
+        portfolio_share: +(rb.pct * n).toFixed(4),
+        avg_provision: +(rb.provision * n).toFixed(4),
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 19. trade_concentrations (obligor + sector per subsidiary)
+// ---------------------------------------------------------------------------
+const TRADE_OBLIGORS = [
+  { name: 'Al-Futtaim Group', rating: 'A+', value: 8.5 },
+  { name: 'Maersk Line', rating: 'AA', value: 7.2 },
+  { name: 'Trafigura', rating: 'A', value: 6.8 },
+  { name: 'Emirates Steel', rating: 'BBB+', value: 5.5 },
+  { name: 'DP World', rating: 'AA+', value: 5.2 },
+  { name: 'Louis Dreyfus', rating: 'A', value: 4.8 },
+  { name: 'Cargill Inc.', rating: 'AA', value: 4.5 },
+  { name: 'ADNOC Distribution', rating: 'A+', value: 4.0 },
+  { name: 'Olam International', rating: 'A', value: 3.5 },
+  { name: 'Glencore PLC', rating: 'A+', value: 3.2 },
+];
+
+const TRADE_SECTORS = [
+  { name: 'Commodities Trading', value: 15 },
+  { name: 'Shipping & Logistics', value: 12 },
+  { name: 'Oil & Gas', value: 10 },
+  { name: 'Steel & Metals', value: 8 },
+  { name: 'Agriculture', value: 7 },
+  { name: 'Automotive', value: 6 },
+  { name: 'Construction', value: 5 },
+  { name: 'FMCG', value: 4 },
+  { name: 'Chemicals', value: 3 },
+  { name: 'Electronics', value: 2.5 },
+];
+
+function buildTradeConcentrations(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const tradeUsd = aumUsd * 0.16;
+    const scale = tradeUsd / 60_000_000;
+
+    // Obligor concentrations
+    for (const ob of TRADE_OBLIGORS) {
+      const n = noise(sub.id, ob.name.length, 7);
+      const val = +(ob.value * 1_000_000 * scale * n).toFixed(2);
+      const fac = Math.max(1, Math.round(3 * n));
+      rows.push({
+        subsidiary_id: sub.id,
+        name: ob.name,
+        category: 'obligor',
+        value: val,
+        value_usd: val,
+        portfolio_share: +(val / tradeUsd).toFixed(4),
+        facilities: fac,
+        rating: ob.rating,
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    }
+
+    // Sector concentrations
+    for (const sec of TRADE_SECTORS) {
+      const n = noise(sub.id, sec.name.length, 11);
+      const val = +(sec.value * 1_000_000 * scale * n).toFixed(2);
+      const fac = Math.max(1, Math.round(5 * n));
+      rows.push({
+        subsidiary_id: sub.id,
+        name: sec.name,
+        category: 'sector',
+        value: val,
+        value_usd: val,
+        portfolio_share: +(val / tradeUsd).toFixed(4),
+        facilities: fac,
+        rating: null,
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 20. trade_collection_efficiency (per subsidiary)
+// ---------------------------------------------------------------------------
+function buildTradeCollectionEfficiency(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const n = noise(sub.id, 77, 4);
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const tradeUsd = aumUsd * 0.16;
+    const provOut = +(tradeUsd * 0.04 * n).toFixed(2);
+
+    rows.push({
+      subsidiary_id: sub.id,
+      collection_efficiency_ratio: +(0.82 + n * 0.12).toFixed(4),
+      overdue_ratio: +(0.04 + (1 - n) * 0.06).toFixed(4),
+      avg_dpd: Math.round(18 + (1 - n) * 25),
+      recovery_rate: +(0.55 + n * 0.3).toFixed(4),
+      rollover_rate: +(0.08 + (1 - n) * 0.1).toFixed(4),
+      provision_outstanding: provOut,
+      provision_outstanding_usd: provOut,
+      rag_status: n > 0.85 ? 'Green' : n > 0.65 ? 'Amber' : 'Red',
+      report_date: '2025-08-15',
+      data_source_id: sub.dsOffset,
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 21. trade_watchlist (flagged facilities per subsidiary)
+// ---------------------------------------------------------------------------
+const WATCHLIST_OBLIGORS = [
+  { name: 'Evergrande Holdings', product: 'Import LC', ews: 4.2 },
+  { name: 'Wirecard AG', product: 'Bank Guarantee', ews: 3.8 },
+  { name: 'Luckin Coffee', product: 'Trade Loan', ews: 3.5 },
+  { name: 'NMC Health', product: 'SBLC', ews: 3.2 },
+  { name: 'Abraaj Group', product: 'Export LC', ews: 4.0 },
+];
+
+function buildTradeWatchlist(): Row[] {
+  const rows: Row[] = [];
+  let refCounter = 1000;
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const tradeUsd = aumUsd * 0.16;
+    const scale = tradeUsd / 60_000_000;
+
+    for (const wl of WATCHLIST_OBLIGORS) {
+      refCounter++;
+      const n = noise(sub.id, wl.name.length, 13);
+      const outstanding = +(wl.ews * 500_000 * scale * n).toFixed(2);
+      const dpd = Math.round(30 + wl.ews * 15 * n);
+      const stage = wl.ews >= 4 ? 'Stage 3' : wl.ews >= 3 ? 'Stage 2' : 'Stage 1';
+
+      rows.push({
+        subsidiary_id: sub.id,
+        facility_ref: `TF-${sub.shortCode}-${refCounter}`,
+        obligor_name: wl.name,
+        product_type: wl.product,
+        outstanding,
+        outstanding_usd: outstanding,
+        dpd,
+        ifrs_stage: stage,
+        rating: Math.round(wl.ews),
+        ews_score: Math.round(wl.ews * n),
+        triggers: dpd > 60 ? 'DPD >60, Rating downgrade' : 'EWS score elevated',
+        action: dpd > 60 ? 'Escalated to recovery' : 'Enhanced monitoring',
+        report_date: '2025-08-15',
+        data_source_id: sub.dsOffset,
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 22. corporate_delinquency (customers per subsidiary)
 // ---------------------------------------------------------------------------
 const CORP_CUSTOMERS = [
   { name: 'Orascom Construction', sector: 'Auto & Auto Components', facility: 'Bank Guarantee', rating: 'A' },
@@ -1692,6 +1946,21 @@ async function main() {
 
   console.log('Seeding trade_entity_performance...');
   await batchInsert('trade_entity_performance', buildTradeEntityPerformance());
+
+  console.log('Seeding trade_product_mix...');
+  await batchInsert('trade_product_mix', buildTradeProductMix());
+
+  console.log('Seeding trade_rating_distribution...');
+  await batchInsert('trade_rating_distribution', buildTradeRatingDistribution());
+
+  console.log('Seeding trade_concentrations...');
+  await batchInsert('trade_concentrations', buildTradeConcentrations());
+
+  console.log('Seeding trade_collection_efficiency...');
+  await batchInsert('trade_collection_efficiency', buildTradeCollectionEfficiency());
+
+  console.log('Seeding trade_watchlist...');
+  await batchInsert('trade_watchlist', buildTradeWatchlist());
 
   console.log('Seeding corporate_delinquency...');
   await batchInsert('corporate_delinquency', buildCorporateDelinquency());
