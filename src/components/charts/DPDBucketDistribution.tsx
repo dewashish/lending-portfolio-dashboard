@@ -33,29 +33,38 @@ export function DPDBucketDistribution({ data }: Props) {
     filtered.forEach((r) => Object.keys(r.values).forEach((k) => periodSet.add(k)));
     const sortedPeriods = Array.from(periodSet).sort();
 
-    const keys = filtered.map((r) => {
+    // Determine unique bucket keys present in the data (in DPD_BUCKETS order)
+    const foundKeys = new Set<DPDBucket>();
+    filtered.forEach((r) => {
       const match = DPD_BUCKETS.find((b) => r.bucket.includes(b));
-      return match ?? ('Current' as DPDBucket);
+      foundKeys.add(match ?? ('Current' as DPDBucket));
     });
+    const orderedKeys = DPD_BUCKETS.filter((b) => foundKeys.has(b));
 
+    // Aggregate values by bucket key per period
     const proc = sortedPeriods.map((p) => {
-      const segments = filtered.map((r, i) => ({
-        bucketKey: keys[i],
-        value: r.values[p] ?? 0,
+      const aggMap = new Map<DPDBucket, number>();
+      filtered.forEach((r) => {
+        const match = DPD_BUCKETS.find((b) => r.bucket.includes(b)) ?? ('Current' as DPDBucket);
+        aggMap.set(match, (aggMap.get(match) ?? 0) + Math.abs(r.values[p] ?? 0));
+      });
+
+      const segments = orderedKeys.map((bk) => ({
+        bucketKey: bk,
+        absValue: aggMap.get(bk) ?? 0,
       }));
-      const total = segments.reduce((s, seg) => s + Math.abs(seg.value), 0) || 1;
+      const total = segments.reduce((s, seg) => s + seg.absValue, 0) || 1;
       return {
         period: p,
         segments: segments.map((seg) => ({
           ...seg,
-          absValue: Math.abs(seg.value),
-          pct: Math.abs(seg.value) / total,
+          pct: seg.absValue / total,
         })),
         total,
       };
     });
 
-    return { periods: sortedPeriods, processed: proc, bucketKeys: Array.from(new Set(keys)) };
+    return { periods: sortedPeriods, processed: proc, bucketKeys: orderedKeys };
   }, [data]);
 
   /* ── D3 render ────────────────────────────────────────────── */
