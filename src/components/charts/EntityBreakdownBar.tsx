@@ -16,8 +16,10 @@ export function EntityBreakdownBar({ data, onEntityClick }: Props) {
   const { d3Tokens } = useThemeMode();
   const filtered = data.filter(d => d.entity !== 'GROUP TOTAL');
 
+  const chartHeight = Math.max(320, filtered.length * 48 + 40);
+
   const ref = useD3Chart((svg, width, height) => {
-    const margin = { top: 10, right: 120, bottom: 30, left: 140 };
+    const margin = { top: 10, right: 120, bottom: 30, left: 160 };
     const w = width - margin.left - margin.right;
     const h = height - margin.top - margin.bottom;
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -83,7 +85,7 @@ export function EntityBreakdownBar({ data, onEntityClick }: Props) {
   }, [filtered, d3Tokens]);
 
   return (
-    <ChartContainer title="Entity Outstanding Breakdown" subtitle="USD mm" empty={!filtered.length}>
+    <ChartContainer title="Entity Outstanding Breakdown" subtitle="USD mm" height={chartHeight} empty={!filtered.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

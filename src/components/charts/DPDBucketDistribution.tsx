@@ -143,6 +143,7 @@ export function DPDBucketDistribution({ data }: Props) {
     <ChartContainer
       title="DPD Bucket Distribution"
       subtitle="Stacked amounts by period"
+      height={400}
       empty={!bucketRows.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

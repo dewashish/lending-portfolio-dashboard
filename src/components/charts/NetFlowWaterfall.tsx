@@ -50,6 +50,8 @@ export function NetFlowWaterfall({ data, selectedPeriod }: Props) {
     return { bars: result, period: activePeriod };
   }, [data, selectedPeriod]);
 
+  const chartHeight = Math.max(320, bars.length * 40 + 40);
+
   const ref = useD3Chart(
     (svg, width, height) => {
       const margin = { top: 10, right: 100, bottom: 30, left: 160 };
@@ -125,6 +127,7 @@ export function NetFlowWaterfall({ data, selectedPeriod }: Props) {
     <ChartContainer
       title="Net Flow — DPD Bucket Amounts"
       subtitle={period ? `Period: ${period}` : undefined}
+      height={chartHeight}
       empty={!bars.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

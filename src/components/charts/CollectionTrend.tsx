@@ -170,6 +170,7 @@ export function CollectionTrend({ data }: Props) {
     <ChartContainer
       title="Collection Trend"
       subtitle="Normalized and roll-back rates by bucket"
+      height={380}
       empty={!data.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

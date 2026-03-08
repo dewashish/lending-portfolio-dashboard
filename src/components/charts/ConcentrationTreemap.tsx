@@ -16,6 +16,8 @@ export function ConcentrationTreemap({ data, groupBy }: Props) {
   const { d3Tokens } = useThemeMode();
   const filtered = data.filter((d) => d.category === groupBy && d.value > 0);
 
+  const chartHeight = Math.max(360, filtered.length * 28 + 8);
+
   const ref = useD3Chart(
     (svg, width, height) => {
       const margin = { top: 4, right: 4, bottom: 4, left: 4 };
@@ -107,6 +109,7 @@ export function ConcentrationTreemap({ data, groupBy }: Props) {
   return (
     <ChartContainer
       title={`Concentration — ${groupBy === 'obligor' ? 'Obligor' : 'Sector'}`}
+      height={chartHeight}
       empty={!filtered.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

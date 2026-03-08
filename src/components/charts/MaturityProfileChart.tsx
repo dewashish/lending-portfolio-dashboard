@@ -157,7 +157,7 @@ export function MaturityProfileChart({ data }: Props) {
   );
 
   return (
-    <ChartContainer title="Maturity Profile" subtitle="Balance by maturity band and facility type" empty={!data.length}>
+    <ChartContainer title="Maturity Profile" subtitle="Balance by maturity band and facility type" height={400} empty={!data.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
