@@ -13,6 +13,9 @@ interface Props {
   metricType: string;
 }
 
+const ROW_H = 36;
+const MARGIN = { top: 20, right: 20, bottom: 40, left: 70 };
+
 export function VintageHeatmap({ data, metricType }: Props) {
   const { d3Tokens } = useThemeMode();
 
@@ -52,9 +55,11 @@ export function VintageHeatmap({ data, metricType }: Props) {
     return { vintages: sorted, mobs: mobSet, maxRate: max, cellMap: map };
   }, [filtered]);
 
+  const chartHeight = Math.max(320, vintages.length * ROW_H + MARGIN.top + MARGIN.bottom);
+
   const ref = useD3Chart(
     (svg, width, height) => {
-      const margin = { top: 20, right: 20, bottom: 40, left: 60 };
+      const margin = MARGIN;
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -160,6 +165,7 @@ export function VintageHeatmap({ data, metricType }: Props) {
     <ChartContainer
       title={`Vintage Heatmap \u2014 ${metricType}`}
       subtitle="Delinquency rate by vintage and MOB"
+      height={chartHeight}
       empty={!filtered.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

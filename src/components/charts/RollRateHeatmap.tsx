@@ -15,6 +15,9 @@ interface Props {
 /** Bucket group prefixes used to insert thicker separator lines */
 const BUCKET_PREFIXES = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
 
+const ROW_H = 32;
+const MARGIN = { top: 60, right: 20, bottom: 10, left: 170 };
+
 export function RollRateHeatmap({ data }: Props) {
   const { d3Tokens } = useThemeMode();
 
@@ -40,9 +43,11 @@ export function RollRateHeatmap({ data }: Props) {
     return indices;
   }, [metrics]);
 
+  const chartHeight = Math.max(320, metrics.length * ROW_H + MARGIN.top + MARGIN.bottom);
+
   const ref = useD3Chart(
     (svg, width, height) => {
-      const margin = { top: 60, right: 20, bottom: 10, left: 140 };
+      const margin = MARGIN;
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -140,7 +145,7 @@ export function RollRateHeatmap({ data }: Props) {
   );
 
   return (
-    <ChartContainer title="Roll Rate Heatmap" subtitle="Transition rates by period" empty={!data.length}>
+    <ChartContainer title="Roll Rate Heatmap" subtitle="Transition rates by period" height={chartHeight} empty={!data.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

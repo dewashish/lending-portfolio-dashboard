@@ -22,6 +22,9 @@ interface HeatCell {
   balance: number;
 }
 
+const ROW_H = 56;
+const MARGIN = { top: 50, right: 20, bottom: 20, left: 90 };
+
 export function DPDRollRateHeatmap({ data }: Props) {
   const { d3Tokens } = useThemeMode();
 
@@ -78,9 +81,11 @@ export function DPDRollRateHeatmap({ data }: Props) {
     return { matrix: cells, bucketRows: fromBuckets, bucketCols: toBuckets };
   }, [data]);
 
+  const chartHeight = Math.max(320, bucketRows.length * ROW_H + MARGIN.top + MARGIN.bottom);
+
   const ref = useD3Chart(
     (svg, width, height) => {
-      const margin = { top: 50, right: 20, bottom: 20, left: 80 };
+      const margin = MARGIN;
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -120,7 +125,7 @@ export function DPDRollRateHeatmap({ data }: Props) {
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', (d) => (d.transitionPct > 0.5 ? '#fff' : '#1e293b'))
-        .attr('font-size', Math.min(11, x.bandwidth() * 0.2) + 'px')
+        .attr('font-size', Math.min(13, x.bandwidth() * 0.22) + 'px')
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('font-weight', '600')
         .attr('pointer-events', 'none')
@@ -175,7 +180,7 @@ export function DPDRollRateHeatmap({ data }: Props) {
   );
 
   return (
-    <ChartContainer title="DPD Roll Rate Heatmap" subtitle="DPD bucket transition rates (latest period)" empty={!matrix.length}>
+    <ChartContainer title="DPD Roll Rate Heatmap" subtitle="DPD bucket transition rates (latest period)" height={chartHeight} empty={!matrix.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

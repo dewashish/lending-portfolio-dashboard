@@ -28,12 +28,16 @@ interface Props {
   onCellClick?: (subsidiaryId: number, tabIndex: number) => void;
 }
 
+const ROW_H = 48;
+const MARGIN = { top: 50, right: 20, bottom: 20, left: 160 };
+
 export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellClick }: Props) {
   const { d3Tokens } = useThemeMode();
+  const chartHeight = Math.max(280, subsidiaries.length * ROW_H + MARGIN.top + MARGIN.bottom);
 
   const ref = useD3Chart(
     (svg, width, height) => {
-      const margin = { top: 50, right: 20, bottom: 20, left: 130 };
+      const margin = MARGIN;
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -72,7 +76,7 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', '#fff')
-        .attr('font-size', Math.min(11, x.bandwidth() * 0.14) + 'px')
+        .attr('font-size', Math.min(13, x.bandwidth() * 0.18) + 'px')
         .attr('font-weight', 700)
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('pointer-events', 'none')
@@ -84,7 +88,7 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
         .call(d3.axisTop(x).tickSize(0))
         .selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '9px')
+        .attr('font-size', '11px')
         .attr('font-weight', 600)
         .attr('text-anchor', 'middle');
 
@@ -107,6 +111,7 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
     <ChartContainer
       title="Subsidiary Risk Heatmap"
       subtitle="RAG status across risk dimensions — click to drill down"
+      height={chartHeight}
       empty={!cells.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

@@ -27,6 +27,9 @@ interface RiskCell {
   rag: RAGStatus;
 }
 
+const ROW_H = 48;
+const MARGIN = { top: 40, right: 20, bottom: 20, left: 160 };
+
 export function CompositeRiskHeatmap({ fxData, countryData, ewsData }: Props) {
   const { d3Tokens } = useThemeMode();
 
@@ -58,9 +61,11 @@ export function CompositeRiskHeatmap({ fxData, countryData, ewsData }: Props) {
     return { cells: cellList, entities: entityList };
   }, [fxData, countryData, ewsData]);
 
+  const chartHeight = Math.max(280, entities.length * ROW_H + MARGIN.top + MARGIN.bottom);
+
   const ref = useD3Chart(
     (svg, width, height) => {
-      const margin = { top: 40, right: 20, bottom: 20, left: 120 };
+      const margin = MARGIN;
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -97,7 +102,7 @@ export function CompositeRiskHeatmap({ fxData, countryData, ewsData }: Props) {
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', '#fff')
-        .attr('font-size', Math.min(11, x.bandwidth() * 0.12) + 'px')
+        .attr('font-size', Math.min(13, x.bandwidth() * 0.16) + 'px')
         .attr('font-weight', '700')
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('pointer-events', 'none')
@@ -128,7 +133,7 @@ export function CompositeRiskHeatmap({ fxData, countryData, ewsData }: Props) {
   );
 
   return (
-    <ChartContainer title="Composite Risk Heatmap" subtitle="Subsidiaries vs. risk dimensions" empty={!cells.length}>
+    <ChartContainer title="Composite Risk Heatmap" subtitle="Subsidiaries vs. risk dimensions" height={chartHeight} empty={!cells.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
