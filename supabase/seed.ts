@@ -60,6 +60,7 @@ async function clearAll() {
     'corporate_facilities',
     'trade_concentrations',
     'trade_asset_quality',
+    'trade_entity_performance',
     'trade_top_exposures',
     'trade_maturity_profile',
     'trade_product_mix',
@@ -1301,6 +1302,101 @@ function buildLosDaily(): Row[] {
   return rows;
 }
 
+// ---------------------------------------------------------------------------
+// 15. trade_asset_quality (IFRS 9 staging per subsidiary)
+// ---------------------------------------------------------------------------
+function buildTradeAssetQuality(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    // Trade portfolio is roughly 16% of total AUM
+    const tradeUsd = aumUsd * 0.16;
+    const n = noise(sub.id, 99, 1);
+
+    const stage1Pct = 0.88 + (n - 1) * 0.03;  // ~85-91%
+    const stage2Pct = 0.08 + (n - 1) * 0.02;  // ~6-10%
+    const stage3Pct = 1 - stage1Pct - stage2Pct;
+
+    const stage1Bal = +(tradeUsd * stage1Pct).toFixed(2);
+    const stage2Bal = +(tradeUsd * stage2Pct).toFixed(2);
+    const stage3Bal = +(tradeUsd * stage3Pct).toFixed(2);
+
+    const stage1Count = Math.round(40 * n);
+    const stage2Count = Math.round(6 * n);
+    const stage3Count = Math.round(2 * n);
+
+    const s2s3Pct = +((stage2Bal + stage3Bal) / tradeUsd).toFixed(4);
+    const provCov = +(0.6 + Math.random() * 0.3).toFixed(4);
+    const rag = s2s3Pct > 0.1 ? 'Red' : s2s3Pct > 0.07 ? 'Amber' : 'Green';
+
+    rows.push({
+      subsidiary_id: sub.id,
+      stage1_count: stage1Count,
+      stage1_balance: stage1Bal,
+      stage1_balance_usd: stage1Bal,
+      stage2_count: stage2Count,
+      stage2_balance: stage2Bal,
+      stage2_balance_usd: stage2Bal,
+      stage3_count: stage3Count,
+      stage3_balance: stage3Bal,
+      stage3_balance_usd: stage3Bal,
+      stage2_plus3_pct: s2s3Pct,
+      provision_coverage: provCov,
+      rag_status: rag,
+      report_date: '2025-08-15',
+      data_source_id: sub.dsOffset,
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 16. trade_entity_performance (per subsidiary)
+// ---------------------------------------------------------------------------
+function buildTradeEntityPerformance(): Row[] {
+  const rows: Row[] = [];
+  for (const sub of SUBSIDIARIES) {
+    const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
+    const tradeUsd = aumUsd * 0.16;
+    const n = noise(sub.id, 88, 2);
+
+    const approvedLimit = +(tradeUsd * 1.4 * n).toFixed(2);
+    const outstanding = +(tradeUsd * n).toFixed(2);
+    const headroom = +(approvedLimit - outstanding).toFixed(2);
+    const utilization = +(outstanding / approvedLimit).toFixed(4);
+
+    const stage1Bal = +(outstanding * 0.88).toFixed(2);
+    const stage2Bal = +(outstanding * 0.08).toFixed(2);
+    const stage3Bal = +(outstanding * 0.04).toFixed(2);
+    const provisions = +(stage3Bal * 0.6 + stage2Bal * 0.1).toFixed(2);
+    const provCov = +(provisions / (stage2Bal + stage3Bal)).toFixed(4);
+    const rag = utilization > 0.85 ? 'Red' : utilization > 0.7 ? 'Amber' : 'Green';
+
+    rows.push({
+      subsidiary_id: sub.id,
+      approved_limit: approvedLimit,
+      approved_limit_usd: approvedLimit,
+      outstanding,
+      outstanding_usd: outstanding,
+      headroom,
+      utilization,
+      stage1_balance: stage1Bal,
+      stage1_balance_usd: stage1Bal,
+      stage2_balance: stage2Bal,
+      stage2_balance_usd: stage2Bal,
+      stage3_balance: stage3Bal,
+      stage3_balance_usd: stage3Bal,
+      provisions,
+      provisions_usd: provisions,
+      provision_coverage: provCov,
+      rag_status: rag,
+      report_date: '2025-08-15',
+      data_source_id: sub.dsOffset,
+    });
+  }
+  return rows;
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -1384,6 +1480,12 @@ async function main() {
 
   console.log('Seeding los_daily...');
   await batchInsert('los_daily', buildLosDaily());
+
+  console.log('Seeding trade_asset_quality...');
+  await batchInsert('trade_asset_quality', buildTradeAssetQuality());
+
+  console.log('Seeding trade_entity_performance...');
+  await batchInsert('trade_entity_performance', buildTradeEntityPerformance());
 
   // -----------------------------------------------------------
   // Risk Appetite Settings (14 global defaults)
