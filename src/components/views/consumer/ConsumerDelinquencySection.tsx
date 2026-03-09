@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Autocomplete, TextField, Chip } from '@mui/material';
+import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Autocomplete, TextField, Chip, Select, MenuItem } from '@mui/material';
 import { NetFlowWaterfall } from '@/components/charts/NetFlowWaterfall';
 import { RollRateHeatmap } from '@/components/charts/RollRateHeatmap';
 import { RollRateSankey } from '@/components/charts/RollRateSankey';
@@ -9,7 +9,7 @@ import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useNetFlowRates, useRollRates, useConsumerOverall, useProductCatalog, useProductMetrics } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
-import { formatPercent } from '@/lib/format';
+import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
 import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
@@ -102,6 +102,7 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
 export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const { data: productCatalog } = useProductCatalog(scope);
   const { getColor } = useRiskAppetite();
 
@@ -126,19 +127,33 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
     return []; // empty = show aggregate (no filter)
   }, [securedFilter, selectedProducts, availableProducts]);
 
-  // Build effective filters for delinquency hooks
-  const effectiveFilters: ConsumerFilters = useMemo(() => ({
-    period: filters?.period ?? null,
+  // Net Flow: filter to specific selected period
+  const netFlowFilters: ConsumerFilters = useMemo(() => ({
+    period: selectedPeriod,
     products: effectiveProducts,
-  }), [filters?.period, effectiveProducts]);
+  }), [selectedPeriod, effectiveProducts]);
+
+  // Roll Rates: fetch ALL periods (client-side filtering in heatmap)
+  const rollRateFilters: ConsumerFilters = useMemo(() => ({
+    period: null,
+    products: effectiveProducts,
+  }), [effectiveProducts]);
 
   const hasProductFilter = effectiveProducts.length > 0;
 
-  const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, effectiveFilters);
-  const { data: rollRates, isLoading: l2 } = useRollRates(scope, effectiveFilters);
+  const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, netFlowFilters);
+  const { data: rollRates, isLoading: l2 } = useRollRates(scope, rollRateFilters);
   const { data: overall } = useConsumerOverall(scope, filters);
   // Product-level metrics for KPIs when filter is active
-  const { data: productData } = useProductMetrics(scope, hasProductFilter ? effectiveFilters : undefined);
+  const { data: productData } = useProductMetrics(scope, hasProductFilter ? netFlowFilters : undefined);
+
+  // Extract available periods from roll rate data (chronologically sorted)
+  const availablePeriods = useMemo(() => {
+    if (!rollRates || rollRates.length === 0) return [];
+    const periodSet = new Set<string>();
+    rollRates.forEach((r) => Object.keys(r.values).forEach((k) => periodSet.add(k)));
+    return sortPeriodsChronologically(Array.from(periodSet));
+  }, [rollRates]);
 
   const kpis = useMemo<DKpi[]>(() => {
     const defs = [
@@ -219,6 +234,19 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
           <ToggleButton value="unsecured">Unsecured</ToggleButton>
         </ToggleButtonGroup>
 
+        <Select
+          size="small"
+          displayEmpty
+          value={selectedPeriod ?? ''}
+          onChange={(e) => setSelectedPeriod(e.target.value === '' ? null : e.target.value as string)}
+          sx={{ minWidth: 130, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.4 } }}
+        >
+          <MenuItem value="" sx={{ fontSize: '0.72rem' }}>Latest Period</MenuItem>
+          {availablePeriods.map((p) => (
+            <MenuItem key={p} value={p} sx={{ fontSize: '0.72rem' }}>{p}</MenuItem>
+          ))}
+        </Select>
+
         <Autocomplete
           multiple
           size="small"
@@ -245,14 +273,14 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <NetFlowWaterfall data={netFlow ?? []} />
+          <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <RollRateSankey data={rollRates ?? []} />
+          <RollRateSankey data={rollRates ?? []} period={selectedPeriod ?? undefined} />
         </Grid>
       </Grid>
 
-      <RollRateHeatmap data={rollRates ?? []} />
+      <RollRateHeatmap data={rollRates ?? []} maxPeriod={selectedPeriod} />
     </Box>
   );
 }

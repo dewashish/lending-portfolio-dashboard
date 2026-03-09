@@ -90,3 +90,28 @@ export function ragFromValue(
   if (value <= amberThreshold) return 'Amber';
   return 'Red';
 }
+
+// ── Period Utilities (Mon'YY format) ─────────────────────────────
+
+const MONTH_INDEX: Record<string, number> = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+};
+
+/** Parse "Mon'YY" period string to a comparable number (year*12 + monthIndex). */
+export function parsePeriodToNum(s: string): number {
+  const match = s.match(/([A-Za-z]+)'?(\d{2,4})/);
+  if (!match) return 0;
+  const m = MONTH_INDEX[match[1]] ?? 0;
+  let y = parseInt(match[2], 10);
+  if (y < 100) y += 2000;
+  return y * 12 + m;
+}
+
+/** Sort period strings chronologically. */
+export function sortPeriodsChronologically(periods: string[], descending = false): string[] {
+  return [...periods].sort((a, b) => {
+    const diff = parsePeriodToNum(a) - parsePeriodToNum(b);
+    return descending ? -diff : diff;
+  });
+}

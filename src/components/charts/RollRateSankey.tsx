@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import * as d3 from 'd3';
 import { sankey as d3Sankey, sankeyLinkHorizontal } from 'd3-sankey';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { BUCKET_COLORS } from '@/lib/constants';
+import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
 import type { RollRateTimeSeries, DPDBucket } from '@/lib/types';
 
 interface Props {
@@ -14,10 +15,6 @@ interface Props {
   period?: string;
 }
 
-/**
- * Two-column Sankey: source buckets (left) → destination buckets (right).
- * This avoids circular links that d3-sankey cannot handle.
- */
 const BUCKETS: DPDBucket[] = ['Current', '1-30', '31-60', '61-90', '91-120', '120+'];
 
 const BUCKET_PREFIX_MAP: Record<string, number> = {
@@ -35,30 +32,51 @@ interface SankeyLink {
   source: number;
   target: number;
   value: number;
+  metricName: string;
+  flowType: string;
+  rawRate: number;
+  prevRate: number | null;
 }
+
+function classifyFlow(lowerMetric: string): string {
+  if (lowerMetric.includes('resolution') || lowerMetric.includes('cure')) return 'Resolution / Cure';
+  if (lowerMetric.includes('roll forward') || lowerMetric.includes('rollforward')) return 'Roll Forward';
+  if (lowerMetric.includes('rollback') || lowerMetric.includes('roll back')) return 'Roll Back';
+  if (lowerMetric.includes('stabilize') || lowerMetric.includes('norm')) return 'Stabilize';
+  return 'Other';
+}
+
+const TOOLTIP_CLASS = 'sankey-tooltip';
 
 export function RollRateSankey({ data, period }: Props) {
   const { d3Tokens } = useThemeMode();
 
-  const { nodes, links, activePeriod } = useMemo(() => {
-    if (!data.length) return { nodes: [], links: [], activePeriod: '' };
+  // Cleanup tooltip on unmount
+  useEffect(() => {
+    return () => { d3.selectAll(`.${TOOLTIP_CLASS}`).remove(); };
+  }, []);
+
+  const { nodes, links, activePeriod, previousPeriod } = useMemo(() => {
+    if (!data.length) return { nodes: [], links: [], activePeriod: '', previousPeriod: '' };
 
     const allPeriods = new Set<string>();
     data.forEach((r) => Object.keys(r.values).forEach((k) => allPeriods.add(k)));
-    const sortedPeriods = Array.from(allPeriods).sort();
+    const sortedPeriods = sortPeriodsChronologically(Array.from(allPeriods));
     const selectedPeriod =
       period && allPeriods.has(period)
         ? period
         : sortedPeriods[sortedPeriods.length - 1] ?? '';
 
-    // Two-column node layout: source buckets [0..5], destination buckets [6..11]
+    const selectedIdx = sortedPeriods.indexOf(selectedPeriod);
+    const prevPeriod = selectedIdx > 0 ? sortedPeriods[selectedIdx - 1] : '';
+
     const nodeList: SankeyNode[] = [
       ...BUCKETS.map((b, i) => ({ name: b, column: 'source' as const, bucketIdx: i })),
       ...BUCKETS.map((b, i) => ({ name: b, column: 'dest' as const, bucketIdx: i })),
     ];
 
     const linkList: SankeyLink[] = [];
-    const DEST_OFFSET = BUCKETS.length; // destination nodes start at index 6
+    const DEST_OFFSET = BUCKETS.length;
 
     data.forEach((row) => {
       const metricName = row.metric;
@@ -71,35 +89,41 @@ export function RollRateSankey({ data, period }: Props) {
       if (srcIdx == null) return;
 
       const lowerMetric = metricName.toLowerCase();
+      const flowType = classifyFlow(lowerMetric);
+      const prevValue = prevPeriod ? (row.values[prevPeriod] ?? null) : null;
+
+      const baseLinkData = {
+        metricName,
+        flowType,
+        rawRate: value,
+        prevRate: prevValue,
+      };
 
       if (lowerMetric.includes('resolution') || lowerMetric.includes('cure')) {
-        // Flows to Current destination
-        linkList.push({ source: srcIdx, target: DEST_OFFSET + 0, value: Math.abs(value) * 100 });
+        linkList.push({ source: srcIdx, target: DEST_OFFSET + 0, value: Math.abs(value) * 100, ...baseLinkData });
       } else if (lowerMetric.includes('roll forward') || lowerMetric.includes('rollforward')) {
         const destIdx = Math.min(srcIdx + 1, BUCKETS.length - 1);
-        linkList.push({ source: srcIdx, target: DEST_OFFSET + destIdx, value: Math.abs(value) * 100 });
+        linkList.push({ source: srcIdx, target: DEST_OFFSET + destIdx, value: Math.abs(value) * 100, ...baseLinkData });
       } else if (lowerMetric.includes('rollback') || lowerMetric.includes('roll back')) {
         const destIdx = Math.max(srcIdx - 1, 0);
         if (destIdx !== srcIdx) {
-          linkList.push({ source: srcIdx, target: DEST_OFFSET + destIdx, value: Math.abs(value) * 100 });
+          linkList.push({ source: srcIdx, target: DEST_OFFSET + destIdx, value: Math.abs(value) * 100, ...baseLinkData });
         }
       } else if (lowerMetric.includes('stabilize') || lowerMetric.includes('norm')) {
-        // Stabilized: stays in same bucket (source → same dest)
-        linkList.push({ source: srcIdx, target: DEST_OFFSET + srcIdx, value: Math.abs(value) * 100 });
+        linkList.push({ source: srcIdx, target: DEST_OFFSET + srcIdx, value: Math.abs(value) * 100, ...baseLinkData });
       }
     });
 
     const validLinks = linkList.filter((l) => l.value > 0);
 
-    // Remove unused nodes (no links attached)
-    const usedNodeIndices = new Set<number>();
-    validLinks.forEach((l) => { usedNodeIndices.add(l.source); usedNodeIndices.add(l.target); });
-
-    return { nodes: nodeList, links: validLinks, activePeriod: selectedPeriod };
+    return { nodes: nodeList, links: validLinks, activePeriod: selectedPeriod, previousPeriod: prevPeriod };
   }, [data, period]);
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      // Clean up stale tooltips
+      d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
+
       if (nodes.length === 0 || links.length === 0) return;
 
       const margin = { top: 10, right: 100, bottom: 10, left: 80 };
@@ -119,7 +143,6 @@ export function RollRateSankey({ data, period }: Props) {
           links: links.map((l) => ({ ...l })),
         });
       } catch {
-        // Fallback: if sankey still fails, skip rendering
         g.append('text')
           .attr('x', w / 2).attr('y', h / 2)
           .attr('text-anchor', 'middle')
@@ -130,7 +153,7 @@ export function RollRateSankey({ data, period }: Props) {
       }
 
       // Link color based on destination bucket severity
-      const linkColor = (link: { target: { bucketIdx?: number; column?: string } | number }) => {
+      const linkColor = (link: { target: { bucketIdx?: number } | number }) => {
         const t = typeof link.target === 'object' ? link.target : null;
         const idx = t?.bucketIdx ?? 0;
         if (idx === 0) return '#4caf5080';
@@ -140,7 +163,39 @@ export function RollRateSankey({ data, period }: Props) {
         return '#f4433680';
       };
 
-      // Draw links
+      // Create tooltip
+      const tooltip = d3
+        .select('body')
+        .append('div')
+        .attr('class', TOOLTIP_CLASS)
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '10px 14px')
+        .style('font-size', '12px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)')
+        .style('z-index', '9999')
+        .style('max-width', '280px')
+        .style('line-height', '1.5')
+        .style('transition', 'opacity 0.15s ease');
+
+      const positionTooltip = (event: MouseEvent) => {
+        const ttNode = tooltip.node() as HTMLDivElement;
+        const ttW = ttNode.offsetWidth;
+        const ttH = ttNode.offsetHeight;
+        let left = event.pageX + 14;
+        let top = event.pageY - ttH / 2;
+        if (left + ttW > window.innerWidth - 8) left = event.pageX - ttW - 14;
+        if (top < 8) top = 8;
+        if (top + ttH > window.innerHeight - 8) top = window.innerHeight - ttH - 8;
+        tooltip.style('left', `${left}px`).style('top', `${top}px`);
+      };
+
+      // Draw links with tooltip
       g.selectAll('path.link')
         .data(graph.links)
         .join('path')
@@ -150,10 +205,50 @@ export function RollRateSankey({ data, period }: Props) {
         .attr('stroke', (d) => linkColor(d as { target: { bucketIdx?: number } }))
         .attr('stroke-width', (d) => Math.max(1, (d as { width?: number }).width ?? 1))
         .attr('opacity', 0.5)
-        .on('mouseover', function () { d3.select(this).attr('opacity', 0.8); })
-        .on('mouseout', function () { d3.select(this).attr('opacity', 0.5); });
+        .style('cursor', 'pointer')
+        .on('mouseover', function (event: MouseEvent, d) {
+          d3.select(this).attr('opacity', 0.85).attr('stroke-width', Math.max(2, ((d as { width?: number }).width ?? 1) + 1));
 
-      // Draw nodes
+          const linkData = d as unknown as SankeyLink & { source: SankeyNode; target: SankeyNode };
+          const srcName = linkData.source?.name ?? '';
+          const destName = linkData.target?.name ?? '';
+          const rate = linkData.rawRate;
+          const prevRate = linkData.prevRate;
+
+          let html = `<div style="font-weight:700;margin-bottom:4px;font-size:13px">${linkData.flowType}</div>`;
+          html += `<div style="color:${d3Tokens.textMuted};margin-bottom:6px;font-size:11px">${srcName} → ${destName}</div>`;
+          html += `<table style="border-collapse:collapse;width:100%">`;
+          html += `<tr>
+            <td style="padding:2px 8px 2px 0;white-space:nowrap;font-size:11px">${activePeriod}</td>
+            <td style="padding:2px 0;text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px">${formatPercent(rate, 1)}</td>
+          </tr>`;
+
+          if (prevRate != null && previousPeriod) {
+            const delta = rate - prevRate;
+            const deltaColor = Math.abs(delta) < 0.001 ? d3Tokens.textMuted : delta > 0 ? '#ef5350' : '#66bb6a';
+            html += `<tr>
+              <td style="padding:2px 8px 2px 0;white-space:nowrap;font-size:11px;color:${d3Tokens.textMuted}">${previousPeriod}</td>
+              <td style="padding:2px 0;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:${d3Tokens.textMuted}">${formatPercent(prevRate, 1)}</td>
+            </tr>`;
+            html += `<tr style="border-top:1px solid ${d3Tokens.tooltipBorder}">
+              <td style="padding:4px 8px 0 0;font-size:11px;font-weight:600">Change</td>
+              <td style="padding:4px 0 0;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:${deltaColor}">${delta >= 0 ? '+' : ''}${(delta * 100).toFixed(1)}pp</td>
+            </tr>`;
+          }
+          html += '</table>';
+
+          tooltip.html(html).style('opacity', '1');
+          positionTooltip(event);
+        })
+        .on('mousemove', function (event: MouseEvent) {
+          positionTooltip(event);
+        })
+        .on('mouseout', function (_, d) {
+          d3.select(this).attr('opacity', 0.5).attr('stroke-width', Math.max(1, ((d as { width?: number }).width ?? 1)));
+          tooltip.style('opacity', '0');
+        });
+
+      // Draw nodes with tooltip
       g.selectAll('rect.node')
         .data(graph.nodes)
         .join('rect')
@@ -167,7 +262,48 @@ export function RollRateSankey({ data, period }: Props) {
           return BUCKET_COLORS[name] ?? '#64748b';
         })
         .attr('rx', 3)
-        .attr('opacity', 0.9);
+        .attr('opacity', 0.9)
+        .style('cursor', 'pointer')
+        .on('mouseover', function (event: MouseEvent, d) {
+          d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const nodeData = d as any;
+          const col = (nodeData as SankeyNode).column;
+          const nodeName = (nodeData as SankeyNode).name;
+          const isSource = col === 'source';
+
+          let html = `<div style="font-weight:700;margin-bottom:4px;font-size:13px">${nodeName}</div>`;
+          html += `<div style="color:${d3Tokens.textMuted};margin-bottom:6px;font-size:11px">${isSource ? 'Outflows' : 'Inflows'} — ${activePeriod}</div>`;
+
+          const relevantLinks: Array<Record<string, unknown>> = isSource ? (nodeData.sourceLinks ?? []) : (nodeData.targetLinks ?? []);
+
+          if (relevantLinks.length > 0) {
+            html += '<table style="border-collapse:collapse;width:100%">';
+            relevantLinks.forEach((link) => {
+              const peer = isSource ? link.target : link.source;
+              const peerName = (peer as { name?: string })?.name ?? '';
+              const rate = link.rawRate as number;
+              html += `<tr>
+                <td style="padding:2px 8px 2px 0;white-space:nowrap;font-size:11px">
+                  <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${BUCKET_COLORS[peerName as DPDBucket] ?? '#64748b'};margin-right:5px;vertical-align:middle"></span>${isSource ? '→' : '←'} ${peerName}
+                </td>
+                <td style="padding:2px 0;text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px">${formatPercent(rate, 1)}</td>
+              </tr>`;
+            });
+            html += '</table>';
+          }
+
+          tooltip.html(html).style('opacity', '1');
+          positionTooltip(event);
+        })
+        .on('mousemove', function (event: MouseEvent) {
+          positionTooltip(event);
+        })
+        .on('mouseout', function () {
+          d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
+        });
 
       // Node labels
       g.selectAll('text.node-label')
@@ -188,7 +324,7 @@ export function RollRateSankey({ data, period }: Props) {
         .attr('font-weight', 600)
         .text((d) => (d as SankeyNode).name);
     },
-    [nodes, links, d3Tokens],
+    [nodes, links, d3Tokens, activePeriod, previousPeriod],
   );
 
   return (

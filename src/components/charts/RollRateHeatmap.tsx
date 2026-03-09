@@ -6,11 +6,12 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
-import { formatPercent } from '@/lib/format';
+import { formatPercent, parsePeriodToNum, sortPeriodsChronologically } from '@/lib/format';
 import type { RollRateTimeSeries } from '@/lib/types';
 
 interface Props {
   data: RollRateTimeSeries[];
+  maxPeriod?: string | null;
 }
 
 /** Bucket group prefixes used to insert thicker separator lines */
@@ -20,16 +21,22 @@ const ROW_H = 48;
 const MIN_CELL_W = 80;
 const MARGIN = { top: 60, right: 20, bottom: 10, left: 170 };
 
-export function RollRateHeatmap({ data }: Props) {
+export function RollRateHeatmap({ data, maxPeriod }: Props) {
   const { d3Tokens } = useThemeMode();
 
   const { metrics, periods } = useMemo(() => {
     const metricNames = data.map((d) => d.metric);
     const periodSet = new Set<string>();
     data.forEach((row) => Object.keys(row.values).forEach((k) => periodSet.add(k)));
-    const sortedPeriods = Array.from(periodSet).sort();
-    return { metrics: metricNames, periods: sortedPeriods };
-  }, [data]);
+    // Sort chronologically descending (most recent first / leftmost)
+    let sorted = sortPeriodsChronologically(Array.from(periodSet), true);
+    // If maxPeriod is set, filter to periods <= maxPeriod
+    if (maxPeriod) {
+      const maxNum = parsePeriodToNum(maxPeriod);
+      sorted = sorted.filter((p) => parsePeriodToNum(p) <= maxNum);
+    }
+    return { metrics: metricNames, periods: sorted };
+  }, [data, maxPeriod]);
 
   // Determine which row indices start a new bucket group (for separator lines)
   const groupStartIndices = useMemo(() => {
