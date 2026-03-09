@@ -1,6 +1,6 @@
 {
   "name": "lending-portfolio-dashboard",
-  "version": "0.3.29",
+  "version": "0.3.30",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,6 +14,7 @@
     "@google/generative-ai": "^0.21.0",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
+    "@sentry/nextjs": "^10.42.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
     "@tanstack/react-table": "^8.17.0",
