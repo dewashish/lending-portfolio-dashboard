@@ -84,3 +84,7 @@ export function useConsumerPeriods(scope?: ScopeSelection) {
 export function useConsumerProducts(scope?: ScopeSelection) {
   return useSWR(scopeKey('consumer-product-names', scope), () => queries.fetchConsumerProductNames(scope));
 }
+
+export function useProductCatalog(scope?: ScopeSelection) {
+  return useSWR(scopeKey('product-catalog', scope), () => queries.fetchProductCatalog(scope));
+}

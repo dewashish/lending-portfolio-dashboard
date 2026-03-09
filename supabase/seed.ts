@@ -437,21 +437,13 @@ function buildConsumerProductMetrics(): Row[] {
     { metric_type: 'Collection Efficiency', metric: 'Collection Efficiency', baseValues: [0.92, 0.925, 0.93, 0.935, 0.94, 0.945, 0.95], benchmark: 0.95, isRate: false, isAbsolute: true },
   ];
 
-  // Product weight within each subsidiary: evenly distributed with slight product-specific risk
-  const productDelinqMult: Record<string, number> = {
-    'Home Loan': 0.65, 'LAP': 0.75, 'Personal Loan': 1.40,
-    'Auto Loan': 0.85, 'Credit Card': 1.55,
-    'Consumer Loan': 1.0, 'Housing Loan': 0.65,
-    'Leasing': 0.80, 'Mortgage': 0.60,
-  };
-
   const rows: Row[] = [];
   for (const sub of SUBSIDIARIES) {
     const nProducts = sub.products.length;
     for (let pri = 0; pri < nProducts; pri++) {
       const product = sub.products[pri];
       const productWeight = 1 / nProducts; // even split for AUM share
-      const prodDelinq = productDelinqMult[product] || 1.0;
+      const prodDelinq = PRODUCT_DELINQ_MULT[product] || 1.0;
 
       for (let di = 0; di < defs.length; di++) {
         const d = defs[di];
@@ -491,6 +483,13 @@ function buildConsumerProductMetrics(): Row[] {
 // ---------------------------------------------------------------------------
 // 3. net_flow_rates
 // ---------------------------------------------------------------------------
+const PRODUCT_DELINQ_MULT: Record<string, number> = {
+  'Home Loan': 0.65, 'LAP': 0.75, 'Personal Loan': 1.40,
+  'Auto Loan': 0.85, 'Credit Card': 1.55,
+  'Consumer Loan': 1.0, 'Housing Loan': 0.65,
+  'Leasing': 0.80, 'Mortgage': 0.60,
+};
+
 function buildNetFlowRates(): Row[] {
   const bucketNames = [
     'AUM', 'Current Bkt',
@@ -533,29 +532,33 @@ function buildNetFlowRates(): Row[] {
   const portfolios = ['Total Active Portfolio', 'Total Active Portfolio Secured'];
 
   const rows: Row[] = [];
-  for (const sub of SUBSIDIARIES) {
+
+  // Helper to generate rows for a given product_name (null = aggregate total)
+  function emitRows(sub: typeof SUBSIDIARIES[number], productName: string | null, prodDelinq: number, productWeight: number) {
     for (let pi = 0; pi < PERIODS_7.length; pi++) {
       for (const bkt of bucketNames) {
         for (let portIdx = 0; portIdx < portfolios.length; portIdx++) {
           const portfolio = portfolios[portIdx];
           const securedScale = portIdx === 1 ? 0.70 : 1.0;
-          const n = noise(sub.id, pi, bucketNames.indexOf(bkt), portIdx);
+          const extraSeed = productName ? productName.charCodeAt(0) : 0;
+          const n = noise(sub.id + extraSeed, pi, bucketNames.indexOf(bkt), portIdx);
 
           let value: number;
           let valueUsd: number | null = null;
 
           if (amountBuckets.has(bkt)) {
             const frac = amountFractions[bkt][pi];
-            value = +(sub.aumLocal * frac * sub.delinqMult * securedScale * n).toFixed(2);
-            // For AUM and Current Bkt, don't multiply by delinqMult
+            // DPD buckets scale by delinquency; AUM/Current don't
             if (bkt === 'AUM' || bkt === 'Current Bkt') {
-              value = +(sub.aumLocal * frac * securedScale * n).toFixed(2);
+              value = +(sub.aumLocal * frac * securedScale * productWeight * n).toFixed(2);
+            } else {
+              value = +(sub.aumLocal * frac * sub.delinqMult * prodDelinq * securedScale * productWeight * n).toFixed(2);
             }
             valueUsd = toUSD(value, sub.currencyCode, FX_MAP);
           } else if (flowBuckets.has(bkt)) {
             const base = flowBase[bkt][pi];
-            const flowDelinqScale = portIdx === 1 ? 0.80 : 1.0; // secured has lower flow rates
-            value = +(base * sub.delinqMult * flowDelinqScale * n).toFixed(6);
+            const flowDelinqScale = portIdx === 1 ? 0.80 : 1.0;
+            value = +(base * sub.delinqMult * prodDelinq * flowDelinqScale * n).toFixed(6);
             valueUsd = null;
           } else {
             value = 0;
@@ -569,9 +572,20 @@ function buildNetFlowRates(): Row[] {
             value,
             value_usd: valueUsd,
             data_source_id: sub.dsOffset,
+            product_name: productName,
           });
         }
       }
+    }
+  }
+
+  for (const sub of SUBSIDIARIES) {
+    // Aggregate rows (product_name = null)
+    emitRows(sub, null, 1.0, 1.0);
+    // Per-product rows
+    const nProducts = sub.products.length;
+    for (const product of sub.products) {
+      emitRows(sub, product, PRODUCT_DELINQ_MULT[product] || 1.0, 1 / nProducts);
     }
   }
   return rows;
@@ -595,19 +609,20 @@ function buildRollRateSeries(): Row[] {
   };
 
   const rows: Row[] = [];
-  for (const sub of SUBSIDIARIES) {
+
+  function emitRows(sub: typeof SUBSIDIARIES[number], productName: string | null, prodDelinq: number) {
+    const extraSeed = productName ? productName.charCodeAt(0) : 0;
     for (let bi = 0; bi < buckets.length; bi++) {
       for (let mi = 0; mi < metrics.length; mi++) {
         for (let pi = 0; pi < PERIODS_7.length; pi++) {
           let v = baseValues[buckets[bi]][mi];
-          // Better-risk subsidiaries have higher resolution, lower roll-forward
-          if (mi === 0) v *= (2 - sub.delinqMult); // resolution inverse of delinq
-          if (mi === 1) v *= sub.delinqMult;        // roll forward scales with delinq
+          // Resolution inversely proportional to risk; Roll Forward proportional
+          if (mi === 0) v *= (2 - sub.delinqMult * prodDelinq);
+          if (mi === 1) v *= sub.delinqMult * prodDelinq;
           // Add period trend (improving over time)
           const trend = pi * 0.003 * (mi === 0 ? 1 : mi === 1 ? -1 : 0);
-          const n = noise(sub.id, bi, mi, pi);
+          const n = noise(sub.id + extraSeed, bi, mi, pi);
           v = Math.max(0, +((v + trend) * n).toFixed(4));
-          // Cap at 1
           v = Math.min(1, v);
 
           rows.push({
@@ -617,9 +632,19 @@ function buildRollRateSeries(): Row[] {
             period: PERIODS_7[pi],
             value: v,
             data_source_id: sub.dsOffset,
+            product_name: productName,
           });
         }
       }
+    }
+  }
+
+  for (const sub of SUBSIDIARIES) {
+    // Aggregate rows (product_name = null)
+    emitRows(sub, null, 1.0);
+    // Per-product rows
+    for (const product of sub.products) {
+      emitRows(sub, product, PRODUCT_DELINQ_MULT[product] || 1.0);
     }
   }
   return rows;

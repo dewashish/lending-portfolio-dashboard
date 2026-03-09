@@ -78,30 +78,74 @@ function pivotToProductData(rows: ProductRow[]): ConsumerProductData[] {
 }
 
 function pivotToNetFlowRows(rows: NetFlowDbRow[]): NetFlowRow[] {
-  const map = new Map<string, NetFlowRow>();
+  const flowBuckets = new Set(['B1 Flow', 'B2 Flow', 'B3 Flow', 'B4 Flow', 'B5 Flow', 'B6 Flow', 'POF%']);
+  const map = new Map<string, { bucket: string; sums: Record<string, number>; counts: Record<string, number> }>();
   for (const r of rows) {
     const key = `${r.portfolio}|${r.bucket}`;
     if (!map.has(key)) {
-      map.set(key, { bucket: `${r.portfolio} — ${r.bucket}`, values: {} });
+      map.set(key, { bucket: `${r.portfolio} — ${r.bucket}`, sums: {}, counts: {} });
     }
-    map.get(key)!.values[r.period] = r.value;
+    const entry = map.get(key)!;
+    entry.sums[r.period] = (entry.sums[r.period] ?? 0) + r.value;
+    entry.counts[r.period] = (entry.counts[r.period] ?? 0) + 1;
   }
-  return Array.from(map.values());
+  return Array.from(map.values()).map(({ bucket, sums, counts }) => {
+    const bucketName = bucket.split(' — ')[1] ?? bucket;
+    const isFlow = flowBuckets.has(bucketName);
+    const values: Record<string, number> = {};
+    for (const [period, sum] of Object.entries(sums)) {
+      values[period] = isFlow ? sum / (counts[period] ?? 1) : sum;
+    }
+    return { bucket, values };
+  });
 }
 
 function pivotToRollRateSeries(rows: RollRateDbRow[]): RollRateTimeSeries[] {
-  const map = new Map<string, RollRateTimeSeries>();
+  const map = new Map<string, { metric: string; sums: Record<string, number>; counts: Record<string, number> }>();
   for (const r of rows) {
     const key = `${r.bucket} ${r.metric}`;
     if (!map.has(key)) {
-      map.set(key, { metric: key, values: {} });
+      map.set(key, { metric: key, sums: {}, counts: {} });
     }
-    map.get(key)!.values[r.period] = r.value;
+    const entry = map.get(key)!;
+    entry.sums[r.period] = (entry.sums[r.period] ?? 0) + r.value;
+    entry.counts[r.period] = (entry.counts[r.period] ?? 0) + 1;
   }
-  return Array.from(map.values());
+  return Array.from(map.values()).map(({ metric, sums, counts }) => {
+    const values: Record<string, number> = {};
+    for (const [period, sum] of Object.entries(sums)) {
+      values[period] = sum / (counts[period] ?? 1); // always average for rates
+    }
+    return { metric, values };
+  });
 }
 
 // ── Metadata Queries (for filter options) ────────────────────────
+
+export interface ProductCatalogEntry {
+  productName: string;
+  productCategory: string;
+}
+
+export async function fetchProductCatalog(scope?: ScopeSelection): Promise<ProductCatalogEntry[]> {
+  let query = supabase
+    .from('product_catalog')
+    .select('product_name, product_category')
+    .eq('is_active', true)
+    .order('product_name');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  const seen = new Set<string>();
+  return (data ?? []).filter((r: { product_name: string }) => {
+    if (seen.has(r.product_name)) return false;
+    seen.add(r.product_name);
+    return true;
+  }).map((r: { product_name: string; product_category: string }) => ({
+    productName: r.product_name,
+    productCategory: r.product_category,
+  }));
+}
 
 export async function fetchConsumerPeriods(scope?: ScopeSelection): Promise<string[]> {
   let query = supabase
@@ -200,10 +244,15 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
 export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NetFlowRow[]> {
   let query = supabase
     .from('net_flow_rates')
-    .select('portfolio, bucket, period, value')
+    .select('portfolio, bucket, period, value, product_name')
     .order('id');
   query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
+  if (filters?.products && filters.products.length > 0) {
+    query = query.in('product_name', filters.products);
+  } else {
+    query = query.is('product_name', null);
+  }
   const { data, error } = await query;
   if (error) throw error;
   return pivotToNetFlowRows((data ?? []) as NetFlowDbRow[]);
@@ -212,10 +261,15 @@ export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: Consum
 export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<RollRateTimeSeries[]> {
   let query = supabase
     .from('roll_rate_series')
-    .select('bucket, metric, period, value')
+    .select('bucket, metric, period, value, product_name')
     .order('id');
   query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
+  if (filters?.products && filters.products.length > 0) {
+    query = query.in('product_name', filters.products);
+  } else {
+    query = query.is('product_name', null);
+  }
   const { data, error } = await query;
   if (error) throw error;
   return pivotToRollRateSeries((data ?? []) as RollRateDbRow[]);

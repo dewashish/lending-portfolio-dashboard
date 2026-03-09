@@ -603,19 +603,19 @@ export interface Database {
           id: number; subsidiary_id: number; portfolio: string;
           bucket: string; period: string; value: number;
           value_usd: number | null; data_source_id: number | null;
-          created_at: string;
+          product_name: string | null; created_at: string;
         };
         Insert: {
           id?: number; subsidiary_id: number; portfolio: string;
           bucket: string; period: string; value: number;
           value_usd?: number | null; data_source_id?: number | null;
-          created_at?: string;
+          product_name?: string | null; created_at?: string;
         };
         Update: {
           id?: number; subsidiary_id?: number; portfolio?: string;
           bucket?: string; period?: string; value?: number;
           value_usd?: number | null; data_source_id?: number | null;
-          created_at?: string;
+          product_name?: string | null; created_at?: string;
         };
         Relationships: [];
       };
@@ -623,17 +623,20 @@ export interface Database {
         Row: {
           id: number; subsidiary_id: number; bucket: string;
           metric: string; period: string; value: number;
-          data_source_id: number | null; created_at: string;
+          data_source_id: number | null; product_name: string | null;
+          created_at: string;
         };
         Insert: {
           id?: number; subsidiary_id: number; bucket: string;
           metric: string; period: string; value: number;
-          data_source_id?: number | null; created_at?: string;
+          data_source_id?: number | null; product_name?: string | null;
+          created_at?: string;
         };
         Update: {
           id?: number; subsidiary_id?: number; bucket?: string;
           metric?: string; period?: string; value?: number;
-          data_source_id?: number | null; created_at?: string;
+          data_source_id?: number | null; product_name?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };

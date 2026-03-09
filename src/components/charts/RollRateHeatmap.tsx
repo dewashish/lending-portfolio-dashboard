@@ -149,10 +149,10 @@ export function RollRateHeatmap({ data }: Props) {
 
   return (
     <ChartContainer title="Roll Rate Heatmap" subtitle="Transition rates by period" height={chartHeight} empty={!data.length}>
-      <Box sx={{ overflowX: 'auto', width: '100%', height: '100%' }}>
+      <Box sx={{ overflowX: 'auto', width: '100%', height: chartHeight }}>
         <svg
           ref={ref}
-          style={{ minWidth: chartMinWidth, width: '100%', height: '100%', overflow: 'visible' }}
+          style={{ minWidth: chartMinWidth, width: '100%', height: chartHeight, overflow: 'visible' }}
         />
       </Box>
     </ChartContainer>
