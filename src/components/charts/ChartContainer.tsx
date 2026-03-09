@@ -9,12 +9,14 @@ interface Props {
   loading?: boolean;
   empty?: boolean;
   headerRight?: React.ReactNode;
+  /** When true (default), Card stretches to fill its parent (needed inside Grid items). */
+  fillHeight?: boolean;
   children: React.ReactNode;
 }
 
-export function ChartContainer({ title, subtitle, height = 320, loading, empty, headerRight, children }: Props) {
+export function ChartContainer({ title, subtitle, height = 320, loading, empty, headerRight, fillHeight = true, children }: Props) {
   return (
-    <Card sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card sx={{ p: 2, ...(fillHeight && { height: '100%' }), display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>

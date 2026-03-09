@@ -12,13 +12,14 @@ import type { VintagePoint } from '@/lib/types';
 interface Props {
   data: VintagePoint[];
   metricType: string;
+  fillHeight?: boolean;
 }
 
-const ROW_H = 28;
-const MIN_CELL_W = 56;
-const MARGIN = { top: 16, right: 16, bottom: 36, left: 72 };
+const ROW_H = 44;
+const MIN_CELL_W = 64;
+const MARGIN = { top: 20, right: 20, bottom: 40, left: 80 };
 
-export function VintageHeatmap({ data, metricType }: Props) {
+export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
   const { d3Tokens } = useThemeMode();
 
   const filtered = useMemo(
@@ -57,7 +58,7 @@ export function VintageHeatmap({ data, metricType }: Props) {
     return { vintages: sorted, mobs: mobSet, maxRate: max, cellMap: map };
   }, [filtered]);
 
-  const chartHeight = Math.max(280, vintages.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartHeight = Math.max(400, vintages.length * ROW_H + MARGIN.top + MARGIN.bottom);
   const chartMinWidth = mobs.length * MIN_CELL_W + MARGIN.left + MARGIN.right;
 
   const ref = useD3Chart(
@@ -124,11 +125,11 @@ export function VintageHeatmap({ data, metricType }: Props) {
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', (d) => (d.rate > maxRate * 0.6 ? '#fff' : '#1e293b'))
-        .attr('font-size', Math.min(10, x.bandwidth() * 0.4) + 'px')
+        .attr('font-size', Math.min(12, x.bandwidth() * 0.45) + 'px')
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('pointer-events', 'none')
         .text((d) => {
-          if (x.bandwidth() < 32 || y.bandwidth() < 14) return '';
+          if (x.bandwidth() < 36 || y.bandwidth() < 18) return '';
           return formatPercent(d.rate, 1);
         });
 
@@ -137,7 +138,7 @@ export function VintageHeatmap({ data, metricType }: Props) {
         .call(d3.axisLeft(y).tickSize(0))
         .selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '9px');
+        .attr('font-size', '11px');
 
       g.selectAll('.domain').remove();
 
@@ -169,6 +170,7 @@ export function VintageHeatmap({ data, metricType }: Props) {
       subtitle="Delinquency rate by vintage and MOB"
       height={chartHeight}
       empty={!filtered.length}
+      fillHeight={fillHeight}
     >
       <Box sx={{ overflowX: 'auto', width: '100%', height: '100%' }}>
         <svg

@@ -12,12 +12,13 @@ import type { NetFlowRow, DPDBucket } from '@/lib/types';
 interface Props {
   data: NetFlowRow[];
   selectedPeriod?: string;
+  fillHeight?: boolean;
 }
 
 /** DPD bucket keywords to match against bucket names */
 const BUCKET_PATTERNS = ['Current', '1-30', '31-60', '61-90', '91-120', '120+', 'Write-off', 'FWOF'];
 
-export function NetFlowWaterfall({ data, selectedPeriod }: Props) {
+export function NetFlowWaterfall({ data, selectedPeriod, fillHeight }: Props) {
   const { d3Tokens } = useThemeMode();
   const { formatCurrency } = useCurrencyFormat();
 
@@ -130,6 +131,7 @@ export function NetFlowWaterfall({ data, selectedPeriod }: Props) {
       subtitle={period ? `Period: ${period}` : undefined}
       height={chartHeight}
       empty={!bars.length}
+      fillHeight={fillHeight}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>

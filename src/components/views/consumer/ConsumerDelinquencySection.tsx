@@ -291,7 +291,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}
 
-      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} />
+      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} fillHeight={false} />
 
       {/* Static Pool Analysis */}
       <Divider sx={{ my: 0.5 }} />
@@ -312,7 +312,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
         </ToggleButtonGroup>
       </Box>
       {l2 ? <ChartGridSkeleton /> : (
-        <VintageHeatmap data={aggregatedVintage} metricType={vintageMetric} />
+        <VintageHeatmap data={aggregatedVintage} metricType={vintageMetric} fillHeight={false} />
       )}
     </Box>
   );
