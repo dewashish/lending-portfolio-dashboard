@@ -87,19 +87,6 @@ export function CollectionMetricsTable({
         ),
       },
       {
-        id: 'transitions',
-        accessorKey: 'transitions',
-        header: 'Transitions',
-        cell: (info) => (
-          <Box
-            component="span"
-            sx={{ fontFamily: '"Roboto Mono", monospace', fontSize: '0.75rem' }}
-          >
-            {formatPercent(info.getValue() as number)}
-          </Box>
-        ),
-      },
-      {
         id: 'normalized',
         accessorKey: 'normalized',
         header: 'Normalized',

@@ -148,7 +148,7 @@ export function ConsumerCollectionsSection({ scope }: Props) {
     products: effectiveProducts,
   }), [effectiveProducts]);
 
-  // Collection metrics: fetch ALL (client-side filtering)
+  // Collection metrics: fetch ALL (client-side filtering by portfolio + period)
   const collectionFilters: ConsumerFilters = useMemo(() => ({
     period: null,
     products: [],
@@ -242,17 +242,17 @@ export function ConsumerCollectionsSection({ scope }: Props) {
 
       {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} />}
 
-      <CollectionMetricsTable data={filteredCollectionMetrics} />
-
+      {/* Table + Sankey side-by-side */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <RollRateSankey data={rollRates ?? []} period={selectedPeriod ?? undefined} />
+        <Grid item xs={12} md={7}>
+          <CollectionMetricsTable data={filteredCollectionMetrics} />
         </Grid>
-        <Grid item xs={12} md={6}>
-          {/* Placeholder for balance — Sankey fills one side */}
+        <Grid item xs={12} md={5}>
+          <RollRateSankey data={rollRates ?? []} period={selectedPeriod ?? undefined} />
         </Grid>
       </Grid>
 
+      {/* Heatmap full width below */}
       <RollRateHeatmap data={rollRates ?? []} maxPeriod={selectedPeriod} />
     </Box>
   );

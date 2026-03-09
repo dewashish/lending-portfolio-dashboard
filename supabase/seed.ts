@@ -712,7 +712,7 @@ function buildCollectionMetrics(): Row[] {
 
   const rows: Row[] = [];
   for (const sub of SUBSIDIARIES) {
-    for (let pi = 0; pi < PERIODS_7.length; pi++) {
+    for (let pi = 0; pi < PERIODS_12.length; pi++) {
       for (let bi = 0; bi < buckets.length; bi++) {
         for (let portIdx = 0; portIdx < portfolios.length; portIdx++) {
           const bd = baseDefs[bi];
@@ -721,7 +721,6 @@ function buildCollectionMetrics(): Row[] {
 
           const amount = +(sub.aumLocal * bd.amountFrac * securedScale * n).toFixed(2);
           const amountUsd = toUSD(amount, sub.currencyCode, FX_MAP);
-          const transitions = +(sub.aumLocal * bd.transitions * securedScale * n).toFixed(2);
 
           // Roll rates adjusted for subsidiary risk and secured/unsecured
           const riskAdj = portIdx === 1 ? 0.85 : portIdx === 2 ? 1.20 : 1.0;
@@ -734,12 +733,11 @@ function buildCollectionMetrics(): Row[] {
             bucket: buckets[bi],
             amount,
             amount_usd: amountUsd,
-            transitions,
             normalized: +(bd.normalized * n).toFixed(4),
             roll_backward: Math.min(1, Math.max(0, rb)),
             stabilized: +(bd.stabilized * noise(sub.id, bi, pi, portIdx)).toFixed(4),
             roll_forward: Math.min(1, Math.max(0, rf)),
-            period: PERIODS_7[pi],
+            period: PERIODS_12[pi],
             data_source_id: sub.dsOffset,
           });
         }
