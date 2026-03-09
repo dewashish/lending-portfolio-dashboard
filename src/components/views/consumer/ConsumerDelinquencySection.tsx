@@ -134,8 +134,8 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
   const hasProductFilter = effectiveProducts.length > 0;
 
-  const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, effectiveFilters);
-  const { data: rollRates, isLoading: l2 } = useRollRates(scope, effectiveFilters);
+  const { data: netFlow, isLoading: l1, error: e1 } = useNetFlowRates(scope, effectiveFilters);
+  const { data: rollRates, isLoading: l2, error: e2 } = useRollRates(scope, effectiveFilters);
   const { data: overall } = useConsumerOverall(scope, filters);
   // Product-level metrics for KPIs when filter is active
   const { data: productData } = useProductMetrics(scope, hasProductFilter ? effectiveFilters : undefined);
@@ -203,8 +203,18 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
   if (l1 || l2) return <ChartGridSkeleton />;
 
+  if (e1 || e2) {
+    // eslint-disable-next-line no-console
+    console.error('[DelinquencySection] SWR errors:', { e1, e2 });
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      {(e1 || e2) && (
+        <Typography variant="caption" color="error" sx={{ px: 1 }}>
+          Error loading delinquency data. Check console for details.
+        </Typography>
+      )}
       {/* Filter Strip */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
         <ToggleButtonGroup

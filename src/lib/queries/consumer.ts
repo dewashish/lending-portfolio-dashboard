@@ -245,7 +245,8 @@ export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: Consum
   let query = supabase
     .from('net_flow_rates')
     .select('portfolio, bucket, period, value, product_name')
-    .order('id');
+    .order('id')
+    .limit(10000);
   query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) {
@@ -262,7 +263,8 @@ export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerF
   let query = supabase
     .from('roll_rate_series')
     .select('bucket, metric, period, value, product_name')
-    .order('id');
+    .order('id')
+    .limit(10000);
   query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) {

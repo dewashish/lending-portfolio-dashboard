@@ -1919,6 +1919,13 @@ async function main() {
     console.log(`Dimension tables already populated (${regCount} regions found) — skipping.`);
   }
 
+  // product_catalog is always re-seeded (cleared above, may not be covered by dimension block)
+  const { count: pcCount } = await supabase.from('product_catalog').select('*', { count: 'exact', head: true });
+  if (!pcCount) {
+    console.log('Seeding product_catalog (was cleared)...');
+    await batchUpsert('product_catalog', buildProductCatalog());
+  }
+
   // -----------------------------------------------------------
   // 2. PQR Summary tables (14 tables)
   // -----------------------------------------------------------
