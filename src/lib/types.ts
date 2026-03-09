@@ -179,6 +179,7 @@ export interface CollectionMetricRow {
   rollBackward: number;
   stabilized: number;
   rollForward: number;
+  period: string;
 }
 
 export interface RollRateTimeSeries {

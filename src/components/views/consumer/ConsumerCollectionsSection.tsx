@@ -1,20 +1,21 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Box, Grid, Card, Typography, Stack } from '@mui/material';
+import { useState, useMemo } from 'react';
+import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
 import { CollectionMetricsTable } from '@/components/tables/CollectionMetricsTable';
-import { CollectionTrend } from '@/components/charts/CollectionTrend';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useCollectionMetrics } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
-import { formatPercent } from '@/lib/format';
+import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
 import type { ScopeSelection, CollectionMetricRow, ConsumerFilters } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
   filters?: ConsumerFilters;
 }
+
+type PortfolioFilter = 'Total' | 'Secured' | 'Unsecured';
 
 interface CollectionKPI {
   label: string;
@@ -66,15 +67,12 @@ function computeCollectionKPIs(
 ): CollectionKPI[] {
   if (data.length === 0) return [];
 
-  // Average roll backward (resolution rate) across all buckets
   const rollBackValues = data.filter((r) => r.rollBackward != null).map((r) => r.rollBackward!);
   const avgRollBack = rollBackValues.length > 0 ? rollBackValues.reduce((a, b) => a + b, 0) / rollBackValues.length : null;
 
-  // Average roll forward (deterioration rate) across all buckets
   const rollFwdValues = data.filter((r) => r.rollForward != null).map((r) => r.rollForward!);
   const avgRollFwd = rollFwdValues.length > 0 ? rollFwdValues.reduce((a, b) => a + b, 0) / rollFwdValues.length : null;
 
-  // Average stabilized rate
   const stabValues = data.filter((r) => r.stabilized != null).map((r) => r.stabilized!);
   const avgStab = stabValues.length > 0 ? stabValues.reduce((a, b) => a + b, 0) / stabValues.length : null;
 
@@ -109,26 +107,80 @@ function computeCollectionKPIs(
   return kpis;
 }
 
-export function ConsumerCollectionsSection({ scope, filters }: Props) {
-  const { data: metrics, isLoading } = useCollectionMetrics(scope, filters);
+export function ConsumerCollectionsSection({ scope }: Props) {
+  const [portfolioFilter, setPortfolioFilter] = useState<PortfolioFilter>('Total');
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const { getColor } = useRiskAppetite();
 
-  const kpis = useMemo(() => computeCollectionKPIs(metrics ?? [], getColor), [metrics, getColor]);
+  // Fetch ALL data (no period filter) to extract available periods client-side
+  const collectionFilters: ConsumerFilters = useMemo(() => ({
+    period: null,
+    products: [],
+  }), []);
+
+  const { data: allMetrics, isLoading } = useCollectionMetrics(scope, collectionFilters);
+
+  // Extract available periods from collection data
+  const availablePeriods = useMemo(() => {
+    if (!allMetrics || allMetrics.length === 0) return [];
+    const periodSet = new Set<string>();
+    allMetrics.forEach((r) => periodSet.add(r.period));
+    return sortPeriodsChronologically(Array.from(periodSet));
+  }, [allMetrics]);
+
+  // Determine effective period (latest if none selected)
+  const effectivePeriod = useMemo(() => {
+    if (selectedPeriod && availablePeriods.includes(selectedPeriod)) return selectedPeriod;
+    return availablePeriods.length > 0 ? availablePeriods[availablePeriods.length - 1] : null;
+  }, [selectedPeriod, availablePeriods]);
+
+  // Filter data by portfolio and period
+  const filteredMetrics = useMemo(() => {
+    if (!allMetrics) return [];
+    return allMetrics.filter((r) => {
+      if (r.portfolio !== portfolioFilter) return false;
+      if (effectivePeriod && r.period !== effectivePeriod) return false;
+      return true;
+    });
+  }, [allMetrics, portfolioFilter, effectivePeriod]);
+
+  const kpis = useMemo(() => computeCollectionKPIs(filteredMetrics, getColor), [filteredMetrics, getColor]);
 
   if (isLoading) return <LoadingSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      {/* Filter Strip */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={portfolioFilter}
+          onChange={(_, v) => { if (v !== null) setPortfolioFilter(v as PortfolioFilter); }}
+          sx={{ '& .MuiToggleButton-root': { fontSize: '0.68rem', py: 0.4, px: 1.5, textTransform: 'none', fontWeight: 600 } }}
+        >
+          <ToggleButton value="Total">All</ToggleButton>
+          <ToggleButton value="Secured">Secured</ToggleButton>
+          <ToggleButton value="Unsecured">Unsecured</ToggleButton>
+        </ToggleButtonGroup>
+
+        <Select
+          size="small"
+          displayEmpty
+          value={selectedPeriod ?? ''}
+          onChange={(e) => setSelectedPeriod(e.target.value === '' ? null : e.target.value as string)}
+          sx={{ minWidth: 130, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.4 } }}
+        >
+          <MenuItem value="" sx={{ fontSize: '0.72rem' }}>Latest Period</MenuItem>
+          {availablePeriods.map((p) => (
+            <MenuItem key={p} value={p} sx={{ fontSize: '0.72rem' }}>{p}</MenuItem>
+          ))}
+        </Select>
+      </Box>
+
       {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} />}
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={7}>
-          <CollectionMetricsTable data={metrics ?? []} />
-        </Grid>
-        <Grid item xs={12} md={5}>
-          <CollectionTrend data={metrics ?? []} />
-        </Grid>
-      </Grid>
+      <CollectionMetricsTable data={filteredMetrics} />
     </Box>
   );
 }

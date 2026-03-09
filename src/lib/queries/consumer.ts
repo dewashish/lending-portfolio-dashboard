@@ -298,6 +298,7 @@ export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: C
     rollBackward: r.roll_backward ?? 0,
     stabilized: r.stabilized ?? 0,
     rollForward: r.roll_forward ?? 0,
+    period: r.period,
   }));
 }
 
