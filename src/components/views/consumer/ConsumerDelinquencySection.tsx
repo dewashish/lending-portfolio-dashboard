@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
+import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
 import { NetFlowWaterfall } from '@/components/charts/NetFlowWaterfall';
-import { RollRateHeatmap } from '@/components/charts/RollRateHeatmap';
-import { RollRateSankey } from '@/components/charts/RollRateSankey';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
-import { useNetFlowRates, useRollRates, useConsumerOverall, useProductCatalog, useProductMetrics } from '@/hooks/useConsumerData';
+import { useNetFlowRates, useConsumerOverall, useProductCatalog, useProductMetrics, useConsumerPeriods } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
@@ -104,6 +102,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const { data: productCatalog } = useProductCatalog(scope);
+  const { data: rawPeriods } = useConsumerPeriods(scope);
   const { getColor } = useRiskAppetite();
 
   // Products available based on the secured/unsecured toggle
@@ -115,16 +114,14 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
   // Resolved product names to pass to hooks
   const effectiveProducts = useMemo(() => {
-    // Specific product selected
     if (selectedProduct !== 'all') {
       const exists = availableProducts.some((p) => p.productName === selectedProduct);
       return exists ? [selectedProduct] : [];
     }
-    // Secured/unsecured toggle active → pass ALL matching products
     if (securedFilter !== 'all') {
       return availableProducts.map((p) => p.productName);
     }
-    return []; // empty = show aggregate (no filter)
+    return [];
   }, [securedFilter, selectedProduct, availableProducts]);
 
   // Net Flow: filter to specific selected period
@@ -133,29 +130,18 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
     products: effectiveProducts,
   }), [selectedPeriod, effectiveProducts]);
 
-  // Roll Rates: fetch ALL periods (client-side filtering in heatmap)
-  const rollRateFilters: ConsumerFilters = useMemo(() => ({
-    period: null,
-    products: effectiveProducts,
-  }), [effectiveProducts]);
-
   const hasProductFilter = effectiveProducts.length > 0;
 
   const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, netFlowFilters);
-  const { data: rollRates, isLoading: l2 } = useRollRates(scope, rollRateFilters);
   const { data: overall } = useConsumerOverall(scope, filters);
-  // Product-level metrics for KPIs when filter is active
   const { data: productData } = useProductMetrics(scope, hasProductFilter ? netFlowFilters : undefined);
 
-  // Extract available periods from roll rate data (chronologically sorted)
+  // Available periods from consumer overall metrics
   const availablePeriods = useMemo(() => {
-    if (!rollRates || rollRates.length === 0) return [];
-    const periodSet = new Set<string>();
-    rollRates.forEach((r) => Object.keys(r.values).forEach((k) => periodSet.add(k)));
-    return sortPeriodsChronologically(Array.from(periodSet));
-  }, [rollRates]);
+    if (!rawPeriods || rawPeriods.length === 0) return [];
+    return sortPeriodsChronologically(rawPeriods);
+  }, [rawPeriods]);
 
-  // Reset product selection when secured filter changes
   const handleSecuredChange = (_: unknown, v: SecuredFilter | null) => {
     if (v !== null) {
       setSecuredFilter(v);
@@ -171,9 +157,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
       { name: 'Net Credit Loss', label: 'NCL Rate', metricKey: 'net_credit_loss' },
     ];
 
-    // When product filter is active, derive KPIs from product-level metrics
     if (hasProductFilter && productData && productData.length > 0) {
-      // Aggregate all matching product metrics
       const aggMetrics = new Map<string, ConsumerMetricRow>();
       const countMap = new Map<string, Record<string, number>>();
       for (const prod of productData) {
@@ -192,7 +176,6 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
           }
         }
       }
-      // Average rate metrics
       const aggRows: ConsumerMetricRow[] = [];
       aggMetrics.forEach((row, key) => {
         const counts = countMap.get(key)!;
@@ -213,7 +196,6 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
       });
     }
 
-    // Default: use overall metrics
     if (!overall || overall.length === 0) return [];
     return defs.map(({ name, label, metricKey }) => {
       const curr = getLatest(overall, name);
@@ -224,7 +206,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
     });
   }, [overall, productData, hasProductFilter, getColor]);
 
-  if (l1 || l2) return <ChartGridSkeleton />;
+  if (l1) return <ChartGridSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -273,16 +255,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <RollRateSankey data={rollRates ?? []} period={selectedPeriod ?? undefined} />
-        </Grid>
-      </Grid>
-
-      <RollRateHeatmap data={rollRates ?? []} maxPeriod={selectedPeriod} />
+      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} />
     </Box>
   );
 }

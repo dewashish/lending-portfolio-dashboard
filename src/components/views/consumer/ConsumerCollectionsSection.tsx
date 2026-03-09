@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
+import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
+import { RollRateHeatmap } from '@/components/charts/RollRateHeatmap';
+import { RollRateSankey } from '@/components/charts/RollRateSankey';
 import { CollectionMetricsTable } from '@/components/tables/CollectionMetricsTable';
-import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
-import { useCollectionMetrics } from '@/hooks/useConsumerData';
+import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
+import { useCollectionMetrics, useRollRates, useProductCatalog } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
@@ -15,7 +17,7 @@ interface Props {
   filters?: ConsumerFilters;
 }
 
-type PortfolioFilter = 'Total' | 'Secured' | 'Unsecured';
+type SecuredFilter = 'all' | 'secured' | 'unsecured';
 
 interface CollectionKPI {
   label: string;
@@ -107,46 +109,91 @@ function computeCollectionKPIs(
   return kpis;
 }
 
+/** Map secured filter to collection_metrics portfolio values */
+const PORTFOLIO_MAP: Record<SecuredFilter, string> = {
+  all: 'Total',
+  secured: 'Secured',
+  unsecured: 'Unsecured',
+};
+
 export function ConsumerCollectionsSection({ scope }: Props) {
-  const [portfolioFilter, setPortfolioFilter] = useState<PortfolioFilter>('Total');
+  const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
+  const [selectedProduct, setSelectedProduct] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  const { data: productCatalog } = useProductCatalog(scope);
   const { getColor } = useRiskAppetite();
 
-  // Fetch ALL data (no period filter) to extract available periods client-side
+  // Products available based on the secured/unsecured toggle
+  const availableProducts = useMemo(() => {
+    if (!productCatalog) return [];
+    if (securedFilter === 'all') return productCatalog;
+    return productCatalog.filter((p) => p.productCategory.toLowerCase() === securedFilter);
+  }, [productCatalog, securedFilter]);
+
+  // Resolved product names for roll rate queries
+  const effectiveProducts = useMemo(() => {
+    if (selectedProduct !== 'all') {
+      const exists = availableProducts.some((p) => p.productName === selectedProduct);
+      return exists ? [selectedProduct] : [];
+    }
+    if (securedFilter !== 'all') {
+      return availableProducts.map((p) => p.productName);
+    }
+    return [];
+  }, [securedFilter, selectedProduct, availableProducts]);
+
+  // Roll Rates: fetch ALL periods (client-side filtering in heatmap)
+  const rollRateFilters: ConsumerFilters = useMemo(() => ({
+    period: null,
+    products: effectiveProducts,
+  }), [effectiveProducts]);
+
+  // Collection metrics: fetch ALL (client-side filtering)
   const collectionFilters: ConsumerFilters = useMemo(() => ({
     period: null,
     products: [],
   }), []);
 
-  const { data: allMetrics, isLoading } = useCollectionMetrics(scope, collectionFilters);
+  const { data: rollRates, isLoading: l1 } = useRollRates(scope, rollRateFilters);
+  const { data: allCollectionMetrics, isLoading: l2 } = useCollectionMetrics(scope, collectionFilters);
 
-  // Extract available periods from collection data
+  // Extract available periods from roll rate data (chronologically sorted)
   const availablePeriods = useMemo(() => {
-    if (!allMetrics || allMetrics.length === 0) return [];
+    if (!rollRates || rollRates.length === 0) return [];
     const periodSet = new Set<string>();
-    allMetrics.forEach((r) => periodSet.add(r.period));
+    rollRates.forEach((r) => Object.keys(r.values).forEach((k) => periodSet.add(k)));
     return sortPeriodsChronologically(Array.from(periodSet));
-  }, [allMetrics]);
+  }, [rollRates]);
 
-  // Determine effective period (latest if none selected)
-  const effectivePeriod = useMemo(() => {
-    if (selectedPeriod && availablePeriods.includes(selectedPeriod)) return selectedPeriod;
-    return availablePeriods.length > 0 ? availablePeriods[availablePeriods.length - 1] : null;
-  }, [selectedPeriod, availablePeriods]);
+  // Filter collection metrics by portfolio and period
+  const filteredCollectionMetrics = useMemo(() => {
+    if (!allCollectionMetrics) return [];
+    const portfolioValue = PORTFOLIO_MAP[securedFilter];
+    // Use latest period from collection data if none selected
+    const collectionPeriods = sortPeriodsChronologically(
+      Array.from(new Set(allCollectionMetrics.map((r) => r.period))),
+    );
+    const effectivePeriod = selectedPeriod && collectionPeriods.includes(selectedPeriod)
+      ? selectedPeriod
+      : collectionPeriods[collectionPeriods.length - 1] ?? null;
 
-  // Filter data by portfolio and period
-  const filteredMetrics = useMemo(() => {
-    if (!allMetrics) return [];
-    return allMetrics.filter((r) => {
-      if (r.portfolio !== portfolioFilter) return false;
+    return allCollectionMetrics.filter((r) => {
+      if (r.portfolio !== portfolioValue) return false;
       if (effectivePeriod && r.period !== effectivePeriod) return false;
       return true;
     });
-  }, [allMetrics, portfolioFilter, effectivePeriod]);
+  }, [allCollectionMetrics, securedFilter, selectedPeriod]);
 
-  const kpis = useMemo(() => computeCollectionKPIs(filteredMetrics, getColor), [filteredMetrics, getColor]);
+  const handleSecuredChange = (_: unknown, v: SecuredFilter | null) => {
+    if (v !== null) {
+      setSecuredFilter(v);
+      setSelectedProduct('all');
+    }
+  };
 
-  if (isLoading) return <LoadingSkeleton />;
+  const kpis = useMemo(() => computeCollectionKPIs(filteredCollectionMetrics, getColor), [filteredCollectionMetrics, getColor]);
+
+  if (l1 || l2) return <ChartGridSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -155,14 +202,29 @@ export function ConsumerCollectionsSection({ scope }: Props) {
         <ToggleButtonGroup
           size="small"
           exclusive
-          value={portfolioFilter}
-          onChange={(_, v) => { if (v !== null) setPortfolioFilter(v as PortfolioFilter); }}
+          value={securedFilter}
+          onChange={handleSecuredChange}
           sx={{ '& .MuiToggleButton-root': { fontSize: '0.68rem', py: 0.4, px: 1.5, textTransform: 'none', fontWeight: 600 } }}
         >
-          <ToggleButton value="Total">All</ToggleButton>
-          <ToggleButton value="Secured">Secured</ToggleButton>
-          <ToggleButton value="Unsecured">Unsecured</ToggleButton>
+          <ToggleButton value="all">All</ToggleButton>
+          <ToggleButton value="secured">Secured</ToggleButton>
+          <ToggleButton value="unsecured">Unsecured</ToggleButton>
         </ToggleButtonGroup>
+
+        {availableProducts.length > 0 && (
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={selectedProduct}
+            onChange={(_, val) => { if (val !== null) setSelectedProduct(val); }}
+            sx={{ '& .MuiToggleButton-root': { fontSize: '0.65rem', py: 0.3, px: 1, textTransform: 'none' } }}
+          >
+            <ToggleButton value="all">All Products</ToggleButton>
+            {availableProducts.map((p) => (
+              <ToggleButton key={p.productName} value={p.productName}>{p.productName}</ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        )}
 
         <Select
           size="small"
@@ -180,7 +242,18 @@ export function ConsumerCollectionsSection({ scope }: Props) {
 
       {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} />}
 
-      <CollectionMetricsTable data={filteredMetrics} />
+      <CollectionMetricsTable data={filteredCollectionMetrics} />
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <RollRateSankey data={rollRates ?? []} period={selectedPeriod ?? undefined} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          {/* Placeholder for balance — Sankey fills one side */}
+        </Grid>
+      </Grid>
+
+      <RollRateHeatmap data={rollRates ?? []} maxPeriod={selectedPeriod} />
     </Box>
   );
 }
