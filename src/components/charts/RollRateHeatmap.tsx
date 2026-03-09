@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Box } from '@mui/material';
+import { Box, Tooltip, IconButton, Typography } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
@@ -17,25 +18,76 @@ interface Props {
 /** Bucket group prefixes used to insert thicker separator lines */
 const BUCKET_PREFIXES = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
 
+/** Fixed display order for metrics within each bucket group */
+const METRIC_ORDER = ['Resolution', 'Norm', 'Rollback', 'Stab', 'Roll Forward'];
+
+const BUCKET_DICT: { code: string; label: string }[] = [
+  { code: 'B1', label: 'Current (0 DPD)' },
+  { code: 'B2', label: '1–30 DPD' },
+  { code: 'B3', label: '31–60 DPD' },
+  { code: 'B4', label: '61–90 DPD' },
+  { code: 'B5', label: '91–120 DPD' },
+  { code: 'B6', label: '120+ DPD' },
+];
+
 const ROW_H = 48;
 const MIN_CELL_W = 80;
 const MARGIN = { top: 60, right: 20, bottom: 10, left: 170 };
+
+function BucketDictionary() {
+  return (
+    <Tooltip
+      arrow
+      placement="left"
+      title={
+        <Box sx={{ p: 0.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.7rem', display: 'block', mb: 0.5 }}>
+            Bucket Dictionary
+          </Typography>
+          {BUCKET_DICT.map((b) => (
+            <Typography key={b.code} variant="caption" sx={{ fontSize: '0.65rem', display: 'block', lineHeight: 1.6 }}>
+              <strong>{b.code}</strong> = {b.label}
+            </Typography>
+          ))}
+        </Box>
+      }
+    >
+      <IconButton size="small" sx={{ ml: 0.5, p: 0.3 }}>
+        <InfoOutlinedIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+      </IconButton>
+    </Tooltip>
+  );
+}
 
 export function RollRateHeatmap({ data, maxPeriod }: Props) {
   const { d3Tokens } = useThemeMode();
 
   const { metrics, periods } = useMemo(() => {
+    // Sort metrics by bucket prefix then by fixed metric order
     const metricNames = data.map((d) => d.metric);
+    const sorted = [...metricNames].sort((a, b) => {
+      const prefixA = BUCKET_PREFIXES.find((p) => a.startsWith(p)) ?? '';
+      const prefixB = BUCKET_PREFIXES.find((p) => b.startsWith(p)) ?? '';
+      const bucketDiff = BUCKET_PREFIXES.indexOf(prefixA) - BUCKET_PREFIXES.indexOf(prefixB);
+      if (bucketDiff !== 0) return bucketDiff;
+      // Within same bucket, sort by fixed metric order
+      const suffixA = a.replace(/^B\d\s*/, '');
+      const suffixB = b.replace(/^B\d\s*/, '');
+      const orderA = METRIC_ORDER.findIndex((m) => suffixA === m);
+      const orderB = METRIC_ORDER.findIndex((m) => suffixB === m);
+      return (orderA === -1 ? 99 : orderA) - (orderB === -1 ? 99 : orderB);
+    });
+
     const periodSet = new Set<string>();
     data.forEach((row) => Object.keys(row.values).forEach((k) => periodSet.add(k)));
     // Sort chronologically descending (most recent first / leftmost)
-    let sorted = sortPeriodsChronologically(Array.from(periodSet), true);
+    let sortedPeriods = sortPeriodsChronologically(Array.from(periodSet), true);
     // If maxPeriod is set, filter to periods <= maxPeriod
     if (maxPeriod) {
       const maxNum = parsePeriodToNum(maxPeriod);
-      sorted = sorted.filter((p) => parsePeriodToNum(p) <= maxNum);
+      sortedPeriods = sortedPeriods.filter((p) => parsePeriodToNum(p) <= maxNum);
     }
-    return { metrics: metricNames, periods: sorted };
+    return { metrics: sorted, periods: sortedPeriods };
   }, [data, maxPeriod]);
 
   // Determine which row indices start a new bucket group (for separator lines)
@@ -51,6 +103,12 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
     });
     return indices;
   }, [metrics]);
+
+  // Identify Resolution rows for bold styling
+  const resolutionMetrics = useMemo(
+    () => new Set(metrics.filter((m) => m.replace(/^B\d\s*/, '') === 'Resolution')),
+    [metrics],
+  );
 
   const chartHeight = Math.max(400, metrics.length * ROW_H + MARGIN.top + MARGIN.bottom);
   const chartMinWidth = periods.length * MIN_CELL_W + MARGIN.left + MARGIN.right;
@@ -69,11 +127,11 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
       const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([1, 0]);
 
       // Build flat cell data
-      const cells: { metric: string; period: string; value: number }[] = [];
+      const cells: { metric: string; period: string; value: number; isResolution: boolean }[] = [];
       data.forEach((row) => {
         periods.forEach((p) => {
           if (row.values[p] != null) {
-            cells.push({ metric: row.metric, period: p, value: row.values[p] });
+            cells.push({ metric: row.metric, period: p, value: row.values[p], isResolution: resolutionMetrics.has(row.metric) });
           }
         });
       });
@@ -109,6 +167,7 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
         .attr('fill', (d) => (d.value > 0.6 ? '#fff' : '#1e293b'))
         .attr('font-size', Math.min(12, y.bandwidth() * 0.55) + 'px')
         .attr('font-family', 'IBM Plex Mono, monospace')
+        .attr('font-weight', (d) => (d.isResolution ? 700 : 400))
         .attr('pointer-events', 'none')
         .text((d) => {
           if (x.bandwidth() < 40 || y.bandwidth() < 18) return '';
@@ -128,12 +187,12 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
           .attr('stroke-dasharray', '4,3');
       });
 
-      // Y axis (metric names)
-      g.append('g')
-        .call(d3.axisLeft(y).tickSize(0))
-        .selectAll('text')
+      // Y axis (metric names) — bold for Resolution rows
+      const yAxis = g.append('g').call(d3.axisLeft(y).tickSize(0));
+      yAxis.selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '11px');
+        .attr('font-size', '11px')
+        .attr('font-weight', (d) => (resolutionMetrics.has(d as string) ? 700 : 400));
 
       g.selectAll('.domain').remove();
 
@@ -151,11 +210,17 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
 
       g.selectAll('.domain').remove();
     },
-    [data, metrics, periods, groupStartIndices, d3Tokens],
+    [data, metrics, periods, groupStartIndices, resolutionMetrics, d3Tokens],
   );
 
   return (
-    <ChartContainer title="Roll Rate Heatmap" subtitle="Transition rates by period" height={chartHeight} empty={!data.length}>
+    <ChartContainer
+      title="Roll Rate Heatmap"
+      subtitle="Transition rates by period"
+      height={chartHeight}
+      empty={!data.length}
+      headerRight={<BucketDictionary />}
+    >
       <Box sx={{ overflowX: 'auto', width: '100%', height: chartHeight }}>
         <svg
           ref={ref}

@@ -38,11 +38,12 @@ interface SankeyLink {
   prevRate: number | null;
 }
 
+/** Classify a metric into a flow type for tooltip display */
 function classifyFlow(lowerMetric: string): string {
-  if (lowerMetric.includes('resolution') || lowerMetric.includes('cure')) return 'Resolution / Cure';
+  if (lowerMetric.includes('norm')) return 'Normalize';
   if (lowerMetric.includes('roll forward') || lowerMetric.includes('rollforward')) return 'Roll Forward';
   if (lowerMetric.includes('rollback') || lowerMetric.includes('roll back')) return 'Roll Back';
-  if (lowerMetric.includes('stabilize') || lowerMetric.includes('norm')) return 'Stabilize';
+  if (lowerMetric.includes('stab')) return 'Stabilize';
   return 'Other';
 }
 
@@ -89,6 +90,10 @@ export function RollRateSankey({ data, period }: Props) {
       if (srcIdx == null) return;
 
       const lowerMetric = metricName.toLowerCase();
+
+      // Skip Resolution — it's a composite metric (Norm + Rollback + Stab), not a distinct flow
+      if (lowerMetric.includes('resolution')) return;
+
       const flowType = classifyFlow(lowerMetric);
       const prevValue = prevPeriod ? (row.values[prevPeriod] ?? null) : null;
 
@@ -99,17 +104,21 @@ export function RollRateSankey({ data, period }: Props) {
         prevRate: prevValue,
       };
 
-      if (lowerMetric.includes('resolution') || lowerMetric.includes('cure')) {
+      if (lowerMetric.includes('norm')) {
+        // Normalize → flow to Current (bucket index 0)
         linkList.push({ source: srcIdx, target: DEST_OFFSET + 0, value: Math.abs(value) * 100, ...baseLinkData });
       } else if (lowerMetric.includes('roll forward') || lowerMetric.includes('rollforward')) {
+        // Roll Forward → flow to next bucket
         const destIdx = Math.min(srcIdx + 1, BUCKETS.length - 1);
         linkList.push({ source: srcIdx, target: DEST_OFFSET + destIdx, value: Math.abs(value) * 100, ...baseLinkData });
       } else if (lowerMetric.includes('rollback') || lowerMetric.includes('roll back')) {
+        // Rollback → flow to previous bucket
         const destIdx = Math.max(srcIdx - 1, 0);
         if (destIdx !== srcIdx) {
           linkList.push({ source: srcIdx, target: DEST_OFFSET + destIdx, value: Math.abs(value) * 100, ...baseLinkData });
         }
-      } else if (lowerMetric.includes('stabilize') || lowerMetric.includes('norm')) {
+      } else if (lowerMetric.includes('stab')) {
+        // Stabilize → stay in same bucket
         linkList.push({ source: srcIdx, target: DEST_OFFSET + srcIdx, value: Math.abs(value) * 100, ...baseLinkData });
       }
     });

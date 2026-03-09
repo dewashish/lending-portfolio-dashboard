@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Autocomplete, TextField, Chip, Select, MenuItem } from '@mui/material';
+import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
 import { NetFlowWaterfall } from '@/components/charts/NetFlowWaterfall';
 import { RollRateHeatmap } from '@/components/charts/RollRateHeatmap';
 import { RollRateSankey } from '@/components/charts/RollRateSankey';
@@ -101,7 +101,7 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
 
 export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const { data: productCatalog } = useProductCatalog(scope);
   const { getColor } = useRiskAppetite();
@@ -115,17 +115,17 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
   // Resolved product names to pass to hooks
   const effectiveProducts = useMemo(() => {
-    const availableNames = new Set(availableProducts.map((p) => p.productName));
-    // Secured/unsecured toggle active but no specific products → pass ALL matching
-    if (securedFilter !== 'all' && selectedProducts.length === 0) {
+    // Specific product selected
+    if (selectedProduct !== 'all') {
+      const exists = availableProducts.some((p) => p.productName === selectedProduct);
+      return exists ? [selectedProduct] : [];
+    }
+    // Secured/unsecured toggle active → pass ALL matching products
+    if (securedFilter !== 'all') {
       return availableProducts.map((p) => p.productName);
     }
-    // Specific products selected → filter to those still in available set
-    if (selectedProducts.length > 0) {
-      return selectedProducts.filter((p) => availableNames.has(p));
-    }
     return []; // empty = show aggregate (no filter)
-  }, [securedFilter, selectedProducts, availableProducts]);
+  }, [securedFilter, selectedProduct, availableProducts]);
 
   // Net Flow: filter to specific selected period
   const netFlowFilters: ConsumerFilters = useMemo(() => ({
@@ -154,6 +154,14 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
     rollRates.forEach((r) => Object.keys(r.values).forEach((k) => periodSet.add(k)));
     return sortPeriodsChronologically(Array.from(periodSet));
   }, [rollRates]);
+
+  // Reset product selection when secured filter changes
+  const handleSecuredChange = (_: unknown, v: SecuredFilter | null) => {
+    if (v !== null) {
+      setSecuredFilter(v);
+      setSelectedProduct('all');
+    }
+  };
 
   const kpis = useMemo<DKpi[]>(() => {
     const defs = [
@@ -226,13 +234,28 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
           size="small"
           exclusive
           value={securedFilter}
-          onChange={(_, v) => { if (v !== null) { setSecuredFilter(v as SecuredFilter); setSelectedProducts([]); } }}
+          onChange={handleSecuredChange}
           sx={{ '& .MuiToggleButton-root': { fontSize: '0.68rem', py: 0.4, px: 1.5, textTransform: 'none', fontWeight: 600 } }}
         >
           <ToggleButton value="all">All</ToggleButton>
           <ToggleButton value="secured">Secured</ToggleButton>
           <ToggleButton value="unsecured">Unsecured</ToggleButton>
         </ToggleButtonGroup>
+
+        {availableProducts.length > 0 && (
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={selectedProduct}
+            onChange={(_, val) => { if (val !== null) setSelectedProduct(val); }}
+            sx={{ '& .MuiToggleButton-root': { fontSize: '0.65rem', py: 0.3, px: 1, textTransform: 'none' } }}
+          >
+            <ToggleButton value="all">All Products</ToggleButton>
+            {availableProducts.map((p) => (
+              <ToggleButton key={p.productName} value={p.productName}>{p.productName}</ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        )}
 
         <Select
           size="small"
@@ -246,27 +269,6 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
             <MenuItem key={p} value={p} sx={{ fontSize: '0.72rem' }}>{p}</MenuItem>
           ))}
         </Select>
-
-        <Autocomplete
-          multiple
-          size="small"
-          options={availableProducts.map((p) => p.productName)}
-          value={selectedProducts}
-          onChange={(_, val) => setSelectedProducts(val)}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder={selectedProducts.length === 0 ? 'All Products' : ''}
-              sx={{ '& .MuiInputBase-root': { fontSize: '0.72rem', py: 0, minHeight: 32 } }}
-            />
-          )}
-          renderTags={(value, getTagProps) =>
-            value.map((option, index) => (
-              <Chip {...getTagProps({ index })} key={option} label={option} size="small" sx={{ fontSize: '0.62rem', height: 20 }} />
-            ))
-          }
-          sx={{ minWidth: 220, maxWidth: 400 }}
-        />
       </Box>
 
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}

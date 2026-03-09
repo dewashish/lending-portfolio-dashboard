@@ -167,6 +167,10 @@ const FX_MAP: Record<string, number> = {
 };
 
 const PERIODS_7 = ["Feb'25", "Mar'25", "Apr'25", "May'25", "Jun'25", "Jul'25", "Aug'25"];
+const PERIODS_12 = [
+  "Apr'25", "May'25", "Jun'25", "Jul'25", "Aug'25", "Sep'25",
+  "Oct'25", "Nov'25", "Dec'25", "Jan'26", "Feb'26", "Mar'26",
+];
 const PERIODS_5 = ["Apr'25", "May'25", "Jun'25", "Jul'25", "Aug'25"];
 
 interface SubsidiaryProfile {
@@ -594,55 +598,85 @@ function buildNetFlowRates(): Row[] {
 // ---------------------------------------------------------------------------
 // 4. roll_rate_series
 // ---------------------------------------------------------------------------
+// Roll rate model (per Excel reference):
+//   Resolution = Norm + Rollback + Stab (composite)
+//   Roll Forward = 1 - Resolution
+//   B1 (Current): only Resolution + Roll Forward (no norm/stab/rollback)
+//   B2 (1-30):    Resolution + Norm + Stab + Roll Forward (no Rollback)
+//   B3-B6:        Resolution + Norm + Rollback + Stab + Roll Forward (all 5)
 function buildRollRateSeries(): Row[] {
   const buckets = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
-  const metrics = ['Resolution', 'Roll Forward', 'Roll Backward'];
 
-  // Base values per bucket [resolution, rollForward, rollBackward]
-  const baseValues: Record<string, number[]> = {
-    B1: [0.71, 0.21, 0.00],
-    B2: [0.18, 0.595, 0.12],
-    B3: [0.10, 0.72, 0.10],
-    B4: [0.065, 0.79, 0.08],
-    B5: [0.045, 0.85, 0.055],
-    B6: [0.03, 0.90, 0.035],
+  // Base component values per bucket: [norm, rollback, stab]
+  // Resolution = norm + rollback + stab; Roll Forward = 1 - resolution
+  // B1: resolution ~80%, no components (current bucket)
+  // B2: no rollback (going back from B2 = normalize)
+  const baseComponents: Record<string, { norm: number; rollback: number; stab: number }> = {
+    B1: { norm: 0, rollback: 0, stab: 0 },          // Resolution ~80% set directly
+    B2: { norm: 0.16, rollback: 0, stab: 0.12 },     // Resolution ~28%
+    B3: { norm: 0.055, rollback: 0.02, stab: 0.10 }, // Resolution ~17.5%
+    B4: { norm: 0.045, rollback: 0.02, stab: 0.08 }, // Resolution ~14.5%
+    B5: { norm: 0.035, rollback: 0.02, stab: 0.06 }, // Resolution ~11.5%
+    B6: { norm: 0.03, rollback: 0.02, stab: 0.05 },  // Resolution ~10%
   };
+
+  // B1 resolution is special — set directly (not sum of components)
+  const B1_RESOLUTION_BASE = 0.80;
 
   const rows: Row[] = [];
 
   function emitRows(sub: typeof SUBSIDIARIES[number], productName: string | null, prodDelinq: number) {
     const extraSeed = productName ? productName.charCodeAt(0) : 0;
-    for (let bi = 0; bi < buckets.length; bi++) {
-      for (let mi = 0; mi < metrics.length; mi++) {
-        for (let pi = 0; pi < PERIODS_7.length; pi++) {
-          let v = baseValues[buckets[bi]][mi];
-          // Resolution inversely proportional to risk; Roll Forward proportional
-          if (mi === 0) v *= (2 - sub.delinqMult * prodDelinq);
-          if (mi === 1) v *= sub.delinqMult * prodDelinq;
-          // Add period trend (improving over time)
-          const trend = pi * 0.003 * (mi === 0 ? 1 : mi === 1 ? -1 : 0);
-          const n = noise(sub.id + extraSeed, bi, mi, pi);
-          v = Math.max(0, +((v + trend) * n).toFixed(4));
-          v = Math.min(1, v);
+    const riskMult = sub.delinqMult * prodDelinq;
 
-          rows.push({
-            subsidiary_id: sub.id,
-            bucket: buckets[bi],
-            metric: metrics[mi],
-            period: PERIODS_7[pi],
-            value: v,
-            data_source_id: sub.dsOffset,
-            product_name: productName,
-          });
+    for (let bi = 0; bi < buckets.length; bi++) {
+      const bucket = buckets[bi];
+      const comp = baseComponents[bucket];
+
+      for (let pi = 0; pi < PERIODS_12.length; pi++) {
+        const trend = pi * 0.002; // slight improvement over time
+
+        if (bi === 0) {
+          // B1 (Current): only Resolution + Roll Forward
+          const resBase = B1_RESOLUTION_BASE * (2 - riskMult);
+          const n = noise(sub.id + extraSeed, bi, 0, pi);
+          const resolution = Math.min(1, Math.max(0, +((resBase + trend) * n).toFixed(4)));
+          const rollForward = Math.min(1, Math.max(0, +(1 - resolution).toFixed(4)));
+
+          rows.push({ subsidiary_id: sub.id, bucket, metric: 'Resolution', period: PERIODS_12[pi], value: resolution, data_source_id: sub.dsOffset, product_name: productName });
+          rows.push({ subsidiary_id: sub.id, bucket, metric: 'Roll Forward', period: PERIODS_12[pi], value: rollForward, data_source_id: sub.dsOffset, product_name: productName });
+        } else {
+          // B2-B6: generate component rates, derive Resolution and Roll Forward
+          const nNorm = noise(sub.id + extraSeed, bi, 1, pi);
+          const nRollback = noise(sub.id + extraSeed, bi, 2, pi);
+          const nStab = noise(sub.id + extraSeed, bi, 3, pi);
+
+          // Norm inversely proportional to risk (better collectors resolve more)
+          const norm = comp.norm > 0
+            ? Math.max(0, +((comp.norm * (2 - riskMult) + trend * 0.5) * nNorm).toFixed(4))
+            : 0;
+          // Rollback: slight inverse to risk
+          const rollback = comp.rollback > 0
+            ? Math.max(0, +((comp.rollback * (1.5 - riskMult * 0.5)) * nRollback).toFixed(4))
+            : 0;
+          // Stab: slight inverse to risk
+          const stab = Math.max(0, +((comp.stab * (1.5 - riskMult * 0.5) + trend * 0.3) * nStab).toFixed(4));
+
+          const resolution = Math.min(1, +(norm + rollback + stab).toFixed(4));
+          const rollForward = Math.min(1, Math.max(0, +(1 - resolution).toFixed(4)));
+
+          rows.push({ subsidiary_id: sub.id, bucket, metric: 'Resolution', period: PERIODS_12[pi], value: resolution, data_source_id: sub.dsOffset, product_name: productName });
+          if (norm > 0) rows.push({ subsidiary_id: sub.id, bucket, metric: 'Norm', period: PERIODS_12[pi], value: norm, data_source_id: sub.dsOffset, product_name: productName });
+          if (rollback > 0) rows.push({ subsidiary_id: sub.id, bucket, metric: 'Rollback', period: PERIODS_12[pi], value: rollback, data_source_id: sub.dsOffset, product_name: productName });
+          rows.push({ subsidiary_id: sub.id, bucket, metric: 'Stab', period: PERIODS_12[pi], value: stab, data_source_id: sub.dsOffset, product_name: productName });
+          rows.push({ subsidiary_id: sub.id, bucket, metric: 'Roll Forward', period: PERIODS_12[pi], value: rollForward, data_source_id: sub.dsOffset, product_name: productName });
         }
       }
     }
   }
 
   for (const sub of SUBSIDIARIES) {
-    // Aggregate rows (product_name = null)
     emitRows(sub, null, 1.0);
-    // Per-product rows
     for (const product of sub.products) {
       emitRows(sub, product, PRODUCT_DELINQ_MULT[product] || 1.0);
     }
