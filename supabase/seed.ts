@@ -768,6 +768,12 @@ function buildVintagePoints(): Row[] {
     'Gross Loss': 0.25, 'Recoveries': 0.08, 'NCL': 0.17,
   };
 
+  // Product-type multiplier: secured products have lower delinquency
+  const securedProducts = new Set(['Home Loan', 'LAP', 'Auto Loan', 'Housing Loan', 'Leasing', 'Mortgage']);
+  function productMult(product: string): number {
+    return securedProducts.has(product) ? 0.7 : 1.3;
+  }
+
   // S-curve for delinquency
   function delinqCurve(mob: number): number {
     if (mob <= 0) return 0;
@@ -781,34 +787,40 @@ function buildVintagePoints(): Row[] {
 
   const rows: Row[] = [];
   for (const sub of SUBSIDIARIES) {
-    // Loan amount per vintage in local currency
-    const baseVintageLoan = sub.aumLocal * 0.003; // ~0.3% of AUM per vintage
+    // Loan amount per vintage in local currency — split across products
+    const baseVintageLoan = sub.aumLocal * 0.003 / sub.products.length;
 
-    for (let vi = 0; vi < vintages.length; vi++) {
-      const loanAmount = +(baseVintageLoan * (0.8 + (vi / 29) * 0.4) * noise(sub.id, vi)).toFixed(2);
-      const loanAmountUsd = toUSD(loanAmount, sub.currencyCode, FX_MAP);
-      const quality = vintageQuality(vi);
+    for (let pi = 0; pi < sub.products.length; pi++) {
+      const product = sub.products[pi];
+      const pMult = productMult(product);
 
-      for (let mob = 1; mob <= 13; mob++) {
-        const base30 = delinqCurve(mob) * quality * sub.delinqMult;
+      for (let vi = 0; vi < vintages.length; vi++) {
+        const loanAmount = +(baseVintageLoan * (0.8 + (vi / 29) * 0.4) * noise(sub.id * 10 + pi, vi)).toFixed(2);
+        const loanAmountUsd = toUSD(loanAmount, sub.currencyCode, FX_MAP);
+        const quality = vintageQuality(vi);
 
-        for (let mti = 0; mti < metricTypes.length; mti++) {
-          const mt = metricTypes[mti];
-          let rate = base30 * metricMultipliers[mt];
-          const n = Math.sin(sub.id * 2.1 + vi * 3.1 + mob * 7.7 + mti * 5.3) * 0.002;
-          rate = Math.max(0, +(rate + n).toFixed(6));
+        for (let mob = 1; mob <= 13; mob++) {
+          const base30 = delinqCurve(mob) * quality * sub.delinqMult * pMult;
 
-          rows.push({
-            subsidiary_id: sub.id,
-            vintage: vintages[vi],
-            portfolio_segment: 'Total',
-            loan_amount: loanAmount,
-            loan_amount_usd: loanAmountUsd,
-            mob,
-            delinquency_rate: rate,
-            metric_type: mt,
-            data_source_id: sub.dsOffset,
-          });
+          for (let mti = 0; mti < metricTypes.length; mti++) {
+            const mt = metricTypes[mti];
+            let rate = base30 * metricMultipliers[mt];
+            const n = Math.sin(sub.id * 2.1 + pi * 1.7 + vi * 3.1 + mob * 7.7 + mti * 5.3) * 0.002;
+            rate = Math.max(0, +(rate + n).toFixed(6));
+
+            rows.push({
+              subsidiary_id: sub.id,
+              vintage: vintages[vi],
+              portfolio_segment: 'Total',
+              product_name: product,
+              loan_amount: loanAmount,
+              loan_amount_usd: loanAmountUsd,
+              mob,
+              delinquency_rate: rate,
+              metric_type: mt,
+              data_source_id: sub.dsOffset,
+            });
+          }
         }
       }
     }

@@ -28,7 +28,7 @@ interface Props {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ConsumerVintageSection({ scope, filters }: Props) {
   const [metricType, setMetricType] = useState<string>('30+');
-  const { data: vintageData, isLoading } = useVintagePoints(undefined, scope);
+  const { data: vintageData, isLoading } = useVintagePoints(scope);
 
   if (isLoading) return <LoadingSkeleton />;
 

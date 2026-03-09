@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
+import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem, Divider } from '@mui/material';
 import { NetFlowWaterfall } from '@/components/charts/NetFlowWaterfall';
+import { VintageHeatmap } from '@/components/charts/VintageHeatmap';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
-import { useNetFlowRates, useConsumerOverall, useProductCatalog, useProductMetrics, useConsumerPeriods } from '@/hooks/useConsumerData';
+import { useNetFlowRates, useConsumerOverall, useProductCatalog, useProductMetrics, useConsumerPeriods, useVintagePoints } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
-import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
+import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters, VintagePoint } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
@@ -97,10 +98,13 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
   );
 }
 
+const VINTAGE_METRICS = ['30+', '60+', '90+', 'X+', 'Gross Loss', 'Recoveries', 'NCL'] as const;
+
 export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  const [vintageMetric, setVintageMetric] = useState<string>('30+');
   const { data: productCatalog } = useProductCatalog(scope);
   const { data: rawPeriods } = useConsumerPeriods(scope);
   const { getColor } = useRiskAppetite();
@@ -135,6 +139,38 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, netFlowFilters);
   const { data: overall } = useConsumerOverall(scope, filters);
   const { data: productData } = useProductMetrics(scope, hasProductFilter ? netFlowFilters : undefined);
+
+  // Vintage / Static Pool data
+  const vintageProducts = useMemo(() => effectiveProducts.length > 0 ? effectiveProducts : undefined, [effectiveProducts]);
+  const { data: vintageData, isLoading: l2 } = useVintagePoints(scope, vintageMetric, vintageProducts);
+
+  // Aggregate vintage data across products (weighted average by loan amount)
+  const aggregatedVintage = useMemo(() => {
+    if (!vintageData || vintageData.length === 0) return [];
+    const groups = new Map<string, { weightedSum: number; totalWeight: number }>();
+    for (const pt of vintageData) {
+      const key = `${pt.vintage}|${pt.mob}|${pt.metricType}`;
+      const g = groups.get(key);
+      if (g) {
+        g.weightedSum += pt.delinquencyRate * pt.loanAmount;
+        g.totalWeight += pt.loanAmount;
+      } else {
+        groups.set(key, { weightedSum: pt.delinquencyRate * pt.loanAmount, totalWeight: pt.loanAmount });
+      }
+    }
+    const result: VintagePoint[] = [];
+    groups.forEach((val, key) => {
+      const [vintage, mob, metricType] = key.split('|');
+      result.push({
+        vintage,
+        mob: parseInt(mob),
+        metricType,
+        delinquencyRate: val.totalWeight > 0 ? val.weightedSum / val.totalWeight : 0,
+        loanAmount: val.totalWeight,
+      });
+    });
+    return result;
+  }, [vintageData]);
 
   // Available periods from consumer overall metrics
   const availablePeriods = useMemo(() => {
@@ -256,6 +292,28 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}
 
       <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} />
+
+      {/* Static Pool Analysis */}
+      <Divider sx={{ my: 0.5 }} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
+          Static Pool Analysis
+        </Typography>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={vintageMetric}
+          onChange={(_, v) => { if (v) setVintageMetric(v); }}
+          sx={{ '& .MuiToggleButton-root': { fontSize: '0.62rem', py: 0.3, px: 1, textTransform: 'none' } }}
+        >
+          {VINTAGE_METRICS.map((m) => (
+            <ToggleButton key={m} value={m}>{m}</ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
+      {l2 ? <ChartGridSkeleton /> : (
+        <VintageHeatmap data={aggregatedVintage} metricType={vintageMetric} />
+      )}
     </Box>
   );
 }

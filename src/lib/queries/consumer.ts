@@ -302,13 +302,14 @@ export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: C
   }));
 }
 
-export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelection): Promise<VintagePoint[]> {
-  let query = supabase.from('vintage_points').select('vintage, loan_amount, mob, delinquency_rate, metric_type').order('id');
+export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelection, products?: string[]): Promise<VintagePoint[]> {
+  let query = supabase.from('vintage_points').select('vintage, loan_amount, mob, delinquency_rate, metric_type, product_name').order('id');
   if (metricType) query = query.eq('metric_type', metricType);
+  if (products && products.length > 0) query = query.in('product_name', products);
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
-  return ((data ?? []) as VintageDbRow[]).map((r) => ({
+  return ((data ?? []) as (VintageDbRow & { product_name?: string })[]).map((r) => ({
     vintage: r.vintage,
     loanAmount: r.loan_amount ?? 0,
     mob: r.mob,

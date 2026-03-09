@@ -539,6 +539,7 @@ CREATE TABLE vintage_points (
   subsidiary_id INTEGER NOT NULL REFERENCES subsidiaries(id),
   vintage TEXT NOT NULL,
   portfolio_segment TEXT DEFAULT 'Total',
+  product_name TEXT,
   loan_amount NUMERIC,
   loan_amount_usd NUMERIC,
   mob INTEGER NOT NULL,

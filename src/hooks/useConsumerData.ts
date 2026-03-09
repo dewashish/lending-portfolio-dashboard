@@ -23,9 +23,10 @@ export function useCollectionMetrics(scope?: ScopeSelection, filters?: ConsumerF
   return useSWR(consumerFilterKey(scopeKey('collection-metrics', scope), filters), () => queries.fetchCollectionMetrics(scope, filters));
 }
 
-export function useVintagePoints(metricType?: string, scope?: ScopeSelection) {
-  const key = metricType ? `vintage-points-${metricType}` : 'vintage-points';
-  return useSWR(scopeKey(key, scope), () => queries.fetchVintagePoints(metricType, scope));
+export function useVintagePoints(scope?: ScopeSelection, metricType?: string, products?: string[]) {
+  const prodKey = products && products.length > 0 ? products.slice().sort().join(',') : 'all';
+  const key = `vintage-points-${metricType ?? 'all'}-${prodKey}`;
+  return useSWR(scopeKey(key, scope), () => queries.fetchVintagePoints(metricType, scope, products));
 }
 
 export function useNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters) {

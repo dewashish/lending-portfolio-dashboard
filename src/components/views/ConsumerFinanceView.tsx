@@ -8,7 +8,6 @@ import { ConsumerOriginationSection } from '@/components/views/consumer/Consumer
 import { ConsumerProductSection } from '@/components/views/consumer/ConsumerProductSection';
 import { ConsumerDelinquencySection } from '@/components/views/consumer/ConsumerDelinquencySection';
 import { ConsumerCollectionsSection } from '@/components/views/consumer/ConsumerCollectionsSection';
-import { ConsumerVintageSection } from '@/components/views/consumer/ConsumerVintageSection';
 import { ConsumerNonStarterSection } from '@/components/views/consumer/ConsumerNonStarterSection';
 import { ConsumerRiskAnalyticsSection } from '@/components/views/consumer/ConsumerRiskAnalyticsSection';
 import { ConsumerTDDSection } from '@/components/views/consumer/ConsumerTDDSection';
@@ -21,7 +20,6 @@ const SUB_TABS = [
   'Products',
   'Delinquency',
   'Collections',
-  'Vintage Analysis',
   'Non-Starters',
   'Risk Analytics',
   'Due Diligence',
@@ -46,10 +44,9 @@ export function ConsumerFinanceView({ scope, filters }: Props) {
       case 2: return <ConsumerProductSection key="sub-2" scope={scope} filters={filters} />;
       case 3: return <ConsumerDelinquencySection key="sub-3" scope={scope} filters={filters} />;
       case 4: return <ConsumerCollectionsSection key="sub-4" scope={scope} filters={filters} />;
-      case 5: return <ConsumerVintageSection key="sub-5" scope={scope} filters={filters} />;
-      case 6: return <ConsumerNonStarterSection key="sub-6" scope={scope} filters={filters} />;
-      case 7: return <ConsumerRiskAnalyticsSection key="sub-7" scope={scope} filters={filters} />;
-      case 8: return <ConsumerTDDSection key="sub-8" scope={scope} filters={filters} />;
+      case 5: return <ConsumerNonStarterSection key="sub-5" scope={scope} filters={filters} />;
+      case 6: return <ConsumerRiskAnalyticsSection key="sub-6" scope={scope} filters={filters} />;
+      case 7: return <ConsumerTDDSection key="sub-7" scope={scope} filters={filters} />;
       default: return null;
     }
   };
