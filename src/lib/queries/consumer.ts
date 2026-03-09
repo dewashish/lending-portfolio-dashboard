@@ -247,13 +247,15 @@ export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: Consum
     .select('portfolio, bucket, period, value, product_name')
     .order('id')
     .limit(10000);
-  query = await applyScopeAsync(query, scope);
+  // Apply all filters BEFORE applyScopeAsync (which implicitly executes the query
+  // because PostgrestBuilder is thenable and async return wraps in Promise.resolve)
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) {
     query = query.in('product_name', filters.products);
   } else {
     query = query.is('product_name', null);
   }
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return pivotToNetFlowRows((data ?? []) as NetFlowDbRow[]);
@@ -265,13 +267,14 @@ export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerF
     .select('bucket, metric, period, value, product_name')
     .order('id')
     .limit(10000);
-  query = await applyScopeAsync(query, scope);
+  // Apply all filters BEFORE applyScopeAsync (see comment above)
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) {
     query = query.in('product_name', filters.products);
   } else {
     query = query.is('product_name', null);
   }
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return pivotToRollRateSeries((data ?? []) as RollRateDbRow[]);
