@@ -179,8 +179,8 @@ export async function fetchConsumerOverall(scope?: ScopeSelection, filters?: Con
     .from('consumer_overall_metrics')
     .select('subsidiary_id, metric_type, metric, period, value, value_usd, benchmark')
     .order('id');
-  query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -233,9 +233,9 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
     .from('consumer_product_metrics')
     .select('product_name, metric_type, metric, period, value, benchmark')
     .order('id');
-  query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) query = query.in('product_name', filters.products);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return pivotToProductData((data ?? []) as ProductRow[]);
@@ -328,9 +328,10 @@ export async function fetchNonStarters(scope?: ScopeSelection, filters?: Consume
     .from('non_starters')
     .select('category, product, metric, period, value, value_usd')
     .order('id');
-  query = await applyScopeAsync(query, scope);
+  // Apply custom filters BEFORE applyScopeAsync (async + thenable = premature execution)
   if (category) query = query.eq('category', category);
   if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -357,8 +358,8 @@ export async function fetchTDDPre(scope?: ScopeSelection, filters?: ConsumerFilt
     .from('tdd_pre_disbursal')
     .select('metric, period, value')
     .order('id');
-  query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -377,8 +378,8 @@ export async function fetchTDDPost(scope?: ScopeSelection, filters?: ConsumerFil
     .from('tdd_post_disbursal')
     .select('variant, bureau_bucket, period, value')
     .order('id');
-  query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -440,8 +441,8 @@ export async function fetchLOSMetrics(scope?: ScopeSelection, filters?: Consumer
     .from('los_metrics')
     .select('metric, product, ftd, mtd, lmtd, lm_full, mom_change, target, achievement')
     .order('id');
-  query = await applyScopeAsync(query, scope);
   if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSMetricDbRow[]).map((r) => ({
@@ -479,8 +480,8 @@ export async function fetchLOSDaily(scope?: ScopeSelection, filters?: ConsumerFi
     .from('los_daily')
     .select('date, product, count, amount, avg_ticket_size')
     .order('date');
-  query = await applyScopeAsync(query, scope);
   if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSDailyDbRow[]).map((r) => ({
