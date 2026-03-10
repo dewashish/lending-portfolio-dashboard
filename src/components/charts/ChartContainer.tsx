@@ -30,7 +30,7 @@ export function ChartContainer({ title, subtitle, height = 320, loading, empty, 
         </Box>
         {headerRight}
       </Box>
-      <Box sx={{ flex: 1, minHeight: height, position: 'relative' }}>
+      <Box sx={{ ...(fillHeight ? { flex: 1, minHeight: height } : { height }), position: 'relative' }}>
         {loading ? (
           <Skeleton variant="rectangular" height={height} sx={{ borderRadius: 1 }} />
         ) : empty ? (
