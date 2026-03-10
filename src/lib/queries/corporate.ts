@@ -21,7 +21,7 @@ import type {
 import { applyScopeAsync } from './shared';
 
 // ── Type aliases ─────────────────────────────────────────────────
-type WatchlistDbRow = Database['public']['Tables']['corporate_watchlist']['Row'];
+// WatchlistDbRow removed — using any[] cast for new columns not in generated types
 type CovenantDbRow = Database['public']['Tables']['corporate_covenants']['Row'];
 type DelinquencyDbRow = Database['public']['Tables']['corporate_delinquency']['Row'];
 type PortfolioMetricDbRow = Database['public']['Tables']['corporate_portfolio_metrics']['Row'];
@@ -36,14 +36,20 @@ export async function fetchCorporateWatchlist(scope?: ScopeSelection): Promise<C
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
-  return ((data ?? []) as WatchlistDbRow[]).map((r) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
     borrower: r.borrower,
     sector: r.sector,
     exposure: String(r.exposure_usd ?? r.exposure ?? 0),
+    exposureNum: Number(r.exposure_usd ?? r.exposure ?? 0),
     ewsTriggerType: r.ews_trigger_type ?? '',
+    triggerCategory: r.trigger_category ?? '',
     internalRating: r.internal_rating ?? '',
+    priorRating: r.prior_rating ?? '',
     status: r.status ?? '',
     remedialAction: r.remedial_action ?? '',
+    dateAdded: r.date_added ?? '',
+    daysOnWatchlist: r.days_on_watchlist ?? 0,
   }));
 }
 

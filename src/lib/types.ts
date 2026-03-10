@@ -426,10 +426,15 @@ export interface CorporateWatchlistRow {
   borrower: string;
   sector: string;
   exposure: string;
+  exposureNum: number;
   ewsTriggerType: string;
+  triggerCategory: string;
   internalRating: string;
+  priorRating: string;
   status: string;
   remedialAction: string;
+  dateAdded: string;
+  daysOnWatchlist: number;
 }
 
 export interface CorporateDelinquencyRow {

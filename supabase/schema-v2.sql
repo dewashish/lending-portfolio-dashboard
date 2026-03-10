@@ -575,3 +575,11 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- ============================================================================
+-- Schema additions for Watchlist Tracking Redesign (v0.3.53)
+-- ============================================================================
+ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS trigger_category TEXT;
+ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS date_added DATE;
+ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS days_on_watchlist INTEGER DEFAULT 0;
+ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS prior_rating TEXT;

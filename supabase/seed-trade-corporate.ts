@@ -1011,7 +1011,29 @@ function buildCountryRisk(): Row[] {
 }
 
 // =============================================================================
-// 13. corporate_watchlist (~5-8 per subsidiary)
+// Trigger category mapping for watchlist
+const TRIGGER_CATEGORY_MAP: Record<string, string> = {
+  'Revenue decline >15%': 'Financial',
+  'Debt/EBITDA >4x': 'Financial',
+  'Interest coverage <1.5x': 'Financial',
+  'Covenant breach - DSCR': 'Financial',
+  'Cash flow deterioration': 'Financial',
+  'Working capital squeeze': 'Financial',
+  'Credit rating downgrade': 'Financial',
+  'Management change': 'Operational',
+  'Audit qualification': 'Operational',
+  'Related party transactions': 'Operational',
+  'Promoter pledge increase': 'Operational',
+  'Regulatory action': 'External',
+  'Sector stress - commodity price': 'External',
+  'FX exposure unhedged': 'External',
+  'Significant customer loss': 'Behavioral',
+};
+
+// Rating ladder for prior rating calculation
+const CORP_RATING_LADDER = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'BBB+', 'BBB', 'BB+', 'BB', 'B', 'C/D'];
+
+// 13. corporate_watchlist (~15-25 per subsidiary)
 // =============================================================================
 function buildCorporateWatchlist(): Row[] {
   const rows: Row[] = [];
@@ -1019,19 +1041,34 @@ function buildCorporateWatchlist(): Row[] {
   for (const sub of SUBSIDIARIES) {
     const borrowers = CORPORATE_BORROWERS[sub.id];
     const sectors = CORPORATE_SECTORS[sub.id];
-    const numWatchlist = Math.round(noiseRange(5, 8, sub.id, 1200));
+    const numWatchlist = Math.round(noiseRange(15, 25, sub.id, 1200));
 
     for (let wi = 0; wi < numWatchlist; wi++) {
       const borrower = borrowers[(wi * 2 + sub.id) % borrowers.length];
       const sector = sectors[(wi + sub.id) % sectors.length];
       const exposure = +(sub.aumLocal * noiseRange(0.005, 0.025, sub.id, wi, 1201)).toFixed(2);
       const trigger = pick(EWS_TRIGGERS, sub.id, wi, 1202);
+      const triggerCategory = TRIGGER_CATEGORY_MAP[trigger] || 'Financial';
 
-      const ratingNum = Math.round(noiseRange(5, 9, sub.id, wi, 1203));
-      const ratingMap: Record<number, string> = { 5: 'A', 6: 'BBB+', 7: 'BBB', 8: 'BB+', 9: 'BB' };
+      const ratingNum = Math.round(noiseRange(4, 11, sub.id, wi, 1203));
+      const ratingMap: Record<number, string> = {
+        4: 'A+', 5: 'A', 6: 'BBB+', 7: 'BBB', 8: 'BB+', 9: 'BB', 10: 'B', 11: 'C/D',
+      };
       const internalRating = ratingMap[ratingNum] || 'BBB';
 
-      const statusOptions = ['Active', 'Under Review', 'Upgraded', 'Downgraded'];
+      // Prior rating: 1-2 notches better than current
+      const curIdx = CORP_RATING_LADDER.indexOf(internalRating);
+      const notchesUp = Math.round(noiseRange(1, 2, sub.id, wi, 1206));
+      const priorIdx = Math.max(0, curIdx - notchesUp);
+      const priorRating = CORP_RATING_LADDER[priorIdx];
+
+      // Date added: 30-365 days before report date
+      const daysOnWatchlist = Math.round(noiseRange(30, 365, sub.id, wi, 1207));
+      const reportDate = new Date(REPORT_DATE);
+      const dateAdded = new Date(reportDate.getTime() - daysOnWatchlist * 86400000);
+      const dateAddedStr = dateAdded.toISOString().slice(0, 10);
+
+      const statusOptions = ['Active Watch', 'Escalated', 'Monitoring', 'Review Pending'];
       const status = pick(statusOptions, sub.id, wi, 1204);
       const action = pick(REMEDIAL_ACTIONS, sub.id, wi, 1205);
 
@@ -1042,9 +1079,13 @@ function buildCorporateWatchlist(): Row[] {
         exposure,
         exposure_usd: toUSD(exposure, sub.currencyCode, FX_MAP),
         ews_trigger_type: trigger,
+        trigger_category: triggerCategory,
         internal_rating: internalRating,
+        prior_rating: priorRating,
         status,
         remedial_action: action,
+        date_added: dateAddedStr,
+        days_on_watchlist: daysOnWatchlist,
         report_date: REPORT_DATE,
         data_source_id: sub.dsOffset,
       });
