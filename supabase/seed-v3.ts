@@ -441,12 +441,22 @@ function buildCorporateLTVDistribution(): Row[] {
       const bal = +(totalBalance * share).toFixed(2);
       const count = Math.round(BASE_COUNTS[bIdx] * n);
 
+      const sanctioned = +(bal * noiseRange(1.3, 1.6, sub.id, bIdx, 910)).toFixed(2);
+      const disbursed = +(bal * noiseRange(1.0, 1.2, sub.id, bIdx, 920)).toFixed(2);
+      const pos = bal;
+
       rows.push({
         subsidiary_id: sub.id,
         ltv_band: band,
         facility_count: count,
         balance: bal,
         balance_usd: toUSD(bal, sub.currencyCode),
+        sanctioned,
+        sanctioned_usd: toUSD(sanctioned, sub.currencyCode),
+        disbursed,
+        disbursed_usd: toUSD(disbursed, sub.currencyCode),
+        pos,
+        pos_usd: toUSD(pos, sub.currencyCode),
         portfolio_share: share,
         report_date: REPORT_DATE,
       });

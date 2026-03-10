@@ -548,6 +548,9 @@ export interface CorporateLTVRow {
   facilityCount: number;
   balance: number;
   portfolioShare: number;
+  sanctioned: number;
+  disbursed: number;
+  pos: number;
 }
 
 // ── Corporate Maturity Profile ───────────────────────────────────

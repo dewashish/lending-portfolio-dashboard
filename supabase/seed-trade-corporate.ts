@@ -1170,6 +1170,18 @@ function buildCorporateCovenants(): Row[] {
       const watchlistFlag = noiseRange(0, 1, sub.id, ci, 1316) > 0.85 * (2 - sub.delinqMult);
       const writeoffFlag = noiseRange(0, 1, sub.id, ci, 1317) > 0.97;
 
+      // New fields for v0.3.55
+      const isBreached = npaFlag || restructuredFlag;
+      const daysSinceBreach = isBreached ? Math.round(noiseRange(5, 120, sub.id, ci, 1320)) : 0;
+
+      // Creation date: a few days before disbursal
+      const creationDate = new Date(disbDate);
+      creationDate.setDate(creationDate.getDate() - Math.round(noiseRange(5, 30, sub.id, ci, 1321)));
+
+      // RM names pool
+      const rmNames = ['Ahmed Hassan', 'Priya Sharma', 'Milan Jovic', 'Carlos Gutierrez', 'Fatima El-Sayed', 'Raj Patel', 'Maria Rodriguez', 'Chen Wei'];
+      const rmName = rmNames[Math.round(noiseRange(0, rmNames.length - 1, sub.id, ci, 1322))];
+
       rows.push({
         subsidiary_id: sub.id,
         group_id: groupId,
@@ -1196,6 +1208,10 @@ function buildCorporateCovenants(): Row[] {
         restructured_flag: restructuredFlag,
         watchlist_flag: watchlistFlag,
         writeoff_flag: writeoffFlag,
+        creation_date: creationDate.toISOString().slice(0, 10),
+        rm_name: rmName,
+        breached: isBreached,
+        days_since_breach: daysSinceBreach,
         report_date: REPORT_DATE,
         data_source_id: sub.dsOffset,
       });

@@ -263,6 +263,9 @@ export async function fetchCorporateLTVDistribution(scope?: ScopeSelection): Pro
     facilityCount: r.facility_count ?? 0,
     balance: r.balance_usd ?? r.balance ?? 0,
     portfolioShare: r.portfolio_share ?? 0,
+    sanctioned: r.sanctioned_usd ?? r.sanctioned ?? 0,
+    disbursed: r.disbursed_usd ?? r.disbursed ?? 0,
+    pos: r.pos_usd ?? r.pos ?? 0,
   }));
 }
 

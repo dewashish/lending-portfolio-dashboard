@@ -188,3 +188,35 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- ============================================================================
+-- v0.3.55: Schema additions for Industry, Collateral, Covenants tab redesigns
+-- ============================================================================
+
+-- Collateral: Add Sanctioned/Disbursed/POS/Particulars columns
+ALTER TABLE corporate_collateral_analysis
+  ADD COLUMN IF NOT EXISTS sanctioned_amount NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS sanctioned_amount_usd NUMERIC,
+  ADD COLUMN IF NOT EXISTS disbursed_amount NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS disbursed_amount_usd NUMERIC,
+  ADD COLUMN IF NOT EXISTS principal_os NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS principal_os_usd NUMERIC,
+  ADD COLUMN IF NOT EXISTS principal_share NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS particulars TEXT DEFAULT '';
+
+-- LTV: Add Sanctioned/Disbursed/POS columns
+ALTER TABLE corporate_ltv_distribution
+  ADD COLUMN IF NOT EXISTS sanctioned NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS sanctioned_usd NUMERIC,
+  ADD COLUMN IF NOT EXISTS disbursed NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS disbursed_usd NUMERIC,
+  ADD COLUMN IF NOT EXISTS pos NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS pos_usd NUMERIC;
+
+-- Covenants: Add creation_date, extended_closure_date, rm_name, breached, days_since_breach
+ALTER TABLE corporate_covenants
+  ADD COLUMN IF NOT EXISTS creation_date DATE,
+  ADD COLUMN IF NOT EXISTS extended_closure_date DATE,
+  ADD COLUMN IF NOT EXISTS rm_name TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS breached BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS days_since_breach INTEGER DEFAULT 0;

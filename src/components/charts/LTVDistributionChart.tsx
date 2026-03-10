@@ -34,9 +34,32 @@ function getLTVColor(band: string): string {
 export function LTVDistributionChart({ data }: Props) {
   const { d3Tokens } = useThemeMode();
   const { formatCurrencyMM } = useCurrencyFormat();
+  const { formatCurrency } = useCurrencyFormat();
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      // Cleanup stale tooltips
+      d3.selectAll('.ltv-dist-tooltip').remove();
+
+      const tooltip = d3.select('body').append('div')
+        .attr('class', 'ltv-dist-tooltip')
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '10px 14px')
+        .style('font-size', '11px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)')
+        .style('z-index', '9999')
+        .style('max-width', '280px')
+        .style('line-height', '1.6')
+        .style('transition', 'opacity 0.15s ease');
+
+      const mutedColor = d3Tokens.textMuted;
+
       const margin = { top: 20, right: 80, bottom: 30, left: 90 };
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
@@ -89,11 +112,38 @@ export function LTVDistributionChart({ data }: Props) {
         .attr('fill', (d) => getLTVColor(d.ltvBand))
         .attr('rx', 3)
         .attr('opacity', 0.9)
-        .on('mouseover', function () {
-          d3.select(this).attr('opacity', 1);
+        .style('cursor', 'pointer')
+        .on('mouseover', function (_event, d) {
+          d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          tooltip.html(
+            `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${d.ltvBand}</div>` +
+            `<div><span style="color:${mutedColor}">Balance:</span> <b>${formatCurrency(d.balance)}</b></div>` +
+            `<div><span style="color:${mutedColor}">Facilities:</span> <b>${d.facilityCount}</b></div>` +
+            `<div><span style="color:${mutedColor}">Share:</span> <b>${formatPercent(d.portfolioShare)}</b></div>` +
+            (d.sanctioned ? `<div><span style="color:${mutedColor}">Sanctioned:</span> <b>${formatCurrency(d.sanctioned)}</b></div>` : '') +
+            (d.disbursed ? `<div><span style="color:${mutedColor}">Disbursed:</span> <b>${formatCurrency(d.disbursed)}</b></div>` : '') +
+            (d.pos ? `<div><span style="color:${mutedColor}">POS:</span> <b>${formatCurrency(d.pos)}</b></div>` : '')
+          ).style('opacity', '1');
+          const ttNode = tooltip.node() as HTMLDivElement;
+          const ttW = ttNode.offsetWidth;
+          let left = (_event as unknown as MouseEvent).pageX + 12;
+          let top = (_event as unknown as MouseEvent).pageY - 10;
+          if (left + ttW > window.innerWidth - 8) left = (_event as unknown as MouseEvent).pageX - ttW - 12;
+          if (top < 8) top = 8;
+          tooltip.style('left', `${left}px`).style('top', `${top}px`);
+        })
+        .on('mousemove', function (_event) {
+          const ttNode = tooltip.node() as HTMLDivElement;
+          const ttW = ttNode.offsetWidth;
+          let left = (_event as unknown as MouseEvent).pageX + 12;
+          let top = (_event as unknown as MouseEvent).pageY - 10;
+          if (left + ttW > window.innerWidth - 8) left = (_event as unknown as MouseEvent).pageX - ttW - 12;
+          if (top < 8) top = 8;
+          tooltip.style('left', `${left}px`).style('top', `${top}px`);
         })
         .on('mouseout', function () {
-          d3.select(this).attr('opacity', 0.9);
+          d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
         });
 
       // Portfolio share labels at end of bars
@@ -118,7 +168,7 @@ export function LTVDistributionChart({ data }: Props) {
 
       g.selectAll('.domain').attr('stroke', d3Tokens.axisDomain);
     },
-    [data, d3Tokens, formatCurrencyMM],
+    [data, d3Tokens, formatCurrencyMM, formatCurrency],
   );
 
   return (
