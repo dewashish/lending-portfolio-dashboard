@@ -43,8 +43,8 @@ export const STAGE_COLORS: Record<IFRSStage, string> = {
 export const TAB_NAMES = [
   'Group Overview',
   'Consumer Finance',
-  'Trade Finance',
   'Corporate Finance',
+  'Trade Finance',
   'Risk & Concentrations',
   'Risk Outlook',
 ] as const;
