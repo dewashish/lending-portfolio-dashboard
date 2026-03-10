@@ -54,3 +54,24 @@ export function useCorporateRatingMigration(scope?: ScopeSelection) {
 export function useCorporateExecutiveSummary(scope?: ScopeSelection) {
   return useSWR(scopeKey('corporate-exec-summary', scope), () => queries.fetchCorporateExecutiveSummary(scope));
 }
+
+export function useCorporateTopDisbursements(scope?: ScopeSelection) {
+  return useSWR(
+    scopeKey('corporate-top-disbursements', scope),
+    () => queries.fetchCorporateTopDisbursements(scope),
+  );
+}
+
+export function useCorporatePDDistribution(scope?: ScopeSelection) {
+  return useSWR(
+    scopeKey('corporate-pd-distribution', scope),
+    () => queries.fetchCorporatePDDistribution(scope),
+  );
+}
+
+export function useCorporatePipeline(scope?: ScopeSelection) {
+  return useSWR(
+    scopeKey('corporate-pipeline', scope),
+    () => queries.fetchCorporatePipeline(scope),
+  );
+}

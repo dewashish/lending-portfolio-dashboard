@@ -1262,7 +1262,7 @@ function buildCorporateDelinquency(): Row[] {
 function buildCorporatePortfolioMetrics(): Row[] {
   const rows: Row[] = [];
 
-  const particulars = ['Sanctioned Limit', 'Outstanding', 'Stage 2+3', 'Provisions'];
+  const particulars = ['Sanctioned Limit', 'Outstanding', 'Stage 2+3', 'Provisions', 'Disbursement (for the month)', 'Repayments (for the month)', 'Net Change', 'Growth Rate (in % vs earlier year)'];
   const periods = ["Jun'25", "Jul'25", "Aug'25"];
 
   for (const sub of SUBSIDIARIES) {
@@ -1305,6 +1305,32 @@ function buildCorporatePortfolioMetrics(): Row[] {
             nonFundBased = +(total - fundBased).toFixed(2);
             break;
           }
+          case 'Disbursement (for the month)': {
+            total = +(corpBook * noiseRange(0.05, 0.12, sub.id, pi, 1520) * n).toFixed(2);
+            fundBased = +(total * noiseRange(0.65, 0.75, sub.id, pi, 1521)).toFixed(2);
+            nonFundBased = +(total - fundBased).toFixed(2);
+            break;
+          }
+          case 'Repayments (for the month)': {
+            total = +(corpBook * noiseRange(0.04, 0.10, sub.id, pi, 1522) * n).toFixed(2);
+            fundBased = +(total * noiseRange(0.65, 0.78, sub.id, pi, 1523)).toFixed(2);
+            nonFundBased = +(total - fundBased).toFixed(2);
+            break;
+          }
+          case 'Net Change': {
+            const disb = corpBook * noiseRange(0.05, 0.12, sub.id, pi, 1520) * n;
+            const repay = corpBook * noiseRange(0.04, 0.10, sub.id, pi, 1522) * n;
+            total = +(disb - repay).toFixed(2);
+            fundBased = +(total * noiseRange(0.60, 0.80, sub.id, pi, 1524)).toFixed(2);
+            nonFundBased = +(total - fundBased).toFixed(2);
+            break;
+          }
+          case 'Growth Rate (in % vs earlier year)': {
+            total = +(noiseRange(0.02, 0.08, sub.id, pi, 1525)).toFixed(4);
+            fundBased = +(noiseRange(0.02, 0.10, sub.id, pi, 1526)).toFixed(4);
+            nonFundBased = +(noiseRange(0.01, 0.06, sub.id, pi, 1527)).toFixed(4);
+            break;
+          }
           default: {
             total = 0;
             fundBased = 0;
@@ -1332,10 +1358,12 @@ function buildCorporatePortfolioMetrics(): Row[] {
 }
 
 // =============================================================================
-// Clear only the 16 new tables (FK-safe order)
+// Clear only the 18 new tables (FK-safe order)
 // =============================================================================
 async function clearNewTables() {
   const tables = [
+    'corporate_pipeline',
+    'corporate_pd_distribution',
     'corporate_portfolio_metrics',
     'corporate_delinquency',
     'corporate_covenants',
@@ -1359,7 +1387,7 @@ async function clearNewTables() {
       console.error(`  WARN: could not clear ${t}: ${error.message}`);
     }
   }
-  console.log('Cleared 16 new tables.\n');
+  console.log('Cleared 18 new tables.\n');
 }
 
 // =============================================================================
@@ -1368,7 +1396,7 @@ async function clearNewTables() {
 async function main() {
   console.log('=== Trade Finance, Corporate Finance, EWS & Risk — Seed Script ===\n');
 
-  // 0. Clear only the 16 new tables
+  // 0. Clear only the 18 new tables
   console.log('Clearing new tables...');
   await clearNewTables();
 

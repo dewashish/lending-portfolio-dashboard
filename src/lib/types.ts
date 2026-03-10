@@ -496,6 +496,11 @@ export interface CorporateTopCustomerRow {
   ifrsStage: string;
   rankByDisbursement: number;
   rankByPOS: number;
+  pceAmount: number;
+  irr: number | null;
+  securityType: string;
+  securityCover: number;
+  industry: string;
 }
 
 // ── Corporate Industry Concentration ─────────────────────────────
@@ -516,6 +521,11 @@ export interface CorporateCollateralRow {
   collateralValue: number;
   exposureCovered: number;
   coverageRatio: number;
+  sanctionedAmount: number;
+  disbursedAmount: number;
+  principalOS: number;
+  principalShare: number;
+  particulars: string;
 }
 
 // ── Corporate LTV Distribution ───────────────────────────────────
@@ -533,6 +543,25 @@ export interface CorporateMaturityRow {
   facilityCount: number;
   balance: number;
   portfolioShare: number;
+  sanctionedAmount: number;
+  disbursedAmount: number;
+}
+
+// ── Corporate PD Distribution ───────────────────────────────────
+export interface CorporatePDDistributionRow {
+  pdBand: string;
+  sanctionedAmount: number;
+  disbursedAmount: number;
+  principalOS: number;
+  principalShare: number;
+}
+
+// ── Corporate Pipeline ──────────────────────────────────────────
+export interface CorporatePipelineRow {
+  stage: string;
+  grossAmount: number;
+  productBid: number;
+  pcrPct: number;
 }
 
 // ── Corporate Provisioning & ECL ─────────────────────────────────

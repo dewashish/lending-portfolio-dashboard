@@ -14,6 +14,8 @@ import type {
   CorporateRatingAnalysisRow,
   CorporateRatingMigrationRow,
   CorporatePortfolioSummary,
+  CorporatePDDistributionRow,
+  CorporatePipelineRow,
   ScopeSelection,
 } from '../types';
 import { applyScopeAsync } from './shared';
@@ -153,6 +155,37 @@ export async function fetchCorporateTopCustomers(scope?: ScopeSelection): Promis
     ifrsStage: r.ifrs_stage ?? 'Stage 1',
     rankByDisbursement: r.rank_by_disbursement ?? 0,
     rankByPOS: r.rank_by_pos ?? 0,
+    pceAmount: r.pce_amount_usd ?? r.pce_amount ?? 0,
+    irr: r.irr ?? null,
+    securityType: r.security_type ?? '',
+    securityCover: r.security_cover ?? 0,
+    industry: r.industry ?? '',
+  }));
+}
+
+export async function fetchCorporateTopDisbursements(scope?: ScopeSelection): Promise<CorporateTopCustomerRow[]> {
+  let query = supabase.from('corporate_top_customers').select('*').order('rank_by_disbursement', { ascending: true });
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    customerName: r.customer_name,
+    sector: r.sector,
+    sanctionedLimit: r.sanctioned_limit_usd ?? r.sanctioned_limit ?? 0,
+    disbursedAmount: r.disbursed_amount_usd ?? r.disbursed_amount ?? 0,
+    currentPOS: r.current_pos_usd ?? r.current_pos ?? 0,
+    facilityType: r.facility_type ?? '',
+    riskRating: r.risk_rating ?? '',
+    dpd: r.dpd ?? 0,
+    ifrsStage: r.ifrs_stage ?? 'Stage 1',
+    rankByDisbursement: r.rank_by_disbursement ?? 0,
+    rankByPOS: r.rank_by_pos ?? 0,
+    pceAmount: r.pce_amount_usd ?? r.pce_amount ?? 0,
+    irr: r.irr ?? null,
+    securityType: r.security_type ?? '',
+    securityCover: r.security_cover ?? 0,
+    industry: r.industry ?? '',
   }));
 }
 
@@ -185,6 +218,11 @@ export async function fetchCorporateCollateralAnalysis(scope?: ScopeSelection): 
     collateralValue: r.collateral_value_usd ?? r.collateral_value ?? 0,
     exposureCovered: r.exposure_covered_usd ?? r.exposure_covered ?? 0,
     coverageRatio: r.coverage_ratio ?? 0,
+    sanctionedAmount: r.sanctioned_amount_usd ?? r.sanctioned_amount ?? 0,
+    disbursedAmount: r.disbursed_amount_usd ?? r.disbursed_amount ?? 0,
+    principalOS: r.principal_os_usd ?? r.principal_os ?? 0,
+    principalShare: r.principal_share ?? 0,
+    particulars: r.particulars ?? '',
   }));
 }
 
@@ -214,6 +252,8 @@ export async function fetchCorporateMaturityProfile(scope?: ScopeSelection): Pro
     facilityCount: r.facility_count ?? 0,
     balance: r.balance_usd ?? r.balance ?? 0,
     portfolioShare: r.portfolio_share ?? 0,
+    sanctionedAmount: r.sanctioned_amount_usd ?? r.sanctioned_amount ?? 0,
+    disbursedAmount: r.disbursed_amount_usd ?? r.disbursed_amount ?? 0,
   }));
 }
 
@@ -306,4 +346,33 @@ export async function fetchCorporateExecutiveSummary(scope?: ScopeSelection): Pr
     watchlistCount: watchlist.length,
     delinquentCount,
   };
+}
+
+export async function fetchCorporatePDDistribution(scope?: ScopeSelection): Promise<CorporatePDDistributionRow[]> {
+  let query = supabase.from('corporate_pd_distribution').select('*').order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    pdBand: r.pd_band,
+    sanctionedAmount: r.sanctioned_amount_usd ?? r.sanctioned_amount ?? 0,
+    disbursedAmount: r.disbursed_amount_usd ?? r.disbursed_amount ?? 0,
+    principalOS: r.principal_os_usd ?? r.principal_os ?? 0,
+    principalShare: r.principal_share ?? 0,
+  }));
+}
+
+export async function fetchCorporatePipeline(scope?: ScopeSelection): Promise<CorporatePipelineRow[]> {
+  let query = supabase.from('corporate_pipeline').select('*').order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    stage: r.stage,
+    grossAmount: r.gross_amount_usd ?? r.gross_amount ?? 0,
+    productBid: r.product_bid_usd ?? r.product_bid ?? 0,
+    pcrPct: r.pcr_pct ?? 0,
+  }));
 }

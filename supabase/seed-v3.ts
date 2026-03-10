@@ -236,6 +236,21 @@ const COLLATERAL_TYPES = [
   'Personal Guarantee', 'Unsecured',
 ];
 
+const SECURITY_TYPES = ['Hypothecation', 'Mortgage', 'Pledge', 'Corporate Guarantee', 'Personal Guarantee', 'Unsecured'];
+const INDUSTRIES = ['Banking', 'Steel', 'Finance', 'Real Estate', 'Pharma', 'IT', 'Mining', 'Textiles', 'Auto', 'FMCG', 'Power', 'Telecom', 'Infrastructure', 'Cement', 'Oil & Gas'];
+
+const COLLATERAL_PARTICULARS: Record<string, string> = {
+  'Commercial Real Estate': 'Equitable Mortgage with title deeds',
+  'Residential Property': 'Registered Mortgage (First Charge)',
+  'Fixed Deposits': 'Cash or CR/Margin Account',
+  'Inventory': 'Hypothecation of stock and book debts',
+  'Receivables': 'Hypothecation of stock and book debts',
+  'Plant & Machinery': 'Hypothecation with Comprehensive Insurance',
+  'Securities/Shares': 'Listed shares on recognized exchange',
+  'Personal Guarantee': 'Pledge on Central Depository Company [SOV]',
+  'Unsecured': 'Clean facility - no collateral',
+};
+
 const LTV_BANDS = ['>90%', '70-90%', '50-70%', '<50%'];
 const MATURITY_BANDS = ['<=1yr', '1-3yr', '3-5yr', '>5yr'];
 const FACILITY_BASES = ['Fund Based', 'Non-Fund Based'];
@@ -281,6 +296,11 @@ function buildCorporateTopCustomers(): Row[] {
       const dpd = idx < 15 ? 0 : Math.round(noiseRange(0, 90, sub.id, idx, 3));
       const stage = dpd > 60 ? 'Stage 3' : dpd > 30 ? 'Stage 2' : 'Stage 1';
       const rating = pick(RATING_BANDS.slice(0, 8), sub.id * 300 + idx); // mostly investment grade
+      const pceAmount = +(disbursed * noiseRange(0.10, 0.30, sub.id, idx, 450)).toFixed(2);
+      const custIrr = +(noiseRange(0.08, 0.22, sub.id, idx, 460)).toFixed(4);
+      const secType = pick(SECURITY_TYPES, sub.id * 350 + idx);
+      const secCover = +noiseRange(0.8, 2.5, sub.id, idx, 470).toFixed(2);
+      const industryVal = pick(INDUSTRIES, sub.id * 360 + idx);
 
       rows.push({
         subsidiary_id: sub.id,
@@ -296,6 +316,12 @@ function buildCorporateTopCustomers(): Row[] {
         risk_rating: rating,
         dpd,
         ifrs_stage: stage,
+        pce_amount: pceAmount,
+        pce_amount_usd: toUSD(pceAmount, sub.currencyCode),
+        irr: custIrr,
+        security_type: secType,
+        security_cover: secCover,
+        industry: industryVal,
         rank_by_disbursement: idx + 1,
         rank_by_pos: idx + 1,
         report_date: REPORT_DATE,
@@ -356,6 +382,11 @@ function buildCorporateCollateralAnalysis(): Row[] {
       const exposed = +(perType * noiseRange(0.5, 1.5, sub.id, cIdx, 1)).toFixed(2);
       const coverage = +(BASE_COVERAGE[cIdx] * noise(sub.id, cIdx, 800)).toFixed(4);
       const collValue = +(exposed * coverage).toFixed(2);
+      const sanctioned = +(exposed * noiseRange(1.1, 1.4, sub.id, cIdx, 750)).toFixed(2);
+      const disbursedAmt = +(exposed * noiseRange(0.7, 0.95, sub.id, cIdx, 760)).toFixed(2);
+      const principalOs = +(disbursedAmt * noiseRange(0.8, 1.0, sub.id, cIdx, 770)).toFixed(2);
+      const totalPrincipal = sub.aumBase * 0.6;
+      const princShare = +(principalOs / totalPrincipal).toFixed(4);
 
       rows.push({
         subsidiary_id: sub.id,
@@ -366,6 +397,14 @@ function buildCorporateCollateralAnalysis(): Row[] {
         exposure_covered: exposed,
         exposure_covered_usd: toUSD(exposed, sub.currencyCode),
         coverage_ratio: coverage,
+        sanctioned_amount: sanctioned,
+        sanctioned_amount_usd: toUSD(sanctioned, sub.currencyCode),
+        disbursed_amount: disbursedAmt,
+        disbursed_amount_usd: toUSD(disbursedAmt, sub.currencyCode),
+        principal_os: principalOs,
+        principal_os_usd: toUSD(principalOs, sub.currencyCode),
+        principal_share: princShare,
+        particulars: COLLATERAL_PARTICULARS[cType] ?? 'Primary',
         report_date: REPORT_DATE,
       });
     });
@@ -422,6 +461,8 @@ function buildCorporateMaturityProfile(): Row[] {
         const share = +(shares[bIdx] * n).toFixed(4);
         const bal = +(total * share).toFixed(2);
         const count = Math.round(noiseRange(2, 15, sub.id, bIdx, fIdx));
+        const sanctionedAmt = +(bal * noiseRange(1.1, 1.4, sub.id, bIdx, fIdx + 1050)).toFixed(2);
+        const disbursedAmt = +(bal * noiseRange(0.85, 1.05, sub.id, bIdx, fIdx + 1060)).toFixed(2);
 
         rows.push({
           subsidiary_id: sub.id,
@@ -431,6 +472,10 @@ function buildCorporateMaturityProfile(): Row[] {
           balance: bal,
           balance_usd: toUSD(bal, sub.currencyCode),
           portfolio_share: share,
+          sanctioned_amount: sanctionedAmt,
+          sanctioned_amount_usd: toUSD(sanctionedAmt, sub.currencyCode),
+          disbursed_amount: disbursedAmt,
+          disbursed_amount_usd: toUSD(disbursedAmt, sub.currencyCode),
           report_date: REPORT_DATE,
         });
       });
@@ -563,6 +608,75 @@ function buildCorporateRatingMigration(): Row[] {
   return rows;
 }
 
+// -- 9. corporate_pd_distribution --
+function buildCorporatePDDistribution(): Row[] {
+  const rows: Row[] = [];
+  const PD_BANDS = ['0.01-2% Fully Covered', '2-5%', '5-10%', '10-20%', '>20%'];
+  const BASE_SHARES = [0.35, 0.25, 0.20, 0.12, 0.08];
+
+  SUBS.forEach((sub) => {
+    const totalPOS = sub.aumBase * 0.55;
+    const totalSanctioned = sub.aumBase * 0.70;
+    const totalDisbursed = sub.aumBase * 0.60;
+
+    PD_BANDS.forEach((band, bIdx) => {
+      const n = noise(sub.id, bIdx, 1700);
+      const share = +(BASE_SHARES[bIdx] * n).toFixed(4);
+      const principalOs = +(totalPOS * share).toFixed(2);
+      const sanctioned = +(totalSanctioned * share * noiseRange(0.9, 1.1, sub.id, bIdx, 1701)).toFixed(2);
+      const disbursed = +(totalDisbursed * share * noiseRange(0.9, 1.1, sub.id, bIdx, 1702)).toFixed(2);
+
+      rows.push({
+        subsidiary_id: sub.id,
+        pd_band: band,
+        sanctioned_amount: sanctioned,
+        sanctioned_amount_usd: toUSD(sanctioned, sub.currencyCode),
+        disbursed_amount: disbursed,
+        disbursed_amount_usd: toUSD(disbursed, sub.currencyCode),
+        principal_os: principalOs,
+        principal_os_usd: toUSD(principalOs, sub.currencyCode),
+        principal_share: share,
+        report_date: REPORT_DATE,
+      });
+    });
+  });
+  return rows;
+}
+
+// -- 10. corporate_pipeline --
+function buildCorporatePipeline(): Row[] {
+  const rows: Row[] = [];
+  const PIPELINE_STAGES = [
+    'Stage 1 - Disbursement Planning',
+    'Stage 2 - Credit Approval',
+    'Stage 3 - Documentation',
+  ];
+
+  SUBS.forEach((sub) => {
+    const baseGross = sub.aumBase * 0.08;
+
+    PIPELINE_STAGES.forEach((stage, sIdx) => {
+      const n = noise(sub.id, sIdx, 1800);
+      const grossShare = [0.55, 0.30, 0.15][sIdx];
+      const gross = +(baseGross * grossShare * n).toFixed(2);
+      const bid = +(gross * noiseRange(0.6, 0.85, sub.id, sIdx, 1801)).toFixed(2);
+      const pcr = +(noiseRange(0.01, 0.08, sub.id, sIdx, 1802) * (sIdx + 1)).toFixed(4);
+
+      rows.push({
+        subsidiary_id: sub.id,
+        stage,
+        gross_amount: gross,
+        gross_amount_usd: toUSD(gross, sub.currencyCode),
+        product_bid: bid,
+        product_bid_usd: toUSD(bid, sub.currencyCode),
+        pcr_pct: pcr,
+        report_date: REPORT_DATE,
+      });
+    });
+  });
+  return rows;
+}
+
 // =============================================================================
 // MAIN
 // =============================================================================
@@ -608,6 +722,12 @@ async function main() {
 
   console.log('Seeding corporate_rating_migration...');
   await batchInsert('corporate_rating_migration', buildCorporateRatingMigration());
+
+  console.log('Seeding corporate_pd_distribution...');
+  await batchInsert('corporate_pd_distribution', buildCorporatePDDistribution());
+
+  console.log('Seeding corporate_pipeline...');
+  await batchInsert('corporate_pipeline', buildCorporatePipeline());
 
   console.log('\n=== V3 Seeding complete! ===');
 }
