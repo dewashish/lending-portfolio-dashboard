@@ -7,6 +7,7 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { formatPercent } from '@/lib/format';
+import { useCurrencyFormat } from '@/lib/currency-context';
 import type { VintagePoint } from '@/lib/types';
 
 interface Props {
@@ -15,20 +16,21 @@ interface Props {
   fillHeight?: boolean;
 }
 
-const ROW_H = 44;
-const MIN_CELL_W = 64;
-const MARGIN = { top: 20, right: 20, bottom: 40, left: 80 };
+const ROW_H = 28;
+const MIN_CELL_W = 56;
+const LA_COL_W = 60;
+const MARGIN = { top: 24, right: 16, bottom: 36, left: 72 };
 
 export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { formatCurrency } = useCurrencyFormat();
 
   const filtered = useMemo(
     () => data.filter((d) => d.metricType === metricType),
     [data, metricType],
   );
 
-  const { vintages, mobs, maxRate, cellMap } = useMemo(() => {
-    // Sort vintages chronologically (parse short-form dates)
+  const { vintages, mobs, maxRate, cellMap, vintageLoanMap } = useMemo(() => {
     const vintageSet = Array.from(new Set(filtered.map((d) => d.vintage)));
     const sorted = vintageSet.sort((a, b) => {
       const parseV = (s: string) => {
@@ -49,29 +51,37 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
     const mobSet = Array.from(new Set(filtered.map((d) => d.mob))).sort((a, b) => a - b);
     const max = d3.max(filtered, (d) => d.delinquencyRate) ?? 0.1;
 
-    // Build lookup map
+    // Build lookup map for rates
     const map = new Map<string, number>();
     filtered.forEach((d) => {
       map.set(`${d.vintage}|${d.mob}`, d.delinquencyRate);
     });
 
-    return { vintages: sorted, mobs: mobSet, maxRate: max, cellMap: map };
+    // Build loan amount per vintage (take from MOB 1 which exists for all vintages)
+    const laMap = new Map<string, number>();
+    filtered.forEach((d) => {
+      if (d.mob === 1) {
+        laMap.set(d.vintage, d.loanAmount);
+      }
+    });
+
+    return { vintages: sorted, mobs: mobSet, maxRate: max, cellMap: map, vintageLoanMap: laMap };
   }, [filtered]);
 
-  const chartHeight = Math.max(400, vintages.length * ROW_H + MARGIN.top + MARGIN.bottom);
-  const chartMinWidth = mobs.length * MIN_CELL_W + MARGIN.left + MARGIN.right;
+  const chartHeight = Math.max(300, vintages.length * ROW_H + MARGIN.top + MARGIN.bottom);
+  const chartMinWidth = mobs.length * MIN_CELL_W + LA_COL_W + MARGIN.left + MARGIN.right;
 
   const ref = useD3Chart(
     (svg, width, height) => {
       const margin = MARGIN;
-      const w = width - margin.left - margin.right;
+      const w = width - margin.left - margin.right - LA_COL_W;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
       const x = d3
         .scaleBand<number>()
         .domain(mobs)
-        .range([0, w])
+        .range([LA_COL_W, LA_COL_W + w])
         .padding(0.04);
 
       const y = d3
@@ -80,12 +90,45 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .range([0, h])
         .padding(0.04);
 
-      // Color: green (low delinquency) → red (high delinquency)
+      // Color: green (low) → yellow → red (high)
       const colorScale = d3
         .scaleSequential(d3.interpolateRdYlGn)
         .domain([maxRate, 0]);
 
-      // Build cell data
+      // ── LA column header ────────────────────────────────────────────
+      g.append('text')
+        .attr('x', LA_COL_W / 2)
+        .attr('y', -8)
+        .attr('text-anchor', 'middle')
+        .attr('fill', d3Tokens.textFaint)
+        .attr('font-size', '9px')
+        .attr('font-weight', 600)
+        .text('Loan Amt');
+
+      // ── LA values per vintage ───────────────────────────────────────
+      vintages.forEach((v) => {
+        const la = vintageLoanMap.get(v);
+        // Background cell
+        g.append('rect')
+          .attr('x', 2)
+          .attr('y', y(v)!)
+          .attr('width', LA_COL_W - 6)
+          .attr('height', y.bandwidth())
+          .attr('fill', 'rgba(128,128,128,0.08)')
+          .attr('rx', 2);
+        // Value
+        g.append('text')
+          .attr('x', LA_COL_W / 2)
+          .attr('y', y(v)! + y.bandwidth() / 2)
+          .attr('dy', '0.35em')
+          .attr('text-anchor', 'middle')
+          .attr('fill', d3Tokens.text)
+          .attr('font-size', '9px')
+          .attr('font-family', 'IBM Plex Mono, monospace')
+          .text(la != null ? formatCurrency(la) : '—');
+      });
+
+      // ── Build cell data (only cells with data → triangular) ─────────
       const cells: { vintage: string; mob: number; rate: number }[] = [];
       vintages.forEach((v) => {
         mobs.forEach((m) => {
@@ -96,7 +139,7 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         });
       });
 
-      // Render cells
+      // ── Render heatmap cells ────────────────────────────────────────
       g.selectAll('rect.cell')
         .data(cells)
         .join('rect')
@@ -107,15 +150,15 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .attr('height', y.bandwidth())
         .attr('fill', (d) => colorScale(d.rate))
         .attr('rx', 2)
-        .attr('opacity', 0.9)
+        .attr('opacity', 0.92)
         .on('mouseover', function () {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
         })
         .on('mouseout', function () {
-          d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+          d3.select(this).attr('opacity', 0.92).attr('stroke', 'none');
         });
 
-      // Rate labels inside cells (only if cell wide enough)
+      // ── Rate labels inside cells ────────────────────────────────────
       g.selectAll('text.cell-label')
         .data(cells)
         .join('text')
@@ -125,49 +168,49 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('fill', (d) => (d.rate > maxRate * 0.6 ? '#fff' : '#1e293b'))
-        .attr('font-size', Math.min(12, x.bandwidth() * 0.45) + 'px')
+        .attr('font-size', Math.min(10, x.bandwidth() * 0.4) + 'px')
         .attr('font-family', 'IBM Plex Mono, monospace')
         .attr('pointer-events', 'none')
         .text((d) => {
-          if (x.bandwidth() < 36 || y.bandwidth() < 18) return '';
+          if (x.bandwidth() < 32 || y.bandwidth() < 14) return '';
           return formatPercent(d.rate, 1);
         });
 
-      // Y axis (vintage labels)
+      // ── Y axis (vintage labels) ────────────────────────────────────
       g.append('g')
         .call(d3.axisLeft(y).tickSize(0))
         .selectAll('text')
         .attr('fill', d3Tokens.text)
-        .attr('font-size', '11px');
+        .attr('font-size', '9px');
 
       g.selectAll('.domain').remove();
 
-      // X axis (MOB numbers)
+      // ── X axis (MOB numbers) ───────────────────────────────────────
       g.append('g')
         .attr('transform', `translate(0,${h})`)
         .call(d3.axisBottom(x).tickSize(0).tickFormat((d) => `${d}`))
         .selectAll('text')
         .attr('fill', d3Tokens.textFaint)
-        .attr('font-size', '10px');
+        .attr('font-size', '9px');
 
       g.selectAll('.domain').remove();
 
-      // X axis label
+      // ── X axis label ───────────────────────────────────────────────
       g.append('text')
-        .attr('x', w / 2)
-        .attr('y', h + 32)
+        .attr('x', LA_COL_W + w / 2)
+        .attr('y', h + 28)
         .attr('text-anchor', 'middle')
         .attr('fill', d3Tokens.textFaint)
-        .attr('font-size', '10px')
+        .attr('font-size', '9px')
         .text('Months on Book (MOB)');
     },
-    [filtered, vintages, mobs, maxRate, cellMap, d3Tokens],
+    [filtered, vintages, mobs, maxRate, cellMap, vintageLoanMap, d3Tokens, formatCurrency],
   );
 
   return (
     <ChartContainer
-      title={`Vintage Heatmap \u2014 ${metricType}`}
-      subtitle="Delinquency rate by vintage and MOB"
+      title={`Static Pool \u2014 ${metricType}`}
+      subtitle="Delinquency rate by vintage cohort and MOB"
       height={chartHeight}
       empty={!filtered.length}
       fillHeight={fillHeight}

@@ -762,6 +762,21 @@ function buildVintagePoints(): Row[] {
     vintages.push(`${monthNames[m]}'25`);
   }
 
+  // Parse vintage string to absolute month index for elapsed-month calculation
+  const monthIdx: Record<string, number> = {
+    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+  };
+  function parseVintageMonth(v: string): number {
+    const match = v.match(/([A-Za-z]+)'?(\d{2,4})/);
+    if (!match) return 0;
+    let y = parseInt(match[2], 10);
+    if (y < 100) y += 2000;
+    return y * 12 + (monthIdx[match[1]] ?? 0);
+  }
+  // "Current" date = one month after the latest vintage (Jul'25)
+  const currentMonth = parseVintageMonth(vintages[vintages.length - 1]) + 1;
+
   const metricTypes = ['X+', '30+', '60+', '90+', 'Gross Loss', 'Recoveries', 'NCL'];
   const metricMultipliers: Record<string, number> = {
     'X+': 1.5, '30+': 1.0, '60+': 0.6, '90+': 0.35,
@@ -799,7 +814,11 @@ function buildVintagePoints(): Row[] {
         const loanAmountUsd = toUSD(loanAmount, sub.currencyCode, FX_MAP);
         const quality = vintageQuality(vi);
 
-        for (let mob = 1; mob <= 13; mob++) {
+        // Only generate MOBs that have elapsed (diagonal/triangular pattern)
+        const monthsElapsed = currentMonth - parseVintageMonth(vintages[vi]);
+        const maxMob = Math.min(13, monthsElapsed);
+
+        for (let mob = 1; mob <= maxMob; mob++) {
           const base30 = delinqCurve(mob) * quality * sub.delinqMult * pMult;
 
           for (let mti = 0; mti < metricTypes.length; mti++) {
