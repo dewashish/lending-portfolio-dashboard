@@ -34,11 +34,12 @@ const SUB_TABS = [
 
 interface Props {
   scope?: ScopeSelection;
+  initialSubTab?: number;
 }
 
-export function CorporateFinanceView({ scope }: Props) {
+export function CorporateFinanceView({ scope, initialSubTab }: Props) {
   const { formatCurrencyMM } = useCurrencyFormat();
-  const [subTab, setSubTab] = useState(0);
+  const [subTab, setSubTab] = useState(initialSubTab ?? 0);
   const { data: summary, isLoading } = useCorporateExecutiveSummary(scope);
   const { getColor } = useRiskAppetite();
 

@@ -14,8 +14,8 @@ interface Props {
 
 const PRODUCT_TAB_MAP: Record<string, number> = {
   'Consumer Finance': 1,
-  'Trade Finance': 2,
-  'Corporate Finance': 3,
+  'Trade Finance': 3,
+  'Corporate Finance': 2,
 };
 
 export function GroupBreachPanel({ scope, onTabChange }: Props) {

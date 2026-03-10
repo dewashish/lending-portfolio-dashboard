@@ -25,7 +25,7 @@ import { SubsidiaryRiskHeatmap } from '@/components/charts/SubsidiaryRiskHeatmap
 
 interface Props {
   scope?: ScopeSelection;
-  onTabChange?: (tabIndex: number) => void;
+  onTabChange?: (tabIndex: number, subTabIndex?: number) => void;
   onScopeChange?: (scope: ScopeSelection) => void;
 }
 
@@ -165,7 +165,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'Consumer 30+',
         formattedValue: cd != null ? formatPercent(cd, 1) : '—',
         rag: cd != null ? (getStatus('dpd_30_plus', cd) as RAGStatus) : 'Green',
-        tabIndex: 1,
+        tabIndex: 1, subTabIndex: 3, // Consumer → Delinquency
       });
 
       // Trade NPL
@@ -175,7 +175,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'Trade NPL',
         formattedValue: tnpl != null ? formatPercent(tnpl, 1) : '—',
         rag: tnpl != null ? (getStatus('npl_ratio', tnpl) as RAGStatus) : 'Green',
-        tabIndex: 2,
+        tabIndex: 3, // Trade Finance
       });
 
       // Corp Watchlist
@@ -185,7 +185,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'Corp WL',
         formattedValue: formatNumber(cwl),
         rag: cwl > 0 ? 'Amber' : 'Green',
-        tabIndex: 3,
+        tabIndex: 2, subTabIndex: 6, // Corporate → Watchlist
       });
 
       // EWS Score
@@ -195,7 +195,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'EWS',
         formattedValue: ews != null ? formatNumber(ews, 1) : '—',
         rag: ews != null ? (getStatus('avg_ews_score', ews) as RAGStatus) : 'Green',
-        tabIndex: 4,
+        tabIndex: 4, subTabIndex: 0, // Risk & Conc → EWS Radar
       });
 
       // FX Risk
@@ -205,7 +205,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'FX Risk',
         formattedValue: fx ? formatPercent(fx.ytd, 1) : '—',
         rag: fx?.rag ?? 'Green',
-        tabIndex: 4,
+        tabIndex: 4, subTabIndex: 2, // Risk & Conc → FX Risk
       });
 
       // Country Risk
@@ -215,7 +215,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'Country',
         formattedValue: cr ? formatNumber(cr.score, 1) : '—',
         rag: cr?.rag ?? 'Green',
-        tabIndex: 4,
+        tabIndex: 4, subTabIndex: 3, // Risk & Conc → Country Risk
       });
 
       // Provision Coverage
@@ -225,16 +225,16 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         dimension: 'Prov Cov',
         formattedValue: prov != null ? formatPercent(prov, 0) : '—',
         rag: prov == null ? 'Green' : prov >= 1 ? 'Green' : prov >= 0.8 ? 'Amber' : 'Red',
-        tabIndex: 2,
+        tabIndex: 3, // Trade Finance
       });
     });
 
     return { heatmapCells: cells, heatmapSubs: subs };
   }, [scorecard, fxRisk, countryRisk, tradeEntityPerf, getStatus]);
 
-  const handleHeatmapClick = (subsidiaryId: number, tabIndex: number) => {
+  const handleHeatmapClick = (subsidiaryId: number, tabIndex: number, subTabIndex?: number) => {
     onScopeChange?.({ level: 'subsidiary', subsidiaryId });
-    onTabChange?.(tabIndex);
+    onTabChange?.(tabIndex, subTabIndex);
   };
 
   // ── Loading skeleton ────────────────────────────────────────────

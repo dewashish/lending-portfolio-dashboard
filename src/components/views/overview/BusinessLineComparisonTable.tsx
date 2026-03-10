@@ -104,8 +104,8 @@ export function BusinessLineComparisonTable({
             <TableRow>
               <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Metric</TableCell>
               <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(1)}>Consumer</TableCell>
-              <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(2)}>Trade</TableCell>
-              <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(3)}>Corporate</TableCell>
+              <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(3)}>Trade</TableCell>
+              <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(2)}>Corporate</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

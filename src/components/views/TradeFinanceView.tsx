@@ -21,12 +21,13 @@ const SUB_TABS = ['Overview', 'Product Mix', 'Concentrations', 'Watchlist', 'EWS
 
 interface Props {
   scope?: ScopeSelection;
+  initialSubTab?: number;
 }
 
-export function TradeFinanceView({ scope }: Props) {
+export function TradeFinanceView({ scope, initialSubTab }: Props) {
   const { formatCurrency, formatCurrencyMM } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
-  const [subTab, setSubTab] = useState(0);
+  const [subTab, setSubTab] = useState(initialSubTab ?? 0);
 
   const { data: summary, isLoading } = useTradeExecutiveSummary(scope);
 

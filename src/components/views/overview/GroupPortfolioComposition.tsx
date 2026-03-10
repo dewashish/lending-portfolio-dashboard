@@ -27,7 +27,7 @@ export function GroupPortfolioComposition({
   onScopeChange,
 }: Props) {
   const segmentToTab = (seg: 'consumer' | 'trade' | 'corporate') => {
-    const map = { consumer: 1, trade: 2, corporate: 3 };
+    const map = { consumer: 1, trade: 3, corporate: 2 };
     onTabChange?.(map[seg]);
   };
 

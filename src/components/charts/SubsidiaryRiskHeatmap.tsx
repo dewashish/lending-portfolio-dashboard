@@ -19,14 +19,15 @@ export interface RiskHeatmapCell {
   dimension: string;
   formattedValue: string;
   rag: RAGStatus;
-  tabIndex: number; // which tab to navigate to on click
+  tabIndex: number; // which main tab to navigate to on click
+  subTabIndex?: number; // which sub-tab within that view
 }
 
 interface Props {
   cells: RiskHeatmapCell[];
   subsidiaries: string[];
   dimensions: string[];
-  onCellClick?: (subsidiaryId: number, tabIndex: number) => void;
+  onCellClick?: (subsidiaryId: number, tabIndex: number, subTabIndex?: number) => void;
 }
 
 const ROW_H = 52;
@@ -40,6 +41,24 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      d3.selectAll('.risk-heatmap-tooltip').remove();
+
+      const tooltip = d3.select('body').append('div')
+        .attr('class', 'risk-heatmap-tooltip')
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '10px 14px')
+        .style('font-size', '12px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.15)')
+        .style('z-index', '9999')
+        .style('max-width', '240px')
+        .style('line-height', '1.5');
+
       const margin = MARGIN;
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
@@ -47,6 +66,8 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
 
       const x = d3.scaleBand<string>().domain(dimensions).range([0, w]).padding(0.08);
       const y = d3.scaleBand<string>().domain(subsidiaries).range([0, h]).padding(0.08);
+
+      const ragLabel: Record<RAGStatus, string> = { Green: 'Within Appetite', Amber: 'Approaching Limit', Red: 'Breach' };
 
       // Cells
       g.selectAll('rect.cell')
@@ -61,12 +82,25 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
         .attr('rx', 4)
         .attr('opacity', 0.85)
         .style('cursor', onCellClick ? 'pointer' : 'default')
-        .on('click', (_, d) => onCellClick?.(d.subsidiaryId, d.tabIndex))
-        .on('mouseover', function () {
+        .on('click', (_, d) => onCellClick?.(d.subsidiaryId, d.tabIndex, d.subTabIndex))
+        .on('mouseover', function (event: MouseEvent, d) {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          tooltip.html(
+            `<div style="font-weight:700;margin-bottom:4px">${d.subsidiary}</div>` +
+            `<div style="margin-bottom:4px">${d.dimension}: <strong style="font-family:'IBM Plex Mono',monospace">${d.formattedValue}</strong></div>` +
+            `<div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${RAG_CELL_COLORS[d.rag]};margin-right:6px;vertical-align:middle"></span>${ragLabel[d.rag]}</div>` +
+            (onCellClick ? '<div style="margin-top:6px;font-size:10px;opacity:0.7">Click to drill down</div>' : '')
+          ).style('opacity', '1');
+          const ttNode = tooltip.node() as HTMLDivElement;
+          const ttW = ttNode.offsetWidth;
+          let left = event.pageX + 16;
+          const top = Math.max(8, event.pageY - 20);
+          if (left + ttW > window.innerWidth - 8) left = event.pageX - ttW - 16;
+          tooltip.style('left', `${left}px`).style('top', `${top}px`);
         })
         .on('mouseout', function () {
           d3.select(this).attr('opacity', 0.85).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
         });
 
       // Value labels inside cells

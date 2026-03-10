@@ -27,19 +27,21 @@ function DashboardContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
   const [scope, setScope] = useState<ScopeSelection>(DEFAULT_SCOPE);
+  const [subTabTarget, setSubTabTarget] = useState<number | undefined>();
 
-  const handleTabChange = useCallback((tab: number) => {
+  const handleTabChange = useCallback((tab: number, subTab?: number) => {
     setActiveTab(tab);
+    setSubTabTarget(subTab);
   }, []);
 
   const renderView = () => {
     switch (activeTab) {
       case 0: return <GroupOverviewView key="tab-0" scope={scope} onTabChange={handleTabChange} onScopeChange={setScope} />;
-      case 1: return <ConsumerFinanceView key="tab-1" scope={scope} />;
-      case 2: return <CorporateFinanceView key="tab-2" scope={scope} />;
-      case 3: return <TradeFinanceView key="tab-3" scope={scope} />;
-      case 4: return <RiskConcentrationsView key="tab-4" scope={scope} />;
-      case 5: return <RiskOutlookView key="tab-5" scope={scope} />;
+      case 1: return <ConsumerFinanceView key="tab-1" scope={scope} initialSubTab={subTabTarget} />;
+      case 2: return <CorporateFinanceView key="tab-2" scope={scope} initialSubTab={subTabTarget} />;
+      case 3: return <TradeFinanceView key="tab-3" scope={scope} initialSubTab={subTabTarget} />;
+      case 4: return <RiskConcentrationsView key="tab-4" scope={scope} initialSubTab={subTabTarget} />;
+      case 5: return <RiskOutlookView key="tab-5" scope={scope} initialSubTab={subTabTarget} />;
       default: return null;
     }
   };

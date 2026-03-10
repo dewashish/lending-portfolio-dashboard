@@ -38,11 +38,12 @@ const SUB_TABS = ['EWS Radar', 'Concentrations', 'FX Risk', 'Country Risk'] as c
 
 interface Props {
   scope?: ScopeSelection;
+  initialSubTab?: number;
 }
 
-export function RiskConcentrationsView({ scope }: Props) {
+export function RiskConcentrationsView({ scope, initialSubTab }: Props) {
   const { formatCurrency } = useCurrencyFormat();
-  const [subTab, setSubTab] = useState(0);
+  const [subTab, setSubTab] = useState(initialSubTab ?? 0);
 
   const { data: ewsSummary, isLoading: ewsLoading } = useEWSEntitySummary(scope);
   const { data: ewsAlerts } = useEWSFacilityAlerts(scope);

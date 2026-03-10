@@ -23,10 +23,11 @@ const SUB_TABS = [
 
 interface Props {
   scope?: ScopeSelection;
+  initialSubTab?: number;
 }
 
-export function RiskOutlookView({ scope }: Props) {
-  const [subTab, setSubTab] = useState(0);
+export function RiskOutlookView({ scope, initialSubTab }: Props) {
+  const [subTab, setSubTab] = useState(initialSubTab ?? 0);
   const { data: kpis } = useRiskOutlookKPIs(scope);
 
   const renderSection = () => {

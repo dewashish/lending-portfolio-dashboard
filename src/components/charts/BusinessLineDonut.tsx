@@ -5,6 +5,9 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { useCurrencyFormat } from '@/lib/currency-context';
+import { formatPercent } from '@/lib/format';
+
+const TOOLTIP_CLASS = 'biz-donut-tooltip';
 
 const SEGMENT_COLORS: Record<string, string> = {
   Consumer: '#00897b',
@@ -33,6 +36,9 @@ export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      // Clean up any previous tooltip
+      d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
+
       const radius = Math.min(width, height) / 2 - 10;
       const innerRadius = radius * 0.55;
 
@@ -48,6 +54,38 @@ export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }
         .cornerRadius(3)
         .padAngle(0.02);
 
+      // ── Tooltip ──────────────────────────────────────────────────────
+      const tooltip = d3.select('body').append('div')
+        .attr('class', TOOLTIP_CLASS)
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '10px 14px')
+        .style('font-size', '11px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)')
+        .style('z-index', '9999')
+        .style('max-width', '280px')
+        .style('line-height', '1.6')
+        .style('transition', 'opacity 0.15s ease');
+
+      const mutedColor = d3Tokens.textMuted;
+
+      function positionTooltip(event: MouseEvent) {
+        const ttNode = tooltip.node() as HTMLDivElement;
+        const ttW = ttNode.offsetWidth;
+        const ttH = ttNode.offsetHeight;
+        let left = event.pageX + 12;
+        let top = event.pageY - 10;
+        if (left + ttW > window.innerWidth - 8) left = event.pageX - ttW - 12;
+        if (top + ttH > window.innerHeight + window.scrollY - 8) top = event.pageY - ttH - 10;
+        if (top < window.scrollY + 4) top = window.scrollY + 4;
+        tooltip.style('left', `${left}px`).style('top', `${top}px`);
+      }
+
       const arcs = g.selectAll('.arc')
         .data(pie(pieData))
         .join('g')
@@ -59,29 +97,38 @@ export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }
         .attr('opacity', 0.9)
         .style('cursor', onSegmentClick ? 'pointer' : 'default')
         .on('click', (_, d) => onSegmentClick?.(d.data.key))
-        .on('mouseover', function () {
+        .on('mouseover', function (_event, d) {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 2);
+          const share = total > 0 ? d.data.value / total : 0;
+          tooltip.html(
+            `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${d.data.label}</div>` +
+            `<div><span style="color:${mutedColor}">AUM:</span> <b>${formatCurrency(d.data.value)}</b></div>` +
+            `<div><span style="color:${mutedColor}">Share:</span> <b>${formatPercent(share, 1)}</b></div>`
+          ).style('opacity', '1');
+          positionTooltip(_event as unknown as MouseEvent);
+        })
+        .on('mousemove', function (_event) {
+          positionTooltip(_event as unknown as MouseEvent);
         })
         .on('mouseout', function () {
           d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
         });
 
-      // Slice labels
+      // Percentage labels on slices > 10%
       const labelArc = d3.arc<d3.PieArcDatum<{ label: string; value: number; key: 'consumer' | 'trade' | 'corporate' }>>()
         .innerRadius(radius * 0.78)
         .outerRadius(radius * 0.78);
 
-      arcs.append('text')
+      arcs.filter(d => total > 0 && d.data.value / total > 0.10)
+        .append('text')
         .attr('transform', d => `translate(${labelArc.centroid(d)})`)
         .attr('text-anchor', 'middle')
-        .attr('fill', d3Tokens.text)
-        .attr('font-size', '10px')
-        .attr('font-weight', 600)
+        .attr('fill', '#ffffff')
+        .attr('font-size', '11px')
+        .attr('font-weight', 700)
         .attr('pointer-events', 'none')
-        .text(d => {
-          const pct = total > 0 ? ((d.data.value / total) * 100).toFixed(1) : '0';
-          return `${d.data.label.slice(0, 4)} ${pct}%`;
-        });
+        .text(d => formatPercent(d.data.value / total, 1));
 
       // Center text
       g.append('text')

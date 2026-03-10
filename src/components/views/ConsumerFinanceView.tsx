@@ -28,13 +28,14 @@ const SUB_TABS = [
 interface Props {
   scope?: ScopeSelection;
   filters?: ConsumerFilters;
+  initialSubTab?: number;
 }
 
 /* ── Main Component ─────────────────────────────────────────────── */
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function ConsumerFinanceView({ scope, filters }: Props) {
-  const [subTab, setSubTab] = useState(0);
+export function ConsumerFinanceView({ scope, filters, initialSubTab }: Props) {
+  const [subTab, setSubTab] = useState(initialSubTab ?? 0);
   const { data: overallData } = useConsumerOverall(scope, filters);
 
   const renderSection = () => {
