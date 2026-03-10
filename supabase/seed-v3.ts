@@ -55,7 +55,7 @@ function pick<T>(arr: T[], seed: number): T {
 // Constants
 // =============================================================================
 const REPORT_DATE = '2026-03-01';
-const PERIODS = ['Jan 2026', 'Feb 2026', 'Mar 2026'];
+const PERIODS = ["Jun'25", "Jul'25", "Aug'25"];
 const STAGES = ['Stage 1', 'Stage 2', 'Stage 3'];
 const DPD_BUCKETS = ['Current', '1-30', '31-60', '61-90', '90+'];
 
