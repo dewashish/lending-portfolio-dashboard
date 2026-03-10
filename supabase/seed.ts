@@ -710,38 +710,61 @@ function buildCollectionMetrics(): Row[] {
 
   const portfolios = ['Total', 'Secured', 'Unsecured'];
 
+  const categoryMap: Record<string, string> = {
+    'Home Loan': 'Secured', 'LAP': 'Secured', 'Personal Loan': 'Unsecured',
+    'Auto Loan': 'Secured', 'Credit Card': 'Unsecured', 'Consumer Loan': 'Unsecured',
+    'Housing Loan': 'Secured', 'Leasing': 'Secured', 'Mortgage': 'Secured',
+  };
+
   const rows: Row[] = [];
-  for (const sub of SUBSIDIARIES) {
+
+  function emitRows(sub: typeof SUBSIDIARIES[number], productName: string | null, portfolioList: string[], amountScale: number, riskMult: number) {
+    const extraSeed = productName ? productName.charCodeAt(0) + productName.charCodeAt(productName.length - 1) : 0;
+
     for (let pi = 0; pi < PERIODS_12.length; pi++) {
       for (let bi = 0; bi < buckets.length; bi++) {
-        for (let portIdx = 0; portIdx < portfolios.length; portIdx++) {
+        for (let portIdx = 0; portIdx < portfolioList.length; portIdx++) {
           const bd = baseDefs[bi];
-          const securedScale = portIdx === 1 ? 0.65 : portIdx === 2 ? 0.35 : 1.0;
-          const n = noise(sub.id, pi, bi, portIdx);
+          const securedScale = portfolioList[portIdx] === 'Secured' ? 0.65
+            : portfolioList[portIdx] === 'Unsecured' ? 0.35 : 1.0;
+          const n = noise(sub.id + extraSeed, pi, bi, portIdx);
 
-          const amount = +(sub.aumLocal * bd.amountFrac * securedScale * n).toFixed(2);
+          const amount = +(sub.aumLocal * bd.amountFrac * securedScale * amountScale * n).toFixed(2);
           const amountUsd = toUSD(amount, sub.currencyCode, FX_MAP);
 
-          // Roll rates adjusted for subsidiary risk and secured/unsecured
-          const riskAdj = portIdx === 1 ? 0.85 : portIdx === 2 ? 1.20 : 1.0;
-          const rb = +(bd.roll_backward * (2 - sub.delinqMult) * riskAdj * noise(sub.id, bi, portIdx, 1)).toFixed(4);
-          const rf = +(bd.roll_forward * sub.delinqMult * riskAdj * noise(sub.id, bi, portIdx, 2)).toFixed(4);
+          const riskAdj = portfolioList[portIdx] === 'Secured' ? 0.85
+            : portfolioList[portIdx] === 'Unsecured' ? 1.20 : 1.0;
+          const rb = +(bd.roll_backward * (2 - sub.delinqMult * riskMult) * riskAdj * noise(sub.id + extraSeed, bi, portIdx, 1)).toFixed(4);
+          const rf = +(bd.roll_forward * sub.delinqMult * riskMult * riskAdj * noise(sub.id + extraSeed, bi, portIdx, 2)).toFixed(4);
 
           rows.push({
             subsidiary_id: sub.id,
-            portfolio: portfolios[portIdx],
+            portfolio: portfolioList[portIdx],
             bucket: buckets[bi],
             amount,
             amount_usd: amountUsd,
             normalized: +(bd.normalized * n).toFixed(4),
             roll_backward: Math.min(1, Math.max(0, rb)),
-            stabilized: +(bd.stabilized * noise(sub.id, bi, pi, portIdx)).toFixed(4),
+            stabilized: +(bd.stabilized * noise(sub.id + extraSeed, bi, pi, portIdx)).toFixed(4),
             roll_forward: Math.min(1, Math.max(0, rf)),
             period: PERIODS_12[pi],
+            product_name: productName,
             data_source_id: sub.dsOffset,
           });
         }
       }
+    }
+  }
+
+  for (const sub of SUBSIDIARIES) {
+    // Aggregate rows (product_name = null) with Total/Secured/Unsecured
+    emitRows(sub, null, portfolios, 1.0, 1.0);
+    // Per-product rows with product's own category as portfolio
+    const nProducts = sub.products.length || 1;
+    for (const product of sub.products) {
+      const cat = categoryMap[product] || 'Unsecured';
+      const prodDelinq = PRODUCT_DELINQ_MULT[product] || 1.0;
+      emitRows(sub, product, [cat], 1 / nProducts, prodDelinq);
     }
   }
   return rows;
@@ -853,55 +876,89 @@ function buildVintagePoints(): Row[] {
 // 7. non_starters
 // ---------------------------------------------------------------------------
 function buildNonStarters(): Row[] {
-  const category = 'Non-Starter 90+';
-  const metricNames = ['Count', 'Amount', '% of Origination', 'Avg DPD at 3MOB'];
+  const categories = ['Total', 'Secured', 'Unsecured'] as const;
+  const metricNames = ['Facility in Force (#)', 'ENR'] as const;
 
-  // Base counts/amounts per product type (will be scaled per subsidiary)
-  const productBaseData: Record<string, { count: number[]; amount: number[]; pctOrig: number[]; avgDPD: number[] }> = {
-    'Home Loan':     { count: [7, 7, 6, 6, 5],         amount: [2.4, 2.3, 2.1, 2.0, 1.9],     pctOrig: [0.017, 0.016, 0.015, 0.014, 0.013], avgDPD: [41, 40, 38, 37, 36] },
-    'LAP':           { count: [10, 9, 8, 8, 7],         amount: [3.2, 3.0, 2.8, 2.6, 2.4],     pctOrig: [0.022, 0.021, 0.019, 0.018, 0.017], avgDPD: [45, 43, 41, 39, 37] },
-    'Personal Loan': { count: [17, 16, 15, 14, 13],     amount: [1.15, 1.1, 1.0, 0.92, 0.85],  pctOrig: [0.048, 0.045, 0.042, 0.039, 0.036], avgDPD: [63, 60, 57, 54, 50] },
-    'Auto Loan':     { count: [21, 20, 18, 17, 15],     amount: [3.1, 2.9, 2.7, 2.4, 2.2],     pctOrig: [0.027, 0.026, 0.024, 0.022, 0.021], avgDPD: [47, 45, 43, 41, 39] },
-    'Credit Card':   { count: [25, 23, 22, 20, 18],     amount: [0.8, 0.75, 0.7, 0.65, 0.6],   pctOrig: [0.055, 0.052, 0.049, 0.046, 0.043], avgDPD: [68, 65, 62, 59, 55] },
-    'Consumer Loan': { count: [58, 55, 52, 48, 45],     amount: [5.6, 5.2, 4.9, 4.5, 4.2],     pctOrig: [0.034, 0.032, 0.030, 0.028, 0.026], avgDPD: [54, 52, 49, 46, 43] },
-    'Housing Loan':  { count: [7, 7, 6, 6, 5],          amount: [2.4, 2.3, 2.1, 2.0, 1.9],     pctOrig: [0.017, 0.016, 0.015, 0.014, 0.013], avgDPD: [41, 40, 38, 37, 36] },
-    'Leasing':       { count: [12, 11, 10, 10, 9],      amount: [4.0, 3.7, 3.4, 3.2, 3.0],     pctOrig: [0.025, 0.023, 0.021, 0.020, 0.019], avgDPD: [48, 46, 44, 42, 40] },
-    'Mortgage':      { count: [5, 5, 4, 4, 4],          amount: [2.8, 2.6, 2.4, 2.3, 2.2],     pctOrig: [0.015, 0.014, 0.013, 0.012, 0.011], avgDPD: [39, 38, 36, 35, 34] },
+  const nsCategoryMap: Record<string, string> = {
+    'Home Loan': 'Secured', 'LAP': 'Secured', 'Personal Loan': 'Unsecured',
+    'Auto Loan': 'Secured', 'Credit Card': 'Unsecured', 'Consumer Loan': 'Unsecured',
+    'Housing Loan': 'Secured', 'Leasing': 'Secured', 'Mortgage': 'Secured',
+  };
+
+  // Base data per product: count of non-starter facilities, ENR in abstract millions
+  const productBase: Record<string, { baseCount: number; baseENR: number }> = {
+    'Home Loan':     { baseCount: 120, baseENR: 45.0 },
+    'LAP':           { baseCount: 85,  baseENR: 32.0 },
+    'Personal Loan': { baseCount: 250, baseENR: 18.0 },
+    'Auto Loan':     { baseCount: 180, baseENR: 28.0 },
+    'Credit Card':   { baseCount: 310, baseENR: 8.5 },
+    'Consumer Loan': { baseCount: 420, baseENR: 35.0 },
+    'Housing Loan':  { baseCount: 95,  baseENR: 52.0 },
+    'Leasing':       { baseCount: 65,  baseENR: 22.0 },
+    'Mortgage':      { baseCount: 40,  baseENR: 60.0 },
   };
 
   const rows: Row[] = [];
+
   for (const sub of SUBSIDIARIES) {
-    // Scale factor for amounts: base data is in "millions of abstract units"; we convert to local
-    const amountScale = sub.aumLocal / 300000000; // normalize so base amounts land in sensible range
+    const amountScale = sub.aumLocal / 300000000;
 
-    for (const product of sub.products) {
-      const bd = productBaseData[product];
-      if (!bd) continue;
+    for (const cat of categories) {
+      const catProducts = cat === 'Total'
+        ? sub.products
+        : sub.products.filter(p => nsCategoryMap[p] === cat);
+      if (catProducts.length === 0) continue;
 
-      for (let pi = 0; pi < PERIODS_5.length; pi++) {
-        const n = noise(sub.id, sub.products.indexOf(product), pi);
+      // Accumulators for "Total" product row
+      const totalAcc: Record<string, { count: number; enr: number; enrUsd: number }> = {};
 
-        const countVal = Math.round(bd.count[pi] * sub.delinqMult * n);
-        const amountVal = +(bd.amount[pi] * amountScale * sub.delinqMult * n).toFixed(2);
-        const amountUsd = toUSD(amountVal, sub.currencyCode, FX_MAP);
-        const pctOrigVal = +(bd.pctOrig[pi] * sub.delinqMult * n).toFixed(6);
-        const avgDPDVal = Math.round(bd.avgDPD[pi] * sub.delinqMult * n);
+      for (const product of catProducts) {
+        const bd = productBase[product];
+        if (!bd) continue;
+        const prodIdx = sub.products.indexOf(product);
 
-        const vals = [countVal, amountVal, pctOrigVal, avgDPDVal];
-        const usdVals = [null, amountUsd, null, null];
+        for (let pi = 0; pi < PERIODS_12.length; pi++) {
+          const n = noise(sub.id, prodIdx, pi, categories.indexOf(cat));
+          // Slight downward trend (improving collections)
+          const trend = 1 - (pi / PERIODS_12.length) * 0.12;
 
-        for (let mi = 0; mi < metricNames.length; mi++) {
+          const countVal = Math.round(bd.baseCount * sub.delinqMult * n * trend);
+          const enrVal = +(bd.baseENR * amountScale * sub.delinqMult * n * trend).toFixed(2);
+          const enrUsd = toUSD(enrVal, sub.currencyCode, FX_MAP);
+          const period = PERIODS_12[pi];
+
+          if (!totalAcc[period]) totalAcc[period] = { count: 0, enr: 0, enrUsd: 0 };
+          totalAcc[period].count += countVal;
+          totalAcc[period].enr += enrVal;
+          totalAcc[period].enrUsd += enrUsd ?? 0;
+
           rows.push({
-            subsidiary_id: sub.id,
-            category,
-            product,
-            metric: metricNames[mi],
-            period: PERIODS_5[pi],
-            value: vals[mi],
-            value_usd: usdVals[mi],
-            data_source_id: sub.dsOffset,
+            subsidiary_id: sub.id, category: cat, product,
+            metric: 'Facility in Force (#)', period, value: countVal,
+            value_usd: null, data_source_id: sub.dsOffset,
+          });
+          rows.push({
+            subsidiary_id: sub.id, category: cat, product,
+            metric: 'ENR', period, value: enrVal,
+            value_usd: enrUsd, data_source_id: sub.dsOffset,
           });
         }
+      }
+
+      // Emit "Total" product rows per period
+      for (const period of PERIODS_12) {
+        const acc = totalAcc[period];
+        if (!acc) continue;
+        rows.push({
+          subsidiary_id: sub.id, category: cat, product: 'Total',
+          metric: 'Facility in Force (#)', period, value: acc.count,
+          value_usd: null, data_source_id: sub.dsOffset,
+        });
+        rows.push({
+          subsidiary_id: sub.id, category: cat, product: 'Total',
+          metric: 'ENR', period, value: +acc.enr.toFixed(2),
+          value_usd: +acc.enrUsd.toFixed(2), data_source_id: sub.dsOffset,
+        });
       }
     }
   }

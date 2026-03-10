@@ -21,29 +21,27 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
-import { formatPercent, formatNumber } from '@/lib/format';
+import { formatNumber, sortPeriodsChronologically } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
-import type { NonStarterRow } from '@/lib/types';
+import type { AugmentedNonStarterRow } from '@/lib/non-starter-utils';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
 
-function formatNonStarterValue(
+function formatNSValue(
   value: number | null | undefined,
   metric: string,
   fmtCurrencyMM: (v: number) => string,
 ): string {
   if (value == null || isNaN(value as number)) return '—';
-  if (/%/.test(metric)) return formatPercent(value);
-  if (/Count|#/i.test(metric)) return formatNumber(value, 0);
-  if (/Amount|\$/i.test(metric)) return fmtCurrencyMM(value);
-  if (/DPD/i.test(metric)) return formatNumber(value, 0);
+  if (/Facility in Force|#/i.test(metric)) return formatNumber(value, 0);
+  if (/ENR/i.test(metric)) return fmtCurrencyMM(value);
   return parseFloat(value.toFixed(2)).toString();
 }
 
 /* ── component ───────────────────────────────────────────────────── */
 
 interface Props {
-  data: NonStarterRow[];
+  data: AugmentedNonStarterRow[];
   title?: string;
 }
 
@@ -54,43 +52,63 @@ export function NonStarterTable({
   const { formatCurrencyMM } = useCurrencyFormat();
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  /* dynamically extract period column keys from monthlyValues of the first row */
+  /* extract period keys sorted chronologically */
   const monthlyKeys = useMemo<string[]>(() => {
     if (data.length === 0) return [];
-    return Object.keys(data[0].monthlyValues);
+    const allKeys = new Set<string>();
+    data.forEach((r) => Object.keys(r.monthlyValues).forEach((k) => allKeys.add(k)));
+    return sortPeriodsChronologically(Array.from(allKeys));
   }, [data]);
 
-  /* group rows by product */
+  /* extract yearly avg keys sorted */
+  const yearlyKeys = useMemo<string[]>(() => {
+    if (data.length === 0) return [];
+    const allKeys = new Set<string>();
+    data.forEach((r) => Object.keys(r.yearlyAverages).forEach((k) => allKeys.add(k)));
+    return Array.from(allKeys).sort();
+  }, [data]);
+
+  /* extract quarterly keys sorted */
+  const quarterlyKeys = useMemo<string[]>(() => {
+    if (data.length === 0) return [];
+    const allKeys = new Set<string>();
+    data.forEach((r) => Object.keys(r.quarterlyValues).forEach((k) => allKeys.add(k)));
+    return Array.from(allKeys).sort((a, b) => {
+      const [qa, ya] = a.replace('Q', '').split(' ').map(Number);
+      const [qb, yb] = b.replace('Q', '').split(' ').map(Number);
+      return ya !== yb ? ya - yb : qa - qb;
+    });
+  }, [data]);
+
+  /* group rows by product — "Total" product goes last */
   const groups = useMemo(() => {
-    const map = new Map<string, NonStarterRow[]>();
+    const map = new Map<string, AugmentedNonStarterRow[]>();
     data.forEach((row) => {
       const existing = map.get(row.product);
       if (existing) existing.push(row);
       else map.set(row.product, [row]);
     });
+    // Move "Total" to end
+    const totalGroup = map.get('Total');
+    if (totalGroup) {
+      map.delete('Total');
+      map.set('Total', totalGroup);
+    }
     return map;
   }, [data]);
 
   const flatRows = useMemo(() => Array.from(groups.values()).flat(), [groups]);
 
   /* columns */
-  const columns = useMemo<ColumnDef<NonStarterRow, unknown>[]>(() => {
-    const cols: ColumnDef<NonStarterRow, unknown>[] = [
+  const columns = useMemo<ColumnDef<AugmentedNonStarterRow, unknown>[]>(() => {
+    const cellStyle = { fontFamily: '"Roboto Mono", monospace', fontSize: '0.75rem' };
+
+    const cols: ColumnDef<AugmentedNonStarterRow, unknown>[] = [
       {
         id: 'product',
         accessorKey: 'product',
         header: 'Product',
         enableSorting: false,
-      },
-      {
-        id: 'category',
-        accessorKey: 'category',
-        header: 'Category',
-        cell: (info) => (
-          <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-            {info.getValue() as string}
-          </Typography>
-        ),
       },
       {
         id: 'metric',
@@ -102,30 +120,57 @@ export function NonStarterTable({
           </Typography>
         ),
       },
-      /* dynamic monthly value columns */
-      ...monthlyKeys.map<ColumnDef<NonStarterRow, unknown>>((key) => ({
+      /* monthly columns */
+      ...monthlyKeys.map<ColumnDef<AugmentedNonStarterRow, unknown>>((key) => ({
         id: `month_${key}`,
-        accessorFn: (row: NonStarterRow) => row.monthlyValues[key] ?? null,
+        accessorFn: (row: AugmentedNonStarterRow) => row.monthlyValues[key] ?? null,
         header: key,
+        cell: (info) => (
+          <Box component="span" sx={cellStyle}>
+            {formatNSValue(info.getValue() as number | null, info.row.original.metric, formatCurrencyMM)}
+          </Box>
+        ),
+      })),
+      /* difference column */
+      {
+        id: 'difference',
+        accessorFn: (row: AugmentedNonStarterRow) => row.difference,
+        header: 'Diff',
         cell: (info) => {
-          const row = info.row.original;
           const val = info.getValue() as number | null;
+          const color = val != null ? (val > 0 ? 'error.main' : val < 0 ? 'success.main' : 'text.primary') : 'text.disabled';
           return (
-            <Box
-              component="span"
-              sx={{
-                fontFamily: '"Roboto Mono", monospace',
-                fontSize: '0.75rem',
-              }}
-            >
-              {formatNonStarterValue(val, row.metric, formatCurrencyMM)}
+            <Box component="span" sx={{ ...cellStyle, color, fontWeight: 600 }}>
+              {val != null ? formatNSValue(val, info.row.original.metric, formatCurrencyMM) : '—'}
             </Box>
           );
         },
+      },
+      /* yearly average columns */
+      ...yearlyKeys.map<ColumnDef<AugmentedNonStarterRow, unknown>>((key) => ({
+        id: `yearly_${key}`,
+        accessorFn: (row: AugmentedNonStarterRow) => row.yearlyAverages[key] ?? null,
+        header: key,
+        cell: (info) => (
+          <Box component="span" sx={{ ...cellStyle, fontStyle: 'italic' }}>
+            {formatNSValue(info.getValue() as number | null, info.row.original.metric, formatCurrencyMM)}
+          </Box>
+        ),
+      })),
+      /* quarterly columns */
+      ...quarterlyKeys.map<ColumnDef<AugmentedNonStarterRow, unknown>>((key) => ({
+        id: `quarterly_${key}`,
+        accessorFn: (row: AugmentedNonStarterRow) => row.quarterlyValues[key] ?? null,
+        header: key,
+        cell: (info) => (
+          <Box component="span" sx={cellStyle}>
+            {formatNSValue(info.getValue() as number | null, info.row.original.metric, formatCurrencyMM)}
+          </Box>
+        ),
       })),
     ];
     return cols;
-  }, [monthlyKeys, formatCurrencyMM]);
+  }, [monthlyKeys, yearlyKeys, quarterlyKeys, formatCurrencyMM]);
 
   const table = useReactTable({
     data: flatRows,
@@ -202,6 +247,7 @@ export function NonStarterTable({
               const showGroupHeader = product !== lastProduct;
               lastProduct = product;
 
+              const isTotal = product === 'Total';
               const colSpan = columns.length - 1;
 
               return [
@@ -210,9 +256,9 @@ export function NonStarterTable({
                     <TableCell
                       colSpan={colSpan}
                       sx={{
-                        bgcolor: 'action.hover',
+                        bgcolor: isTotal ? 'action.selected' : 'action.hover',
                         borderLeft: '3px solid',
-                        borderLeftColor: 'secondary.main',
+                        borderLeftColor: isTotal ? 'primary.main' : 'secondary.main',
                         py: 0.75,
                         px: 2,
                       }}
@@ -222,7 +268,7 @@ export function NonStarterTable({
                         sx={{
                           fontWeight: 700,
                           fontSize: '0.7rem',
-                          color: 'secondary.main',
+                          color: isTotal ? 'primary.main' : 'secondary.main',
                           textTransform: 'uppercase',
                           letterSpacing: '0.06em',
                         }}
@@ -242,6 +288,7 @@ export function NonStarterTable({
                       fontSize: '0.75rem',
                       color: 'text.primary',
                       whiteSpace: 'nowrap',
+                      fontWeight: isTotal ? 700 : 400,
                     },
                   }}
                 >

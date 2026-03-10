@@ -29,8 +29,9 @@ export function useVintagePoints(scope?: ScopeSelection, metricType?: string, pr
   return useSWR(scopeKey(key, scope), () => queries.fetchVintagePoints(metricType, scope, products));
 }
 
-export function useNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters) {
-  return useSWR(consumerFilterKey(scopeKey('non-starters', scope), filters), () => queries.fetchNonStarters(scope, filters));
+export function useNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters, category?: string) {
+  const catKey = category ?? 'all';
+  return useSWR(consumerFilterKey(scopeKey(`non-starters-${catKey}`, scope), filters), () => queries.fetchNonStarters(scope, filters, category));
 }
 
 export function useTDDPre(scope?: ScopeSelection, filters?: ConsumerFilters) {

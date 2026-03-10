@@ -148,11 +148,11 @@ export function ConsumerCollectionsSection({ scope }: Props) {
     products: effectiveProducts,
   }), [effectiveProducts]);
 
-  // Collection metrics: fetch ALL (client-side filtering by portfolio + period)
+  // Collection metrics: only filter by specific product (aggregate rows when 'all')
   const collectionFilters: ConsumerFilters = useMemo(() => ({
     period: null,
-    products: [],
-  }), []);
+    products: selectedProduct !== 'all' ? [selectedProduct] : [],
+  }), [selectedProduct]);
 
   const { data: rollRates, isLoading: l1 } = useRollRates(scope, rollRateFilters);
   const { data: allCollectionMetrics, isLoading: l2 } = useCollectionMetrics(scope, collectionFilters);
@@ -177,12 +177,15 @@ export function ConsumerCollectionsSection({ scope }: Props) {
       ? selectedPeriod
       : collectionPeriods[collectionPeriods.length - 1] ?? null;
 
+    // Skip portfolio filter when viewing a specific product (per-product rows have their own portfolio)
+    const filterByPortfolio = selectedProduct === 'all';
+
     return allCollectionMetrics.filter((r) => {
-      if (r.portfolio !== portfolioValue) return false;
+      if (filterByPortfolio && r.portfolio !== portfolioValue) return false;
       if (effectivePeriod && r.period !== effectivePeriod) return false;
       return true;
     });
-  }, [allCollectionMetrics, securedFilter, selectedPeriod]);
+  }, [allCollectionMetrics, securedFilter, selectedPeriod, selectedProduct]);
 
   const handleSecuredChange = (_: unknown, v: SecuredFilter | null) => {
     if (v !== null) {

@@ -647,6 +647,7 @@ export interface Database {
           transitions: number | null; normalized: number | null;
           roll_backward: number | null; stabilized: number | null;
           roll_forward: number | null; period: string;
+          product_name: string | null;
           data_source_id: number | null; created_at: string;
         };
         Insert: {
@@ -655,6 +656,7 @@ export interface Database {
           transitions?: number | null; normalized?: number | null;
           roll_backward?: number | null; stabilized?: number | null;
           roll_forward?: number | null; period: string;
+          product_name?: string | null;
           data_source_id?: number | null; created_at?: string;
         };
         Update: {
@@ -663,6 +665,7 @@ export interface Database {
           transitions?: number | null; normalized?: number | null;
           roll_backward?: number | null; stabilized?: number | null;
           roll_forward?: number | null; period?: string;
+          product_name?: string | null;
           data_source_id?: number | null; created_at?: string;
         };
         Relationships: [];

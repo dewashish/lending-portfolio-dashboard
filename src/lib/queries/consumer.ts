@@ -283,10 +283,15 @@ export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerF
 export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<CollectionMetricRow[]> {
   let query = supabase
     .from('collection_metrics')
-    .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period')
+    .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period, product_name')
     .order('id');
-  query = await applyScopeAsync(query, scope);
   if (filters?.period) query = query.eq('period', filters.period);
+  if (filters?.products && filters.products.length > 0) {
+    query = query.in('product_name', filters.products);
+  } else {
+    query = query.is('product_name', null);
+  }
+  query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as CollectionDbRow[]).map((r) => ({
@@ -318,13 +323,13 @@ export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelec
   }));
 }
 
-export async function fetchNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NonStarterRow[]> {
+export async function fetchNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters, category?: string): Promise<NonStarterRow[]> {
   let query = supabase
     .from('non_starters')
-    .select('category, product, metric, period, value')
+    .select('category, product, metric, period, value, value_usd')
     .order('id');
   query = await applyScopeAsync(query, scope);
-  if (filters?.period) query = query.eq('period', filters.period);
+  if (category) query = query.eq('category', category);
   if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
   const { data, error } = await query;
   if (error) throw error;

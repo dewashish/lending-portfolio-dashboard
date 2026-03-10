@@ -5,6 +5,55 @@ import { verifySessionToken, createSessionToken, SESSION_COOKIE } from '@/lib/au
 /** If last_active_at is older than this, treat it as a return visit */
 const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes (2× heartbeat interval)
 
+/** Helper to create a new session row and issue a fresh JWT cookie */
+async function createSessionAndRespond(
+  request: NextRequest,
+  payload: { sub: string; username: string; role: string },
+) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  let newSessionId: string | undefined;
+  try {
+    const { data: newSession, error } = await supabase
+      .from('user_sessions')
+      .insert({
+        user_id: payload.sub,
+        ip_address: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? null,
+        user_agent: request.headers.get('user-agent') ?? null,
+      } as Record<string, unknown>)
+      .select('id')
+      .single();
+    if (error) console.error('[heartbeat] session insert error:', error.message);
+    if (newSession) newSessionId = (newSession as { id: string }).id;
+  } catch (e) {
+    console.error('[heartbeat] session insert exception:', e);
+  }
+
+  if (!newSessionId) {
+    return NextResponse.json({ ok: true, tracked: false });
+  }
+
+  const newToken = await createSessionToken({
+    sub: payload.sub,
+    username: payload.username,
+    role: payload.role,
+    session_id: newSessionId,
+  });
+
+  const response = NextResponse.json({ ok: true, renewed: true });
+  response.cookies.set(SESSION_COOKIE, newToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
@@ -13,8 +62,13 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = await verifySessionToken(token);
-    if (!payload?.session_id) {
+    if (!payload) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
+    // Legacy JWT without session_id — create a session for this user
+    if (!payload.session_id) {
+      return createSessionAndRespond(request, payload);
     }
 
     const supabase = createClient(
@@ -43,41 +97,7 @@ export async function POST(request: NextRequest) {
         .eq('id', payload.session_id);
 
       // Create a new session for this return visit
-      let newSessionId = payload.session_id; // fallback
-      try {
-        const { data: newSession } = await supabase
-          .from('user_sessions')
-          .insert({
-            user_id: payload.sub,
-            ip_address: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? null,
-            user_agent: request.headers.get('user-agent') ?? null,
-          } as Record<string, unknown>)
-          .select('id')
-          .single();
-        if (newSession) {
-          newSessionId = (newSession as { id: string }).id;
-        }
-      } catch {
-        // If new session creation fails, continue with old session_id
-      }
-
-      // Issue a new JWT with the new session_id
-      const newToken = await createSessionToken({
-        sub: payload.sub,
-        username: payload.username,
-        role: payload.role,
-        session_id: newSessionId,
-      });
-
-      const response = NextResponse.json({ ok: true, renewed: true });
-      response.cookies.set(SESSION_COOKIE, newToken, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      return response;
+      return createSessionAndRespond(request, payload);
     }
 
     // Normal heartbeat — just update last_active_at
@@ -87,7 +107,8 @@ export async function POST(request: NextRequest) {
       .eq('id', payload.session_id);
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    console.error('[heartbeat] error:', e);
     return NextResponse.json({ error: 'Heartbeat failed' }, { status: 500 });
   }
 }

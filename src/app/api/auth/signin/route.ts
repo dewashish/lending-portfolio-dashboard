@@ -44,8 +44,8 @@ export async function POST(request: Request) {
         .select('id')
         .single();
       sessionId = (session as { id: string } | null)?.id;
-    } catch {
-      // Session tracking is non-critical — login should not fail
+    } catch (e) {
+      console.error('[signin] session insert error:', e);
     }
 
     const token = await createSessionToken({
