@@ -583,3 +583,33 @@ ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS trigger_category TEXT;
 ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS date_added DATE;
 ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS days_on_watchlist INTEGER DEFAULT 0;
 ALTER TABLE corporate_watchlist ADD COLUMN IF NOT EXISTS prior_rating TEXT;
+
+-- ============================================================================
+-- Schema additions for Corporate Delinquency Redesign (v0.3.54)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS corporate_par_trend (
+  id SERIAL PRIMARY KEY,
+  subsidiary_id INTEGER NOT NULL REFERENCES subsidiaries(id),
+  period TEXT NOT NULL,
+  dpd_bucket TEXT NOT NULL,
+  par_rate NUMERIC DEFAULT 0,
+  total_pos NUMERIC DEFAULT 0,
+  total_pos_usd NUMERIC,
+  delinquent_pos NUMERIC DEFAULT 0,
+  delinquent_pos_usd NUMERIC,
+  report_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  data_source_id INTEGER REFERENCES data_sources(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_cpt_subsidiary ON corporate_par_trend(subsidiary_id);
+CREATE INDEX IF NOT EXISTS idx_cpt_period ON corporate_par_trend(subsidiary_id, period);
+
+-- RLS for corporate_par_trend
+DO $$
+BEGIN
+  EXECUTE 'ALTER TABLE corporate_par_trend ENABLE ROW LEVEL SECURITY';
+  EXECUTE 'CREATE POLICY "Allow anon read corporate_par_trend" ON corporate_par_trend FOR SELECT USING (true)';
+  EXECUTE 'CREATE POLICY "Allow anon insert corporate_par_trend" ON corporate_par_trend FOR INSERT WITH CHECK (true)';
+  EXECUTE 'CREATE POLICY "Allow anon delete corporate_par_trend" ON corporate_par_trend FOR DELETE USING (true)';
+END
+$$;

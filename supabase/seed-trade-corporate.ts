@@ -1213,7 +1213,7 @@ function buildCorporateDelinquency(): Row[] {
   for (const sub of SUBSIDIARIES) {
     const borrowers = CORPORATE_BORROWERS[sub.id];
     const sectors = CORPORATE_SECTORS[sub.id];
-    const numDelinquent = Math.round(noiseRange(5, 10, sub.id, 1400));
+    const numDelinquent = Math.round(noiseRange(25, 40, sub.id, 1400));
 
     for (let di = 0; di < numDelinquent; di++) {
       const borrower = borrowers[(di * 2 + sub.id + 3) % borrowers.length];
@@ -1292,6 +1292,48 @@ function buildCorporateDelinquency(): Row[] {
         report_date: REPORT_DATE,
         data_source_id: sub.dsOffset,
       });
+    }
+  }
+  return rows;
+}
+
+// =============================================================================
+// 15b. corporate_par_trend (~24 per subsidiary: 6 periods x 4 buckets)
+// =============================================================================
+function buildCorporatePARTrend(): Row[] {
+  const rows: Row[] = [];
+  const periods = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26"];
+  const buckets = ['X+', '30+', '60+', '90+'];
+  const baseRates: Record<string, number> = { 'X+': 0.08, '30+': 0.05, '60+': 0.03, '90+': 0.015 };
+
+  for (const sub of SUBSIDIARIES) {
+    const corpPosBase = sub.aumLocal * 0.25;
+
+    for (let pi = 0; pi < periods.length; pi++) {
+      const period = periods[pi];
+      const totalPos = +(corpPosBase * noiseRange(0.9, 1.1, sub.id, pi, 2000)).toFixed(2);
+
+      for (let bi = 0; bi < buckets.length; bi++) {
+        const bucket = buckets[bi];
+        const base = baseRates[bucket] * sub.delinqMult;
+        // Time variation: slight trend with noise
+        const trendFactor = 1 + (pi - 3) * noiseRange(-0.015, 0.025, sub.id, pi, bi, 2001);
+        const parRate = +(base * trendFactor * noiseRange(0.7, 1.3, sub.id, pi, bi, 2002)).toFixed(4);
+        const delinquentPos = +(totalPos * parRate).toFixed(2);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          period,
+          dpd_bucket: bucket,
+          par_rate: parRate,
+          total_pos: totalPos,
+          total_pos_usd: toUSD(totalPos, sub.currencyCode, FX_MAP),
+          delinquent_pos: delinquentPos,
+          delinquent_pos_usd: toUSD(delinquentPos, sub.currencyCode, FX_MAP),
+          report_date: REPORT_DATE,
+          data_source_id: sub.dsOffset,
+        });
+      }
     }
   }
   return rows;
@@ -1404,6 +1446,7 @@ function buildCorporatePortfolioMetrics(): Row[] {
 async function clearNewTables() {
   const tables = [
     'corporate_pipeline',
+    'corporate_par_trend',
     'corporate_pd_distribution',
     'corporate_portfolio_metrics',
     'corporate_delinquency',
@@ -1497,6 +1540,9 @@ async function main() {
 
   console.log('Seeding corporate_delinquency...');
   await batchInsert('corporate_delinquency', buildCorporateDelinquency());
+
+  console.log('Seeding corporate_par_trend...');
+  await batchInsert('corporate_par_trend', buildCorporatePARTrend());
 
   console.log('Seeding corporate_portfolio_metrics...');
   await batchInsert('corporate_portfolio_metrics', buildCorporatePortfolioMetrics());

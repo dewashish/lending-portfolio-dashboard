@@ -461,6 +461,15 @@ export interface CorporateDelinquencyRow {
   nextStep: string;
 }
 
+// ── Corporate PAR Trend ──────────────────────────────────────────
+export interface CorporatePARTrendRow {
+  period: string;
+  dpdBucket: string;
+  parRate: number;
+  totalPOS: number;
+  delinquentPOS: number;
+}
+
 // ── Trade Stage Migration ────────────────────────────────────────
 export interface TradeStageMigrationRow {
   period: string;

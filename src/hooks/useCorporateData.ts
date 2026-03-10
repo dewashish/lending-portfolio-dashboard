@@ -75,3 +75,7 @@ export function useCorporatePipeline(scope?: ScopeSelection) {
     () => queries.fetchCorporatePipeline(scope),
   );
 }
+
+export function useCorporatePARTrend(scope?: ScopeSelection) {
+  return useSWR(scopeKey('corporate-par-trend', scope), () => queries.fetchCorporatePARTrend(scope));
+}

@@ -16,6 +16,7 @@ import type {
   CorporatePortfolioSummary,
   CorporatePDDistributionRow,
   CorporatePipelineRow,
+  CorporatePARTrendRow,
   ScopeSelection,
 } from '../types';
 import { applyScopeAsync } from './shared';
@@ -116,6 +117,25 @@ export async function fetchCorporateDelinquency(scope?: ScopeSelection): Promise
     updateOnRemedial: r.update_on_remedial ?? '',
     currentStatus: r.current_status ?? '',
     nextStep: r.next_step ?? '',
+  }));
+}
+
+export async function fetchCorporatePARTrend(scope?: ScopeSelection): Promise<CorporatePARTrendRow[]> {
+  let query = supabase
+    .from('corporate_par_trend')
+    .select('*')
+    .order('period')
+    .order('dpd_bucket');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    period: r.period,
+    dpdBucket: r.dpd_bucket,
+    parRate: r.par_rate ?? 0,
+    totalPOS: r.total_pos_usd ?? r.total_pos ?? 0,
+    delinquentPOS: r.delinquent_pos_usd ?? r.delinquent_pos ?? 0,
   }));
 }
 
