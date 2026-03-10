@@ -192,7 +192,7 @@ export function NonStarterTable({
           </Typography>
         </Box>
       )}
-      <TableContainer sx={{ maxHeight: 560 }}>
+      <TableContainer>
         <Table size="small" stickyHeader>
           <TableHead>
             {table.getHeaderGroups().map((hg) => (
