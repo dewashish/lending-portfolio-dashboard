@@ -10,6 +10,7 @@ const TABS = [
   { name: 'Trade Finance', subTabs: 6, color: '#9c27b0', desc: 'Facility analytics, product mix, concentrations, watchlist, EWS, macro risk' },
   { name: 'Corporate Finance', subTabs: 9, color: '#ff9800', desc: 'Portfolio metrics, industry concentration, collateral, covenants, rating analysis' },
   { name: 'Risk & Concentrations', subTabs: 4, color: '#f44336', desc: 'EWS radar, obligor/sector treemaps, FX risk, country risk' },
+  { name: 'Forward Outlook', subTabs: 3, color: '#009688', desc: 'ECL forecast, provision coverage trend, delinquency forecast, scenario impact analysis, methodology' },
 ];
 
 export function ProductOverview() {

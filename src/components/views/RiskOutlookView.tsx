@@ -1,82 +1,98 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
-import { RiskOutlookKPIRow } from '@/components/views/risk-outlook/RiskOutlookKPIRow';
-import { ECLProvisionsSection } from '@/components/views/risk-outlook/ECLProvisionsSection';
-import { StressTestingSection } from '@/components/views/risk-outlook/StressTestingSection';
-import { PDMigrationSection } from '@/components/views/risk-outlook/PDMigrationSection';
-import { VintageForecastSection } from '@/components/views/risk-outlook/VintageForecastSection';
-import { MacroEWSSection } from '@/components/views/risk-outlook/MacroEWSSection';
-import { MethodologySection } from '@/components/views/risk-outlook/MethodologySection';
-import { useRiskOutlookKPIs } from '@/hooks/useRiskOutlookData';
+import {
+  Box, Grid, Typography, FormControl, InputLabel, Select, MenuItem, Card,
+} from '@mui/material';
+import { ForwardOutlookKPIRow } from '@/components/views/risk-outlook/ForwardOutlookKPIRow';
+import { ECLStackedArea } from '@/components/charts/ECLStackedArea';
+import { ProvisionCoverageLine } from '@/components/charts/ProvisionCoverageLine';
+import { VintageProjectionChart } from '@/components/charts/VintageProjectionChart';
+import { ScenarioImpactTable } from '@/components/views/risk-outlook/ScenarioImpactTable';
+import { FilteredMethodologySection } from '@/components/views/risk-outlook/FilteredMethodologySection';
+import { useEclForecast, useVintageForecast } from '@/hooks/useRiskOutlookData';
+import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import type { ScopeSelection } from '@/lib/types';
 
-const SUB_TABS = [
-  'ECL & Provisions',
-  'Stress Testing',
-  'PD & Migration',
-  'Vintage Forecast',
-  'Macro & EWS',
-  'Methodology',
-] as const;
+const SCENARIOS = ['Base', 'Adverse', 'Severe'] as const;
 
 interface Props {
   scope?: ScopeSelection;
-  initialSubTab?: number;
+  initialSubTab?: number; // kept for backward compat, ignored
 }
 
-export function RiskOutlookView({ scope, initialSubTab }: Props) {
-  const [subTab, setSubTab] = useState(initialSubTab ?? 0);
-  const { data: kpis } = useRiskOutlookKPIs(scope);
+export function ForwardOutlookView({ scope }: Props) {
+  const [scenario, setScenario] = useState<string>('Base');
 
-  const renderSection = () => {
-    switch (subTab) {
-      case 0: return <ECLProvisionsSection key="sub-0" scope={scope} />;
-      case 1: return <StressTestingSection key="sub-1" scope={scope} />;
-      case 2: return <PDMigrationSection key="sub-2" scope={scope} />;
-      case 3: return <VintageForecastSection key="sub-3" scope={scope} />;
-      case 4: return <MacroEWSSection key="sub-4" scope={scope} />;
-      case 5: return <MethodologySection key="sub-5" />;
-      default: return null;
-    }
-  };
+  // ECL data for selected scenario (used by ECLStackedArea)
+  const { data: eclData, isLoading: eclLoading } = useEclForecast(scope, scenario);
+  // ECL data for ALL scenarios (used by ProvisionCoverageLine)
+  const { data: eclAllData, isLoading: eclAllLoading } = useEclForecast(scope);
+  // Vintage data (used by VintageProjectionChart)
+  const { data: vintageData, isLoading: vintageLoading } = useVintageForecast(scope);
+
+  const isLoading = eclLoading || eclAllLoading || vintageLoading;
+
+  if (isLoading) return <LoadingSkeleton />;
 
   return (
-    <Box id="tour-risk-outlook" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {kpis && <RiskOutlookKPIRow data={kpis} />}
+    <Box id="tour-risk-outlook" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* ── KPI Row ──────────────────────────────────────────────── */}
+      <ForwardOutlookKPIRow scope={scope} />
 
-      <Tabs
-        value={subTab}
-        onChange={(_, v) => setSubTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          minHeight: 36,
-          '& .MuiTab-root': {
-            minHeight: 36,
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            textTransform: 'none',
-            px: 1.5,
-            py: 0.5,
-          },
-          '& .MuiTabs-indicator': {
-            height: 2,
-            borderRadius: 1,
-          },
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        {SUB_TABS.map((label) => (
-          <Tab key={label} label={label} />
-        ))}
-      </Tabs>
+      {/* ── Scenario Selector ────────────────────────────────────── */}
+      <FormControl size="small" sx={{ minWidth: 160, alignSelf: 'flex-start' }}>
+        <InputLabel>Scenario</InputLabel>
+        <Select
+          value={scenario}
+          label="Scenario"
+          onChange={(e) => setScenario(e.target.value)}
+          sx={{ fontSize: '0.82rem' }}
+        >
+          {SCENARIOS.map((s) => (
+            <MenuItem key={s} value={s}>{s}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-      <Box sx={{ pt: 1 }}>
-        {renderSection()}
+      {/* ── Section 1: ECL & Provision Forecast ──────────────────── */}
+      <Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '0.9rem', mb: 1.5 }}>
+          ECL & Provision Forecast
+        </Typography>
+        <Grid container spacing={2.5}>
+          <Grid item xs={12} md={7}>
+            <Card sx={{ p: 2, minHeight: 420 }}>
+              <ECLStackedArea data={eclData ?? []} scenario={scenario} />
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <Card sx={{ p: 2, minHeight: 420 }}>
+              <ProvisionCoverageLine data={eclAllData ?? []} scenario={scenario} />
+            </Card>
+          </Grid>
+        </Grid>
       </Box>
+
+      {/* ── Section 2: Forward Risk Indicators ───────────────────── */}
+      <Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '0.9rem', mb: 1.5 }}>
+          Forward Risk Indicators
+        </Typography>
+        <Grid container spacing={2.5}>
+          <Grid item xs={12} md={7}>
+            <Card sx={{ p: 2, minHeight: 420 }}>
+              <VintageProjectionChart data={vintageData ?? []} />
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <ScenarioImpactTable scope={scope} />
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* ── Section 3: Methodology & Assumptions ─────────────────── */}
+      <FilteredMethodologySection />
     </Box>
   );
 }

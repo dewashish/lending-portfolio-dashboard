@@ -15,7 +15,7 @@ const TAB_ICONS: Record<TabName, React.ReactElement> = {
   'Trade Finance': <AccountBalanceIcon sx={{ fontSize: 18 }} />,
   'Corporate Finance': <BusinessIcon sx={{ fontSize: 18 }} />,
   'Risk & Concentrations': <WarningAmberIcon sx={{ fontSize: 18 }} />,
-  'Risk Outlook': <TrendingUpIcon sx={{ fontSize: 18 }} />,
+  'Forward Outlook': <TrendingUpIcon sx={{ fontSize: 18 }} />,
 };
 
 interface Props {

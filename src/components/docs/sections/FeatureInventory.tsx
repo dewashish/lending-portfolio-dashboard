@@ -66,13 +66,13 @@ const FEATURE_MAP: TabFeatures[] = [
     icon: 'Business',
     features: [
       { subTab: 'Overview', components: 'CorporateOverviewSection', keyMetrics: 'Total POS, Disbursement, Delinquency Rate, NPA Rate, Security Cover' },
-      { subTab: 'Industry', components: 'CorporateIndustrySection, IndustryConcentrationChart', keyMetrics: 'Industry sector concentration, exposure by sector' },
-      { subTab: 'Collateral & LTV', components: 'CorporateCollateralSection, LTVDistributionChart', keyMetrics: 'Collateral coverage ratio, LTV band distribution' },
+      { subTab: 'Industry', components: 'IndustryBarChart, ConcentrationTreemap, drill-down detail table', keyMetrics: 'D3 horizontal bar chart by sector, period filters, sector drill-down, row limits, IRR, % of Total Disbursement' },
+      { subTab: 'Collateral & LTV', components: 'CollateralDonut, LTVDistributionChart, MaturityProfileChart + 3 detail tables', keyMetrics: 'Collateral coverage with tooltips, LTV bands, maturity profile, Sanctioned/Disbursed/POS columns' },
       { subTab: 'Maturity', components: 'CorporateMaturitySection, MaturityProfileChart', keyMetrics: 'Maturity band analysis, concentration by tenor' },
       { subTab: 'Provisioning', components: 'CorporateProvisioningSection, ProvisioningTrendChart', keyMetrics: 'IFRS 9 stage provisioning (ECL), provision coverage ratio trend' },
       { subTab: 'Rating Analysis', components: 'CorporateRatingSection, RatingDistributionBar', keyMetrics: 'Credit rating distribution, rating migration matrix' },
       { subTab: 'Watchlist', components: 'CorporateWatchlistSection', keyMetrics: 'Flagged borrowers, sectors, exposure, EWS triggers, status' },
-      { subTab: 'Covenants', components: 'CorporateCovenantSection', keyMetrics: 'Covenant category, frequency, facility details, POS tracking' },
+      { subTab: 'Covenants', components: 'CovenantCategoryDonut, CovenantComplianceDonut, 14-column detail table', keyMetrics: 'KPI strip, category/compliance D3 donuts, category summary, filterable detail with flags' },
       { subTab: 'Delinquency', components: 'CorporateDelinquencySection', keyMetrics: 'Customer-level DPD, reason for delinquency, remedial actions' },
     ],
   },
@@ -87,15 +87,26 @@ const FEATURE_MAP: TabFeatures[] = [
       { subTab: 'Country Risk', components: 'Country risk table', keyMetrics: 'Sovereign rating, composite risk score, exposure, capital impact, RAG' },
     ],
   },
+  {
+    tab: 'Forward Outlook',
+    color: '#009688',
+    icon: 'TrendingUp',
+    features: [
+      { subTab: 'KPI Row', components: 'ForwardOutlookKPIRow (4 cards)', keyMetrics: 'Expected Credit Loss (Base), Provision Coverage %, Forecasted Loss Rate, 90+ DPD Forecast' },
+      { subTab: 'ECL & Provision Forecast', components: 'ECLStackedArea + ProvisionCoverageLine', keyMetrics: 'ECL by IFRS stage (stacked area with scenario dropdown), weighted-avg provision coverage ratio trend' },
+      { subTab: 'Forward Risk Indicators', components: 'VintageProjectionChart + ScenarioImpactTable', keyMetrics: 'Vintage delinquency forecast (solid=actual, dashed=projected), scenario comparison (Base/Adverse/Severe)' },
+      { subTab: 'Methodology', components: 'FilteredMethodologySection (4 accordions)', keyMetrics: 'ECL Forecast, Provision Coverage, Vintage Delinquency, Scenario Analysis — assumptions, methods, limitations' },
+    ],
+  },
 ];
 
 export function FeatureInventory() {
   return (
     <PRDSection id="feature-inventory" title="Feature Inventory" sectionNumber={6}>
       <Typography variant="body2" sx={{ mb: 2.5, lineHeight: 1.8 }}>
-        The platform is organized into five main navigation tabs, each containing multiple sub-views
-        with specialized charts, tables, and analytics. The total feature surface spans 34 sub-tabs,
-        40+ chart types, and 12 table components.
+        The platform is organized into six main navigation tabs, each containing multiple sub-views
+        with specialized charts, tables, and analytics. The total feature surface spans 38+ sub-views,
+        50+ chart types, and 15+ table components.
       </Typography>
 
       {FEATURE_MAP.map((tab) => (

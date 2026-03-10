@@ -5,11 +5,11 @@ import { PRDSection } from '@/components/docs/PRDSection';
 import { APP_VERSION } from '@/lib/version';
 
 const STATS = [
-  { label: 'Business Tabs', value: '5' },
-  { label: 'Risk Metrics', value: '34' },
-  { label: 'Database Tables', value: '75+' },
+  { label: 'Business Tabs', value: '6' },
+  { label: 'Risk Metrics', value: '38+' },
+  { label: 'Database Tables', value: '87+' },
   { label: 'Subsidiaries', value: '5' },
-  { label: 'Chart Types', value: '40+' },
+  { label: 'Chart Types', value: '50+' },
 ];
 
 export function ExecutiveSummary() {

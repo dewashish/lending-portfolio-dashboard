@@ -66,7 +66,7 @@ const ALL_STEPS: Step[] = [
   },
   {
     target: '#tour-tab-bar',
-    content: 'Navigate between Group Overview, Consumer Finance, Trade Finance, Corporate Finance, Risk & Concentrations, and Risk Outlook.',
+    content: 'Navigate between Group Overview, Consumer Finance, Trade Finance, Corporate Finance, Risk & Concentrations, and Forward Outlook.',
     disableBeacon: true,
     title: 'Navigation Tabs',
   },
@@ -78,9 +78,9 @@ const ALL_STEPS: Step[] = [
   },
   {
     target: '#tour-risk-outlook',
-    content: 'The Risk Outlook tab provides forward-looking CRO views: ECL projections, stress testing, PD migration, vintage forecasts, macro-credit linkages, and full methodology documentation.',
+    content: 'The Forward Outlook tab provides core forward-looking risk metrics: ECL projections, provision coverage trends, delinquency forecasts, and scenario impact analysis.',
     disableBeacon: true,
-    title: 'Risk Outlook',
+    title: 'Forward Outlook',
   },
   {
     target: 'body',

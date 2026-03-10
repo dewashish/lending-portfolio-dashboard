@@ -34,7 +34,7 @@ export function TableOfContents({ activeId, onNavigate }: Props) {
         variant="subtitle2"
         sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary', mb: 1, px: 1.5 }}
       >
-        Product Requirements Document
+        Documentation
       </Typography>
 
       <List dense sx={{ flex: 1, overflow: 'auto', mx: -0.5 }}>

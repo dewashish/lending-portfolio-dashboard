@@ -90,7 +90,7 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
 
       <MenuItem onClick={() => handleNavigate('/dashboard/docs')} sx={{ fontSize: '0.85rem' }}>
         <ListItemIcon><DescriptionIcon fontSize="small" /></ListItemIcon>
-        <ListItemText primaryTypographyProps={{ fontSize: '0.85rem' }}>Product Documentation</ListItemText>
+        <ListItemText primaryTypographyProps={{ fontSize: '0.85rem' }}>Documentation</ListItemText>
       </MenuItem>
 
       <MenuItem onClick={() => handleNavigate('/dashboard/about')} sx={{ fontSize: '0.85rem' }}>

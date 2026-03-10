@@ -146,7 +146,7 @@ export default function ProductDocumentationPage() {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Avaloura PRD
+            Avaloura Docs
           </Typography>
 
           <Typography
@@ -163,7 +163,7 @@ export default function ProductDocumentationPage() {
         {/* Document title */}
         <Box sx={{ px: { xs: 2, md: 5 }, pt: 4, pb: 2 }}>
           <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: '1.5rem', md: '2rem' } }}>
-            Product Requirements Document
+            Documentation
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
             Avaloura Portfolio Monitor — Enterprise Lending Portfolio Risk Management Platform

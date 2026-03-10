@@ -47,10 +47,24 @@ const PHASES = [
       'Role-based access control with PIN-protected admin',
       'Multi-currency toggle (USD/AED)',
       'Origination funnel with period comparison filter',
+      'Risk Outlook tab (ECL, stress testing, PD migration, vintage, macro EWS, methodology)',
     ],
   },
   {
-    phase: 'v0.4 — Data Pipeline & Automation (Planned)',
+    phase: 'v0.4 — Forward Outlook & Corporate Finance Redesign',
+    status: 'Completed',
+    color: '#4caf50',
+    items: [
+      'Forward Outlook tab: simplified single-page forward-looking risk view',
+      'ECL forecast, provision coverage trend, delinquency forecast, scenario impact table',
+      'Corporate Finance: Industry redesign with bar chart, period filters, drill-down',
+      'Corporate Finance: Collateral & LTV with maturity, tooltips, Sanctioned/Disbursed/POS',
+      'Corporate Finance: Covenants redesign with D3 donuts, 14-column detail table, filters',
+      'Documentation overhaul: renamed, updated feature inventory, roadmap alignment',
+    ],
+  },
+  {
+    phase: 'v0.5 — Data Pipeline & Automation (Planned)',
     status: 'Planned',
     color: '#2196f3',
     items: [
@@ -62,12 +76,11 @@ const PHASES = [
     ],
   },
   {
-    phase: 'v0.5 — Advanced Analytics (Planned)',
+    phase: 'v0.6 — Advanced Analytics (Planned)',
     status: 'Planned',
     color: '#9c27b0',
     items: [
       'Predictive delinquency modeling (ML-based)',
-      'Stress testing / scenario analysis module',
       'Portfolio optimization recommendations',
       'Audit trail for risk appetite changes',
       'Regulatory reporting templates (IFRS 9, Basel III)',
