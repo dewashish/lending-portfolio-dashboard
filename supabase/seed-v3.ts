@@ -578,14 +578,14 @@ function buildCorporateRatingMigration(): Row[] {
 
   SUBS.forEach((sub) => {
     const customers = CUSTOMER_NAMES[sub.id] ?? CUSTOMER_NAMES[1];
-    // 5-10 migrations per subsidiary
-    const migCount = Math.round(noiseRange(5, 10, sub.id, 1400));
+    // 15-25 migrations per subsidiary for meaningful matrix data
+    const migCount = Math.round(noiseRange(15, 25, sub.id, 1400));
 
     for (let i = 0; i < migCount; i++) {
       const customer = customers[i % customers.length];
       const sector = pick(CORP_SECTORS, sub.id * 500 + i);
       const direction = pick(DIRECTIONS, sub.id * 600 + i);
-      const priorIdx = Math.round(noiseRange(2, 9, sub.id, i, 1500));
+      const priorIdx = Math.round(noiseRange(0, 11, sub.id, i, 1500));
       const prior = RATING_BANDS[priorIdx];
       let currentIdx: number;
       let trigger: string;

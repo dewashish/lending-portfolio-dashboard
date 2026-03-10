@@ -5,18 +5,24 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { useCurrencyFormat } from '@/lib/currency-context';
+import { formatPercent } from '@/lib/format';
 import type { RatingDistribution } from '@/lib/types';
+
+const TOOLTIP_CLASS = 'rating-dist-tooltip';
 
 interface Props {
   data: RatingDistribution[];
+  period?: string;
 }
 
-export function RatingDistributionBar({ data }: Props) {
+export function RatingDistributionBar({ data, period }: Props) {
   const { d3Tokens } = useThemeMode();
   const { formatCurrency } = useCurrencyFormat();
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
+
       const margin = { top: 10, right: 20, bottom: 40, left: 60 };
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
@@ -43,6 +49,38 @@ export function RatingDistributionBar({ data }: Props) {
         .range(['#4caf50', '#f44336'])
         .interpolate(d3.interpolateHcl);
 
+      // Tooltip
+      const tooltip = d3.select('body').append('div')
+        .attr('class', TOOLTIP_CLASS)
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '10px 14px')
+        .style('font-size', '11px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.15)')
+        .style('z-index', '9999')
+        .style('max-width', '280px')
+        .style('line-height', '1.6')
+        .style('transition', 'opacity 0.15s ease');
+
+      const mutedColor = d3Tokens.textMuted;
+
+      function positionTooltip(event: MouseEvent) {
+        const ttNode = tooltip.node() as HTMLDivElement;
+        const ttW = ttNode.offsetWidth;
+        const ttH = ttNode.offsetHeight;
+        let left = event.pageX + 12;
+        let top = event.pageY - 10;
+        if (left + ttW > window.innerWidth - 8) left = event.pageX - ttW - 12;
+        if (top + ttH > window.innerHeight + window.scrollY - 8) top = event.pageY - ttH - 10;
+        if (top < window.scrollY + 4) top = window.scrollY + 4;
+        tooltip.style('left', `${left}px`).style('top', `${top}px`);
+      }
+
       // Grid lines
       g.append('g')
         .call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat((d) => formatCurrency(+d)))
@@ -65,11 +103,22 @@ export function RatingDistributionBar({ data }: Props) {
         .attr('fill', (_, i) => colorScale(i))
         .attr('rx', 3)
         .attr('opacity', 0.9)
-        .on('mouseover', function () {
-          d3.select(this).attr('opacity', 1);
+        .on('mouseover', function (_event, d) {
+          d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          tooltip.html(
+            `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${d.ratingBand}</div>` +
+            `<div><span style="color:${mutedColor}">Balance:</span> <b>${formatCurrency(d.balance)}</b></div>` +
+            `<div><span style="color:${mutedColor}">Facilities:</span> <b>${d.count}</b></div>` +
+            `<div><span style="color:${mutedColor}">Share:</span> <b>${formatPercent(d.portfolioShare)}</b></div>`
+          ).style('opacity', '1');
+          positionTooltip(_event as unknown as MouseEvent);
+        })
+        .on('mousemove', function (_event) {
+          positionTooltip(_event as unknown as MouseEvent);
         })
         .on('mouseout', function () {
-          d3.select(this).attr('opacity', 0.9);
+          d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
         });
 
       // Value labels
@@ -106,8 +155,10 @@ export function RatingDistributionBar({ data }: Props) {
     [data, d3Tokens, formatCurrency],
   );
 
+  const subtitle = period ? `Balance by rating band — ${period}` : 'Balance by rating band';
+
   return (
-    <ChartContainer title="Rating Distribution" subtitle="Balance by rating band" empty={!data.length}>
+    <ChartContainer title="Rating Distribution" subtitle={subtitle} empty={!data.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
