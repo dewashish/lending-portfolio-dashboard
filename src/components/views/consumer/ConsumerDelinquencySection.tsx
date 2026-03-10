@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem, Divider } from '@mui/material';
+import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem, Divider, Tooltip, IconButton } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { NetFlowWaterfall } from '@/components/charts/NetFlowWaterfall';
 import { VintageHeatmap } from '@/components/charts/VintageHeatmap';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
@@ -98,7 +99,7 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
   );
 }
 
-const VINTAGE_METRICS = ['30+', '60+', '90+', 'X+', 'Gross Loss', 'Recoveries', 'NCL'] as const;
+const VINTAGE_METRICS = ['X+', '30+', '60+', '90+'] as const;
 
 export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
@@ -274,28 +275,44 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
             ))}
           </ToggleButtonGroup>
         )}
-
-        <Select
-          size="small"
-          displayEmpty
-          value={selectedPeriod ?? ''}
-          onChange={(e) => setSelectedPeriod(e.target.value === '' ? null : e.target.value as string)}
-          sx={{ minWidth: 130, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.4 } }}
-        >
-          <MenuItem value="" sx={{ fontSize: '0.72rem' }}>Latest Period</MenuItem>
-          {availablePeriods.map((p) => (
-            <MenuItem key={p} value={p} sx={{ fontSize: '0.72rem' }}>{p}</MenuItem>
-          ))}
-        </Select>
       </Box>
 
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}
 
       {/* Static Pool Analysis — always shows current data, unaffected by period filter */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
-          Static Pool Analysis
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
+            Static Pool Analysis
+          </Typography>
+          <Tooltip
+            arrow
+            placement="right"
+            title={
+              <Box sx={{ p: 0.5, maxWidth: 280 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.7rem', display: 'block', mb: 0.5 }}>
+                  What is Static Pool Analysis?
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', display: 'block', lineHeight: 1.6 }}>
+                  Static pool tracks how each vintage cohort (month of disbursement) performs over time.
+                  Rows represent vintage months, columns represent Months on Book (MOB).
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', display: 'block', lineHeight: 1.6, mt: 0.5 }}>
+                  The triangular shape occurs because newer vintages have fewer months of history.
+                  MOBs beyond 18 are grouped into an &quot;18+&quot; bucket.
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', display: 'block', lineHeight: 1.6, mt: 0.5 }}>
+                  Hover over any cell to see the absolute delinquent amount.
+                  Use the metric toggles (X+, 30+, 60+, 90+) to view different delinquency thresholds.
+                </Typography>
+              </Box>
+            }
+          >
+            <IconButton size="small" sx={{ ml: 0.5, p: 0.3 }}>
+              <InfoOutlinedIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
         <ToggleButtonGroup
           size="small"
           exclusive
@@ -314,7 +331,20 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
       <Divider sx={{ my: 0.5 }} />
 
-      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} fillHeight={false} />
+      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} fillHeight={false} periodSelector={
+        <Select
+          size="small"
+          displayEmpty
+          value={selectedPeriod ?? ''}
+          onChange={(e) => setSelectedPeriod(e.target.value === '' ? null : e.target.value as string)}
+          sx={{ minWidth: 130, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.4 } }}
+        >
+          <MenuItem value="" sx={{ fontSize: '0.72rem' }}>Latest Period</MenuItem>
+          {availablePeriods.map((p) => (
+            <MenuItem key={p} value={p} sx={{ fontSize: '0.72rem' }}>{p}</MenuItem>
+          ))}
+        </Select>
+      } />
     </Box>
   );
 }
