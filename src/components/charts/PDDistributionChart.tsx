@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
+import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { CorporatePDDistributionRow } from '@/lib/types';
 
@@ -17,6 +18,26 @@ export function PDDistributionChart({ data }: Props) {
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      // Cleanup stale tooltips
+      d3.selectAll('.pd-dist-tooltip').remove();
+
+      // Create tooltip
+      const tooltip = d3.select('body').append('div')
+        .attr('class', 'pd-dist-tooltip')
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '12px 16px')
+        .style('font-size', '12px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.15)')
+        .style('z-index', '9999')
+        .style('max-width', '280px')
+        .style('line-height', '1.5');
+
       const margin = { top: 10, right: 20, bottom: 40, left: 60 };
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
@@ -65,11 +86,27 @@ export function PDDistributionChart({ data }: Props) {
         .attr('fill', (_, i) => colorScale(i))
         .attr('rx', 3)
         .attr('opacity', 0.9)
-        .on('mouseover', function () {
-          d3.select(this).attr('opacity', 1);
+        .style('cursor', 'pointer')
+        .on('mouseover', function (event, d) {
+          d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          tooltip.html(
+            `<strong>${d.pdBand}</strong><br/>` +
+            `Principal O/s: ${formatCurrency(d.principalOS)}<br/>` +
+            `Portfolio Share: ${formatPercent(d.principalShare)}<br/>` +
+            `Sanctioned Amt: ${formatCurrency(d.sanctionedAmount)}<br/>` +
+            `Disbursed Amt: ${formatCurrency(d.disbursedAmount)}`
+          ).style('opacity', '1');
+          const ttNode = tooltip.node() as HTMLDivElement;
+          const ttW = ttNode.offsetWidth;
+          let left = event.pageX + 16;
+          let top = event.pageY - 20;
+          if (left + ttW > window.innerWidth - 8) left = event.pageX - ttW - 16;
+          if (top < 8) top = 8;
+          tooltip.style('left', `${left}px`).style('top', `${top}px`);
         })
         .on('mouseout', function () {
-          d3.select(this).attr('opacity', 0.9);
+          d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
         });
 
       // Value labels

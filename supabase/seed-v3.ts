@@ -286,6 +286,8 @@ function buildCorporateTopCustomers(): Row[] {
     const customers = CUSTOMER_NAMES[sub.id] ?? CUSTOMER_NAMES[1];
     const baseLimit = sub.aumBase * 0.03; // ~3% of AUM per top customer
 
+    // Build rows without ranks first
+    const subRows: Row[] = [];
     customers.forEach((name, idx) => {
       const n = noise(sub.id, idx, 400);
       const sector = pick(CORP_SECTORS, sub.id * 100 + idx);
@@ -302,7 +304,7 @@ function buildCorporateTopCustomers(): Row[] {
       const secCover = +noiseRange(0.8, 2.5, sub.id, idx, 470).toFixed(2);
       const industryVal = pick(INDUSTRIES, sub.id * 360 + idx);
 
-      rows.push({
+      subRows.push({
         subsidiary_id: sub.id,
         customer_name: name,
         sector,
@@ -322,11 +324,23 @@ function buildCorporateTopCustomers(): Row[] {
         security_type: secType,
         security_cover: secCover,
         industry: industryVal,
-        rank_by_disbursement: idx + 1,
-        rank_by_pos: idx + 1,
+        rank_by_disbursement: 0,
+        rank_by_pos: 0,
         report_date: REPORT_DATE,
       });
     });
+
+    // Sort by disbursed desc and assign disbursement rank
+    [...subRows]
+      .sort((a, b) => (b.disbursed_amount as number) - (a.disbursed_amount as number))
+      .forEach((r, i) => { r.rank_by_disbursement = i + 1; });
+
+    // Sort by POS desc and assign POS rank
+    [...subRows]
+      .sort((a, b) => (b.current_pos as number) - (a.current_pos as number))
+      .forEach((r, i) => { r.rank_by_pos = i + 1; });
+
+    rows.push(...subRows);
   });
   return rows;
 }
