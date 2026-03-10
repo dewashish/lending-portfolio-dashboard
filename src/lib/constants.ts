@@ -46,6 +46,7 @@ export const TAB_NAMES = [
   'Trade Finance',
   'Corporate Finance',
   'Risk & Concentrations',
+  'Risk Outlook',
 ] as const;
 
 export type TabName = (typeof TAB_NAMES)[number];

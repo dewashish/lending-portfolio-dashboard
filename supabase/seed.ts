@@ -51,6 +51,10 @@ async function batchUpsert(table: string, rows: Row[], batchSize = 500) {
 /** Delete from all tables in correct FK order */
 async function clearAll() {
   const tables = [
+    // Risk Outlook tables (FK -> subsidiaries)
+    'ecl_forecast', 'ecl_waterfall', 'stress_scenario_losses', 'cet1_trajectory',
+    'ecl_sensitivity', 'pd_migration_matrix', 'pd_term_structure', 'rating_distribution',
+    'vintage_forecast', 'roll_rate_forecast', 'leading_indicators', 'macro_credit_linkage',
     // Trade & Corporate tables (FK -> data_sources, subsidiaries)
     'corporate_portfolio_metrics',
     'corporate_delinquency',
@@ -2005,6 +2009,510 @@ function buildCorporateCovenants(): Row[] {
 }
 
 // =============================================================================
+// Risk Outlook Table Builders
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// 21. ecl_forecast
+// ---------------------------------------------------------------------------
+function buildEclForecast(): Row[] {
+  const rows: Row[] = [];
+  const stages = ['Stage 1', 'Stage 2', 'Stage 3'];
+  const scenarios = ['Base', 'Adverse', 'Severe'];
+  const quarters = ['Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025'];
+
+  const baseEcl: Record<string, number> = { 'Stage 1': 5_000_000, 'Stage 2': 15_000_000, 'Stage 3': 30_000_000 };
+  const scenarioMult: Record<string, number> = { 'Base': 1.0, 'Adverse': 1.5, 'Severe': 2.2 };
+  const coverageBase: Record<string, number> = { 'Stage 1': 0.005, 'Stage 2': 0.05, 'Stage 3': 0.45 };
+
+  for (const sub of SUBSIDIARIES) {
+    for (let si = 0; si < stages.length; si++) {
+      const stage = stages[si];
+      for (let sci = 0; sci < scenarios.length; sci++) {
+        const scenario = scenarios[sci];
+        for (let qi = 0; qi < quarters.length; qi++) {
+          const quarter = quarters[qi];
+          const n = noise(sub.id, si, sci, qi);
+          const eclLocal = +(baseEcl[stage] * scenarioMult[scenario] * n).toFixed(2);
+          const eclUsd = toUSD(eclLocal, sub.currencyCode, FX_MAP);
+          const coverage = +(coverageBase[stage] * n).toFixed(6);
+
+          rows.push({
+            subsidiary_id: sub.id,
+            stage,
+            scenario,
+            quarter,
+            ecl_amount: eclLocal,
+            ecl_amount_usd: eclUsd,
+            coverage_ratio: coverage,
+          });
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 22. ecl_waterfall
+// ---------------------------------------------------------------------------
+function buildEclWaterfall(): Row[] {
+  const rows: Row[] = [];
+  const drivers = [
+    { name: 'Opening ECL', baseAmt: 50_000_000, sign: 1 },
+    { name: 'New Originations', baseAmt: 5_000_000, sign: 1 },
+    { name: 'Derecognitions', baseAmt: 3_000_000, sign: -1 },
+    { name: 'Stage Transfers', baseAmt: 2_000_000, sign: 1 },
+    { name: 'PD/LGD Changes', baseAmt: 1_000_000, sign: -1 },
+    { name: 'Macro Overlay', baseAmt: 3_000_000, sign: 1 },
+    { name: 'Write-offs', baseAmt: 4_000_000, sign: -1 },
+  ];
+
+  for (const sub of SUBSIDIARIES) {
+    let runningSum = 0;
+    const driverRows: Row[] = [];
+    for (let di = 0; di < drivers.length; di++) {
+      const d = drivers[di];
+      const n = noise(sub.id, di, 22);
+      const amount = +(d.baseAmt * d.sign * n).toFixed(2);
+      runningSum += amount;
+      driverRows.push({
+        subsidiary_id: sub.id,
+        scenario: 'Base',
+        driver: d.name,
+        amount,
+        amount_usd: toUSD(Math.abs(amount), sub.currencyCode, FX_MAP) * (amount < 0 ? -1 : 1),
+        sort_order: di + 1,
+      });
+    }
+    // Closing ECL = sum of all above
+    const closingUsd = toUSD(Math.abs(runningSum), sub.currencyCode, FX_MAP) * (runningSum < 0 ? -1 : 1);
+    driverRows.push({
+      subsidiary_id: sub.id,
+      scenario: 'Base',
+      driver: 'Closing ECL',
+      amount: +runningSum.toFixed(2),
+      amount_usd: +closingUsd.toFixed(2),
+      sort_order: 8,
+    });
+    rows.push(...driverRows);
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 23. stress_scenario_losses
+// ---------------------------------------------------------------------------
+function buildStressScenarioLosses(): Row[] {
+  const rows: Row[] = [];
+  const segments = ['Home Loans', 'Personal Loans', 'Credit Cards', 'Auto Loans', 'SME Lending'];
+  const scenarios = ['Base', 'Mild', 'Severe', 'Stagflation'];
+  const baseLossRates: Record<string, number> = {
+    'Home Loans': 0.005, 'Personal Loans': 0.02, 'Credit Cards': 0.03,
+    'Auto Loans': 0.015, 'SME Lending': 0.025,
+  };
+  const scenarioMult: Record<string, number> = { 'Base': 1.0, 'Mild': 1.8, 'Severe': 3.0, 'Stagflation': 2.5 };
+
+  for (const sub of SUBSIDIARIES) {
+    for (let si = 0; si < segments.length; si++) {
+      const segment = segments[si];
+      for (let sci = 0; sci < scenarios.length; sci++) {
+        const scenario = scenarios[sci];
+        const n = noise(sub.id, si, sci, 23);
+        const exposure = 200_000_000 * n;
+        const lossRate = +(baseLossRates[segment] * scenarioMult[scenario]).toFixed(6);
+        const lossAmount = +(lossRate * exposure).toFixed(2);
+        const lossAmountUsd = toUSD(lossAmount, sub.currencyCode, FX_MAP);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          segment,
+          scenario,
+          loss_rate: lossRate,
+          loss_amount: lossAmount,
+          loss_amount_usd: lossAmountUsd,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 24. cet1_trajectory
+// ---------------------------------------------------------------------------
+function buildCET1Trajectory(): Row[] {
+  const rows: Row[] = [];
+  const scenarios = ['Base', 'Mild', 'Severe', 'Stagflation'];
+  const quarters = ['Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025'];
+  const dropPerQ: Record<string, number> = { 'Base': 0.0, 'Mild': 0.005, 'Severe': 0.015, 'Stagflation': 0.01 };
+
+  for (const sub of SUBSIDIARIES) {
+    const startCET1 = 0.125 * noise(sub.id, 24);
+    for (let sci = 0; sci < scenarios.length; sci++) {
+      const scenario = scenarios[sci];
+      for (let qi = 0; qi < quarters.length; qi++) {
+        const quarter = quarters[qi];
+        const n = noise(sub.id, sci, qi, 24);
+        const baseFluctuation = noiseRange(-0.002, 0.002, sub.id, sci, qi, 241);
+        let cet1Ratio: number;
+        if (scenario === 'Base') {
+          cet1Ratio = startCET1 + baseFluctuation;
+        } else {
+          cet1Ratio = startCET1 - dropPerQ[scenario] * (qi + 1) + baseFluctuation;
+        }
+        cet1Ratio = +cet1Ratio.toFixed(6);
+        const rwaAmount = +(5_000_000_000 * n).toFixed(2);
+        const capitalAmount = +(cet1Ratio * rwaAmount).toFixed(2);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          scenario,
+          quarter,
+          cet1_ratio: cet1Ratio,
+          rwa_amount: rwaAmount,
+          capital_amount: capitalAmount,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 25. ecl_sensitivity
+// ---------------------------------------------------------------------------
+function buildEclSensitivity(): Row[] {
+  const rows: Row[] = [];
+  const factors: { name: string; up: number; down: number }[] = [
+    { name: 'Unemployment', up: 12, down: -8 },
+    { name: 'GDP Growth', up: -6, down: 9 },
+    { name: 'House Prices', up: -15, down: 18 },
+    { name: 'Interest Rates', up: 8, down: -5 },
+    { name: 'Oil Prices', up: 4, down: -3 },
+  ];
+  const baseEcl = 50_000_000;
+
+  for (const sub of SUBSIDIARIES) {
+    for (let fi = 0; fi < factors.length; fi++) {
+      const f = factors[fi];
+      for (const direction of ['up', 'down'] as const) {
+        const impactPct = direction === 'up' ? f.up : f.down;
+        const impactAmount = +(impactPct * baseEcl / 100).toFixed(2);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          factor: f.name,
+          direction,
+          ecl_impact_pct: impactPct,
+          ecl_impact_amount: impactAmount,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 26. pd_migration_matrix
+// ---------------------------------------------------------------------------
+function buildPDMigrationMatrix(): Row[] {
+  const rows: Row[] = [];
+  const grades = ['AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'D'];
+
+  // Transition matrix: from_grade -> to_grade probabilities
+  const matrix: Record<string, Record<string, number>> = {
+    'AAA': { 'AAA': 0.92, 'AA': 0.06, 'A': 0.015, 'BBB': 0.003, 'BB': 0.001, 'B': 0.0005, 'CCC': 0.0003, 'D': 0.0002 },
+    'AA':  { 'AAA': 0.03, 'AA': 0.88, 'A': 0.07, 'BBB': 0.012, 'BB': 0.005, 'B': 0.002, 'CCC': 0.0007, 'D': 0.0003 },
+    'A':   { 'AAA': 0.005, 'AA': 0.03, 'A': 0.89, 'BBB': 0.055, 'BB': 0.012, 'B': 0.005, 'CCC': 0.002, 'D': 0.001 },
+    'BBB': { 'AAA': 0.001, 'AA': 0.005, 'A': 0.04, 'BBB': 0.87, 'BB': 0.06, 'B': 0.015, 'CCC': 0.006, 'D': 0.003 },
+    'BB':  { 'AAA': 0.0005, 'AA': 0.002, 'A': 0.01, 'BBB': 0.05, 'BB': 0.84, 'B': 0.07, 'CCC': 0.02, 'D': 0.0075 },
+    'B':   { 'AAA': 0.0002, 'AA': 0.001, 'A': 0.003, 'BBB': 0.01, 'BB': 0.05, 'B': 0.82, 'CCC': 0.08, 'D': 0.0358 },
+    'CCC': { 'AAA': 0.0001, 'AA': 0.0003, 'A': 0.001, 'BBB': 0.003, 'BB': 0.01, 'B': 0.05, 'CCC': 0.73, 'D': 0.2056 },
+    'D':   { 'AAA': 0, 'AA': 0, 'A': 0, 'BBB': 0, 'BB': 0, 'B': 0, 'CCC': 0, 'D': 1.0 },
+  };
+
+  for (const sub of SUBSIDIARIES) {
+    for (const fromGrade of grades) {
+      for (const toGrade of grades) {
+        const prob = matrix[fromGrade][toGrade];
+        const n = noiseRange(0.95, 1.05, sub.id, grades.indexOf(fromGrade), grades.indexOf(toGrade), 26);
+        const longRunAvg = +(prob * n).toFixed(6);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          from_grade: fromGrade,
+          to_grade: toGrade,
+          probability: prob,
+          long_run_avg: longRunAvg,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 27. pd_term_structure
+// ---------------------------------------------------------------------------
+function buildPDTermStructure(): Row[] {
+  const rows: Row[] = [];
+  const grades = ['AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC'];
+  const basePD1Y: Record<string, number> = {
+    'AAA': 0.0003, 'AA': 0.0008, 'A': 0.0015, 'BBB': 0.005, 'BB': 0.02, 'B': 0.05, 'CCC': 0.15,
+  };
+
+  for (const sub of SUBSIDIARIES) {
+    for (let gi = 0; gi < grades.length; gi++) {
+      const grade = grades[gi];
+      const pd1y = basePD1Y[grade] * noise(sub.id, gi, 27);
+      for (let horizon = 1; horizon <= 5; horizon++) {
+        // Cumulative PD: 1 - (1 - PD_1Y)^N
+        const cumulativePd = +(1 - Math.pow(1 - pd1y, horizon)).toFixed(6);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          rating_grade: grade,
+          horizon_years: horizon,
+          cumulative_pd: cumulativePd,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 28. rating_distribution
+// ---------------------------------------------------------------------------
+function buildRatingDistribution(): Row[] {
+  const rows: Row[] = [];
+  const grades = ['AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'D'];
+  const currentShares: Record<string, number> = {
+    'AAA': 0.05, 'AA': 0.10, 'A': 0.20, 'BBB': 0.30,
+    'BB': 0.20, 'B': 0.10, 'CCC': 0.04, 'D': 0.01,
+  };
+  const projectedShares: Record<string, number> = {
+    'AAA': 0.045, 'AA': 0.095, 'A': 0.19, 'BBB': 0.30,
+    'BB': 0.21, 'B': 0.105, 'CCC': 0.042, 'D': 0.013,
+  };
+
+  for (const sub of SUBSIDIARIES) {
+    for (let gi = 0; gi < grades.length; gi++) {
+      const grade = grades[gi];
+      const n = noise(sub.id, gi, 28);
+      const currentShare = +(currentShares[grade] * n).toFixed(6);
+      const projectedShare = +(projectedShares[grade] * n).toFixed(6);
+
+      rows.push({
+        subsidiary_id: sub.id,
+        rating_grade: grade,
+        current_share: currentShare,
+        projected_share: projectedShare,
+        projection_quarter: 'Q4 2025',
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 29. vintage_forecast
+// ---------------------------------------------------------------------------
+function buildVintageForecast(): Row[] {
+  const rows: Row[] = [];
+  const vintages = ['2022-Q1', '2022-Q3', '2023-Q1', '2023-Q3', '2024-Q1'];
+  const ultimates: Record<string, number> = {
+    '2022-Q1': 0.04, '2022-Q3': 0.035, '2023-Q1': 0.03, '2023-Q3': 0.028, '2024-Q1': 0.025,
+  };
+  // Actual data cutoff (MOB up to which data is actual)
+  const actualCutoff: Record<string, number> = {
+    '2022-Q1': 36, '2022-Q3': 36, '2023-Q1': 36, '2023-Q3': 18, '2024-Q1': 12,
+  };
+
+  for (const sub of SUBSIDIARIES) {
+    for (let vi = 0; vi < vintages.length; vi++) {
+      const vintage = vintages[vi];
+      const ultimate = ultimates[vintage] * noise(sub.id, vi, 29);
+      const cutoff = actualCutoff[vintage];
+
+      for (let mob = 1; mob <= 36; mob++) {
+        // S-curve: delinq_rate = ultimate / (1 + exp(-0.15 * (mob - 12)))
+        const rate = +(ultimate / (1 + Math.exp(-0.15 * (mob - 12)))).toFixed(6);
+        const isProjected = mob > cutoff;
+
+        rows.push({
+          subsidiary_id: sub.id,
+          vintage,
+          mob,
+          actual_delinq_rate: isProjected ? null : rate,
+          projected_delinq_rate: isProjected ? rate : null,
+          is_projected: isProjected,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 30. roll_rate_forecast
+// ---------------------------------------------------------------------------
+function buildRollRateForecast(): Row[] {
+  const rows: Row[] = [];
+  const buckets = ['Current', '1-30', '31-60', '61-90', '91-120', '120+'];
+
+  // Roll forward rates (from -> next bucket)
+  const rollForward: Record<string, number> = {
+    'Current': 0.03, '1-30': 0.15, '31-60': 0.25, '61-90': 0.30, '91-120': 0.35,
+  };
+  // Cure rates (from -> previous bucket)
+  const cureRates: Record<string, number> = {
+    '1-30': 0.60, '31-60': 0.30, '61-90': 0.15, '91-120': 0.08, '120+': 0.03,
+  };
+
+  for (const sub of SUBSIDIARIES) {
+    for (let month = 1; month <= 3; month++) {
+      const deterioration = Math.pow(1.03, month - 1);
+      for (let fi = 0; fi < buckets.length; fi++) {
+        const fromBucket = buckets[fi];
+        for (let ti = 0; ti < buckets.length; ti++) {
+          const toBucket = buckets[ti];
+          let rate: number | null = null;
+
+          if (fi === ti) {
+            // Stay rate: 1 - rollForward - cureRate
+            const rf = rollForward[fromBucket] || 0;
+            const cr = cureRates[fromBucket] || 0;
+            rate = +(Math.max(0, 1 - rf * deterioration - cr / deterioration)).toFixed(6);
+          } else if (ti === fi + 1 && rollForward[fromBucket] !== undefined) {
+            // Roll forward
+            rate = +(rollForward[fromBucket] * deterioration).toFixed(6);
+          } else if (ti === fi - 1 && cureRates[fromBucket] !== undefined) {
+            // Cure (backward)
+            rate = +(cureRates[fromBucket] / deterioration).toFixed(6);
+          }
+
+          if (rate !== null) {
+            const n = noise(sub.id, fi, ti, month, 30);
+            rows.push({
+              subsidiary_id: sub.id,
+              from_bucket: fromBucket,
+              to_bucket: toBucket,
+              forecast_month: month,
+              transition_rate: +(rate * n).toFixed(6),
+            });
+          }
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 31. leading_indicators
+// ---------------------------------------------------------------------------
+function buildLeadingIndicators(): Row[] {
+  const rows: Row[] = [];
+
+  interface IndicatorDef {
+    name: string;
+    baseValue: number;
+    baseZ: number;
+    trend: string;
+    baseRag: string;
+    category: string;
+  }
+
+  const indicators: IndicatorDef[] = [
+    { name: 'Unemployment Rate', baseValue: 6.2, baseZ: 1.5, trend: 'up', baseRag: 'Amber', category: 'macro' },
+    { name: 'GDP Growth', baseValue: 2.1, baseZ: -0.8, trend: 'down', baseRag: 'Green', category: 'macro' },
+    { name: 'PMI', baseValue: 48.5, baseZ: -1.2, trend: 'down', baseRag: 'Amber', category: 'macro' },
+    { name: 'Inflation Rate', baseValue: 5.8, baseZ: 2.1, trend: 'up', baseRag: 'Red', category: 'macro' },
+    { name: 'Payment Index', baseValue: 1.15, baseZ: 1.3, trend: 'up', baseRag: 'Amber', category: 'behavioral' },
+    { name: 'Migration Velocity', baseValue: 0.08, baseZ: 2.2, trend: 'up', baseRag: 'Red', category: 'behavioral' },
+    { name: '30DPD Entry Rate', baseValue: 0.035, baseZ: 0.6, trend: 'stable', baseRag: 'Green', category: 'behavioral' },
+    { name: 'Write-off Rate', baseValue: 0.012, baseZ: 1.8, trend: 'up', baseRag: 'Amber', category: 'behavioral' },
+  ];
+
+  for (const sub of SUBSIDIARIES) {
+    for (let ii = 0; ii < indicators.length; ii++) {
+      const ind = indicators[ii];
+      const n = noise(sub.id, ii, 31);
+      const currentValue = +(ind.baseValue * n).toFixed(4);
+      const zScore = +(ind.baseZ * n).toFixed(4);
+      const absZ = Math.abs(zScore);
+      const ragStatus = absZ >= 2 ? 'Red' : absZ >= 1 ? 'Amber' : 'Green';
+
+      rows.push({
+        subsidiary_id: sub.id,
+        indicator_name: ind.name,
+        current_value: currentValue,
+        z_score: zScore,
+        trend: ind.trend,
+        rag_status: ragStatus,
+        category: ind.category,
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 32. macro_credit_linkage
+// ---------------------------------------------------------------------------
+function buildMacroCreditLinkage(): Row[] {
+  const rows: Row[] = [];
+  const periods = [
+    "Jan'25", "Feb'25", "Mar'25", "Apr'25", "May'25", "Jun'25",
+    "Jul'25", "Aug'25", "Sep'25", "Oct'25", "Nov'25", "Dec'25",
+  ];
+
+  interface LinkageDef {
+    macroVar: string;
+    creditMetric: string;
+    leadMonths: number;
+    macroStart: number;
+    macroEnd: number;
+    creditStart: number;
+    creditEnd: number;
+  }
+
+  const linkages: LinkageDef[] = [
+    { macroVar: 'Unemployment', creditMetric: '90+ DPD Rate', leadMonths: 4,
+      macroStart: 5.5, macroEnd: 7.0, creditStart: 0.015, creditEnd: 0.03 },
+    { macroVar: 'GDP Growth', creditMetric: 'Write-off Rate', leadMonths: 6,
+      macroStart: 3.0, macroEnd: 1.5, creditStart: 0.008, creditEnd: 0.015 },
+    { macroVar: 'PMI', creditMetric: 'Default Rate', leadMonths: 3,
+      macroStart: 52, macroEnd: 46, creditStart: 0.005, creditEnd: 0.012 },
+  ];
+
+  for (const sub of SUBSIDIARIES) {
+    for (let li = 0; li < linkages.length; li++) {
+      const link = linkages[li];
+      for (let pi = 0; pi < periods.length; pi++) {
+        const t = pi / (periods.length - 1); // 0..1 over 12 months
+        const n = noise(sub.id, li, pi, 32);
+        const macroValue = +(link.macroStart + (link.macroEnd - link.macroStart) * t * n).toFixed(4);
+        const creditValue = +(link.creditStart + (link.creditEnd - link.creditStart) * t * n).toFixed(6);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          macro_variable: link.macroVar,
+          credit_metric: link.creditMetric,
+          period: periods[pi],
+          macro_value: macroValue,
+          credit_value: creditValue,
+          lead_months: link.leadMonths,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+// =============================================================================
 // Main
 // =============================================================================
 
@@ -2149,6 +2657,47 @@ async function main() {
     { metric_key: 'collection_efficiency', scope_level: 'global', appetite: 0.9, tolerance: 0.75 },
     { metric_key: 'provision_coverage', scope_level: 'global', appetite: 0.8, tolerance: 0.6 },
   ]); } catch { console.log('  ⚠ risk_appetite_settings table not found — skipping.'); }
+
+  // -----------------------------------------------------------
+  // 3. Risk Outlook tables (12 tables)
+  // -----------------------------------------------------------
+  console.log('\n--- Risk Outlook Tables ---');
+
+  console.log('Seeding ecl_forecast...');
+  await batchInsert('ecl_forecast', buildEclForecast());
+
+  console.log('Seeding ecl_waterfall...');
+  await batchInsert('ecl_waterfall', buildEclWaterfall());
+
+  console.log('Seeding stress_scenario_losses...');
+  await batchInsert('stress_scenario_losses', buildStressScenarioLosses());
+
+  console.log('Seeding cet1_trajectory...');
+  await batchInsert('cet1_trajectory', buildCET1Trajectory());
+
+  console.log('Seeding ecl_sensitivity...');
+  await batchInsert('ecl_sensitivity', buildEclSensitivity());
+
+  console.log('Seeding pd_migration_matrix...');
+  await batchInsert('pd_migration_matrix', buildPDMigrationMatrix());
+
+  console.log('Seeding pd_term_structure...');
+  await batchInsert('pd_term_structure', buildPDTermStructure());
+
+  console.log('Seeding rating_distribution...');
+  await batchInsert('rating_distribution', buildRatingDistribution());
+
+  console.log('Seeding vintage_forecast...');
+  await batchInsert('vintage_forecast', buildVintageForecast());
+
+  console.log('Seeding roll_rate_forecast...');
+  await batchInsert('roll_rate_forecast', buildRollRateForecast());
+
+  console.log('Seeding leading_indicators...');
+  await batchInsert('leading_indicators', buildLeadingIndicators());
+
+  console.log('Seeding macro_credit_linkage...');
+  await batchInsert('macro_credit_linkage', buildMacroCreditLinkage());
 
   console.log('\n=== Seeding complete! ===');
 }

@@ -66,7 +66,7 @@ const ALL_STEPS: Step[] = [
   },
   {
     target: '#tour-tab-bar',
-    content: 'Navigate between Group Overview, Consumer Finance, Trade Finance, Corporate Finance, and Risk & Concentrations.',
+    content: 'Navigate between Group Overview, Consumer Finance, Trade Finance, Corporate Finance, Risk & Concentrations, and Risk Outlook.',
     disableBeacon: true,
     title: 'Navigation Tabs',
   },
@@ -75,6 +75,12 @@ const ALL_STEPS: Step[] = [
     content: 'This is your main workspace. Charts, tables, and KPIs update based on your scope and tab selection. Click on charts and heatmap cells to drill down.',
     disableBeacon: true,
     title: 'Dashboard Content',
+  },
+  {
+    target: '#tour-risk-outlook',
+    content: 'The Risk Outlook tab provides forward-looking CRO views: ECL projections, stress testing, PD migration, vintage forecasts, macro-credit linkages, and full methodology documentation.',
+    disableBeacon: true,
+    title: 'Risk Outlook',
   },
   {
     target: 'body',

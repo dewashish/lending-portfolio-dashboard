@@ -686,3 +686,130 @@ export interface LOSDisbursementDaily {
   avgTicketSize: number;
 }
 
+// ── Risk Outlook ─────────────────────────────────────────────────
+
+export interface EclForecastRow {
+  id: number;
+  subsidiaryId: number;
+  stage: string;
+  scenario: string;
+  quarter: string;
+  eclAmount: number;
+  eclAmountUsd: number;
+  coverageRatio: number | null;
+}
+
+export interface EclWaterfallRow {
+  id: number;
+  subsidiaryId: number;
+  scenario: string;
+  driver: string;
+  amount: number;
+  amountUsd: number;
+  sortOrder: number;
+}
+
+export interface StressScenarioLossRow {
+  id: number;
+  subsidiaryId: number;
+  segment: string;
+  scenario: string;
+  lossRate: number;
+  lossAmount: number;
+  lossAmountUsd: number;
+}
+
+export interface CET1TrajectoryRow {
+  id: number;
+  subsidiaryId: number;
+  scenario: string;
+  quarter: string;
+  cet1Ratio: number;
+  rwaAmount: number;
+  capitalAmount: number;
+}
+
+export interface EclSensitivityRow {
+  id: number;
+  subsidiaryId: number;
+  factor: string;
+  direction: string;
+  eclImpactPct: number;
+  eclImpactAmount: number;
+}
+
+export interface PDMigrationCell {
+  id: number;
+  subsidiaryId: number;
+  fromGrade: string;
+  toGrade: string;
+  probability: number;
+  longRunAvg: number;
+}
+
+export interface PDTermStructureRow {
+  id: number;
+  subsidiaryId: number;
+  ratingGrade: string;
+  horizonYears: number;
+  cumulativePd: number;
+}
+
+export interface RatingDistributionRow {
+  id: number;
+  subsidiaryId: number;
+  ratingGrade: string;
+  currentShare: number;
+  projectedShare: number;
+  projectionQuarter: string;
+}
+
+export interface VintageForecastRow {
+  id: number;
+  subsidiaryId: number;
+  vintage: string;
+  mob: number;
+  actualDelinqRate: number | null;
+  projectedDelinqRate: number | null;
+  isProjected: boolean;
+}
+
+export interface RollRateForecastRow {
+  id: number;
+  subsidiaryId: number;
+  fromBucket: string;
+  toBucket: string;
+  forecastMonth: number;
+  transitionRate: number;
+}
+
+export interface LeadingIndicatorRow {
+  id: number;
+  subsidiaryId: number;
+  indicatorName: string;
+  currentValue: number;
+  zScore: number;
+  trend: string;
+  ragStatus: string;
+  category: string;
+}
+
+export interface MacroCreditLinkageRow {
+  id: number;
+  subsidiaryId: number;
+  macroVariable: string;
+  creditMetric: string;
+  period: string;
+  macroValue: number;
+  creditValue: number;
+  leadMonths: number;
+}
+
+export interface RiskOutlookKPIs {
+  totalEcl: number;
+  provisionCoverage: number;
+  cet1UnderStress: number;
+  avgPd1Y: number;
+  ewsAlerts: number;
+}
+

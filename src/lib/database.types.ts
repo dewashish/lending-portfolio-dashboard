@@ -1472,6 +1472,200 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      // ── Risk Outlook Tables ───────────────────────────────────────────
+      ecl_forecast: {
+        Row: {
+          id: number; subsidiary_id: number; stage: string; scenario: string;
+          quarter: string; ecl_amount: number; ecl_amount_usd: number;
+          coverage_ratio: number | null; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; stage: string; scenario: string;
+          quarter: string; ecl_amount?: number; ecl_amount_usd?: number;
+          coverage_ratio?: number | null; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; stage?: string; scenario?: string;
+          quarter?: string; ecl_amount?: number; ecl_amount_usd?: number;
+          coverage_ratio?: number | null; created_at?: string;
+        };
+        Relationships: [];
+      };
+      ecl_waterfall: {
+        Row: {
+          id: number; subsidiary_id: number; scenario: string; driver: string;
+          amount: number; amount_usd: number; sort_order: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; scenario: string; driver: string;
+          amount?: number; amount_usd?: number; sort_order?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; scenario?: string; driver?: string;
+          amount?: number; amount_usd?: number; sort_order?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      stress_scenario_losses: {
+        Row: {
+          id: number; subsidiary_id: number; segment: string; scenario: string;
+          loss_rate: number; loss_amount: number; loss_amount_usd: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; segment: string; scenario: string;
+          loss_rate?: number; loss_amount?: number; loss_amount_usd?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; segment?: string; scenario?: string;
+          loss_rate?: number; loss_amount?: number; loss_amount_usd?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      cet1_trajectory: {
+        Row: {
+          id: number; subsidiary_id: number; scenario: string; quarter: string;
+          cet1_ratio: number; rwa_amount: number; capital_amount: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; scenario: string; quarter: string;
+          cet1_ratio?: number; rwa_amount?: number; capital_amount?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; scenario?: string; quarter?: string;
+          cet1_ratio?: number; rwa_amount?: number; capital_amount?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      ecl_sensitivity: {
+        Row: {
+          id: number; subsidiary_id: number; factor: string; direction: string;
+          ecl_impact_pct: number; ecl_impact_amount: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; factor: string; direction: string;
+          ecl_impact_pct?: number; ecl_impact_amount?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; factor?: string; direction?: string;
+          ecl_impact_pct?: number; ecl_impact_amount?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      pd_migration_matrix: {
+        Row: {
+          id: number; subsidiary_id: number; from_grade: string; to_grade: string;
+          probability: number; long_run_avg: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; from_grade: string; to_grade: string;
+          probability?: number; long_run_avg?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; from_grade?: string; to_grade?: string;
+          probability?: number; long_run_avg?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      pd_term_structure: {
+        Row: {
+          id: number; subsidiary_id: number; rating_grade: string;
+          horizon_years: number; cumulative_pd: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; rating_grade: string;
+          horizon_years?: number; cumulative_pd?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; rating_grade?: string;
+          horizon_years?: number; cumulative_pd?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      rating_distribution: {
+        Row: {
+          id: number; subsidiary_id: number; rating_grade: string;
+          current_share: number; projected_share: number; projection_quarter: string; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; rating_grade: string;
+          current_share?: number; projected_share?: number; projection_quarter?: string; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; rating_grade?: string;
+          current_share?: number; projected_share?: number; projection_quarter?: string; created_at?: string;
+        };
+        Relationships: [];
+      };
+      vintage_forecast: {
+        Row: {
+          id: number; subsidiary_id: number; vintage: string; mob: number;
+          actual_delinq_rate: number | null; projected_delinq_rate: number | null;
+          is_projected: boolean; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; vintage: string; mob?: number;
+          actual_delinq_rate?: number | null; projected_delinq_rate?: number | null;
+          is_projected?: boolean; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; vintage?: string; mob?: number;
+          actual_delinq_rate?: number | null; projected_delinq_rate?: number | null;
+          is_projected?: boolean; created_at?: string;
+        };
+        Relationships: [];
+      };
+      roll_rate_forecast: {
+        Row: {
+          id: number; subsidiary_id: number; from_bucket: string; to_bucket: string;
+          forecast_month: number; transition_rate: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; from_bucket: string; to_bucket: string;
+          forecast_month?: number; transition_rate?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; from_bucket?: string; to_bucket?: string;
+          forecast_month?: number; transition_rate?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
+      leading_indicators: {
+        Row: {
+          id: number; subsidiary_id: number; indicator_name: string;
+          current_value: number; z_score: number; trend: string;
+          rag_status: string; category: string; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; indicator_name: string;
+          current_value?: number; z_score?: number; trend?: string;
+          rag_status?: string; category?: string; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; indicator_name?: string;
+          current_value?: number; z_score?: number; trend?: string;
+          rag_status?: string; category?: string; created_at?: string;
+        };
+        Relationships: [];
+      };
+      macro_credit_linkage: {
+        Row: {
+          id: number; subsidiary_id: number; macro_variable: string;
+          credit_metric: string; period: string; macro_value: number;
+          credit_value: number; lead_months: number; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; macro_variable: string;
+          credit_metric: string; period: string; macro_value?: number;
+          credit_value?: number; lead_months?: number; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; macro_variable?: string;
+          credit_metric?: string; period?: string; macro_value?: number;
+          credit_value?: number; lead_months?: number; created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       v_group_aum_summary: {

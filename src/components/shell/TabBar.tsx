@@ -6,6 +6,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import BusinessIcon from '@mui/icons-material/Business';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { TAB_NAMES, type TabName } from '@/lib/constants';
 
 const TAB_ICONS: Record<TabName, React.ReactElement> = {
@@ -14,6 +15,7 @@ const TAB_ICONS: Record<TabName, React.ReactElement> = {
   'Trade Finance': <AccountBalanceIcon sx={{ fontSize: 18 }} />,
   'Corporate Finance': <BusinessIcon sx={{ fontSize: 18 }} />,
   'Risk & Concentrations': <WarningAmberIcon sx={{ fontSize: 18 }} />,
+  'Risk Outlook': <TrendingUpIcon sx={{ fontSize: 18 }} />,
 };
 
 interface Props {

@@ -16,6 +16,7 @@ import { ConsumerFinanceView } from '@/components/views/ConsumerFinanceView';
 import { TradeFinanceView } from '@/components/views/TradeFinanceView';
 import { CorporateFinanceView } from '@/components/views/CorporateFinanceView';
 import { RiskConcentrationsView } from '@/components/views/RiskConcentrationsView';
+import { RiskOutlookView } from '@/components/views/RiskOutlookView';
 import { AIQueryPanel } from '@/components/ai/AIQueryPanel';
 import { TourProvider } from '@/lib/tour-context';
 import { CurrencyProvider } from '@/lib/currency-context';
@@ -38,6 +39,7 @@ function DashboardContent() {
       case 2: return <TradeFinanceView key="tab-2" scope={scope} />;
       case 3: return <CorporateFinanceView key="tab-3" scope={scope} />;
       case 4: return <RiskConcentrationsView key="tab-4" scope={scope} />;
+      case 5: return <RiskOutlookView key="tab-5" scope={scope} />;
       default: return null;
     }
   };
