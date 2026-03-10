@@ -501,6 +501,13 @@ export function CorporateOverviewSection({ scope }: Props) {
     }));
   }, [maturity]);
 
+  // Latest period in industry data (may differ from portfolio metrics periods)
+  const latestIndustryPeriod = useMemo(() => {
+    if (!industry?.length) return '';
+    const periods = sortPeriods(Array.from(new Set(industry.map((d) => d.period))));
+    return periods[periods.length - 1] ?? '';
+  }, [industry]);
+
   // Collateral filtered by donut click
   const visibleCollateral = useMemo(() => {
     const rows = collateral ?? [];
@@ -526,7 +533,6 @@ export function CorporateOverviewSection({ scope }: Props) {
   const pdRows = pdDist ?? [];
   const pipelineRows = pipelineData ?? [];
   const maturityRows = maturity ?? [];
-  const latestPeriod = visiblePeriods[visiblePeriods.length - 1] ?? '';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -669,7 +675,7 @@ export function CorporateOverviewSection({ scope }: Props) {
           <Grid item xs={12} md={4}>
             <SectorBreakdownChart
               data={industry ?? []}
-              period={latestPeriod}
+              period={latestIndustryPeriod}
               valueField={customerTab === 'disbursement' ? 'disbursement' : 'pos'}
             />
           </Grid>
