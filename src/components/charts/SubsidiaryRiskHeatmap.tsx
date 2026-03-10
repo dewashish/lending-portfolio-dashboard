@@ -82,7 +82,11 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
         .attr('rx', 4)
         .attr('opacity', 0.85)
         .style('cursor', onCellClick ? 'pointer' : 'default')
-        .on('click', (_, d) => onCellClick?.(d.subsidiaryId, d.tabIndex, d.subTabIndex))
+        .on('click', (_, d) => {
+          tooltip.style('opacity', '0');
+          d3.selectAll('.risk-heatmap-tooltip').remove();
+          onCellClick?.(d.subsidiaryId, d.tabIndex, d.subTabIndex);
+        })
         .on('mouseover', function (event: MouseEvent, d) {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
           tooltip.html(

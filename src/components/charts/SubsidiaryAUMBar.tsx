@@ -98,7 +98,11 @@ export function SubsidiaryAUMBar({ data, onBarClick }: Props) {
       .attr('stroke-width', 1.5)
       .attr('rx', 4)
       .style('cursor', onBarClick ? 'pointer' : 'default')
-      .on('click', (_, d) => onBarClick?.(d.subsidiaryId))
+      .on('click', (_, d) => {
+        tooltip.style('opacity', '0');
+        d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
+        onBarClick?.(d.subsidiaryId);
+      })
       .on('mouseover', function (_event, d) {
         d3.select(this).attr('opacity', 0.8);
         const ragColor = RAG_BAR_COLORS[d.rag];

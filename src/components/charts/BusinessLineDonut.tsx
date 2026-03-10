@@ -96,7 +96,11 @@ export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }
         .attr('fill', d => SEGMENT_COLORS[d.data.label])
         .attr('opacity', 0.9)
         .style('cursor', onSegmentClick ? 'pointer' : 'default')
-        .on('click', (_, d) => onSegmentClick?.(d.data.key))
+        .on('click', (_, d) => {
+          tooltip.style('opacity', '0');
+          d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
+          onSegmentClick?.(d.data.key);
+        })
         .on('mouseover', function (_event, d) {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 2);
           const share = total > 0 ? d.data.value / total : 0;

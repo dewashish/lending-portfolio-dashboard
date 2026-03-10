@@ -30,6 +30,10 @@ function DashboardContent() {
   const [subTabTarget, setSubTabTarget] = useState<number | undefined>();
 
   const handleTabChange = useCallback((tab: number, subTab?: number) => {
+    // Remove any lingering D3 tooltips before navigating
+    if (typeof document !== 'undefined') {
+      document.querySelectorAll('.risk-heatmap-tooltip,.biz-donut-tooltip,.aum-bar-tooltip,.staging-donut-tooltip').forEach(el => el.remove());
+    }
     setActiveTab(tab);
     setSubTabTarget(subTab);
   }, []);
