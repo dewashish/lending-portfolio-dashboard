@@ -13,6 +13,9 @@ import {
   TableContainer,
   Grid,
   Chip,
+  FormControl,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -212,6 +215,7 @@ export function CorporateRatingSection({ scope }: Props) {
 
   // ── State ──
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
+  const [borrowerLimit, setBorrowerLimit] = useState<number>(20);
 
   // ── Derived periods ──
   const allPeriods = useMemo(() => {
@@ -371,87 +375,12 @@ export function CorporateRatingSection({ scope }: Props) {
         {kpiItems.length > 0 && <KPIRow items={kpiItems} />}
       </Card>
 
-      {/* ═══════ GROUP B: Rating Distribution Chart ═══════ */}
-      <RatingDistributionBar data={barData} period={latestPeriod} />
+      {/* ═══════ GROUP B: Rating Distribution Chart (taller) ═══════ */}
+      <Box sx={{ height: 420 }}>
+        <RatingDistributionBar data={barData} period={latestPeriod} />
+      </Box>
 
-      {/* ═══════ GROUP C: Two Pivot Tables ═══════ */}
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.82rem', mb: 1.5 }}>
-              Value of Disbursement
-            </Typography>
-            <RatingPivotTable
-              data={ratingRows}
-              valueField="disbursement"
-              selectedPeriods={visiblePeriods}
-              formatCurrency={formatCurrency}
-            />
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.82rem', mb: 1.5 }}>
-              Current Principal O/s
-            </Typography>
-            <RatingPivotTable
-              data={ratingRows}
-              valueField="pos"
-              selectedPeriods={visiblePeriods}
-              formatCurrency={formatCurrency}
-            />
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* ═══════ GROUP D: Borrower-Level Rating Change Detail ═══════ */}
-      <Card sx={{ p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.82rem', mb: 1.5 }}>
-          Borrower-Level Rating Change Detail
-        </Typography>
-        {migrationRows.length === 0 ? (
-          <Typography variant="caption" color="text.secondary">No migration data available</Typography>
-        ) : (
-          <TableContainer sx={{ maxHeight: 480 }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={HDR}>Borrower Name</TableCell>
-                  <TableCell sx={HDR}>Sector</TableCell>
-                  <TableCell sx={HDR}>Previous Rating</TableCell>
-                  <TableCell sx={HDR}>New Rating</TableCell>
-                  <TableCell align="center" sx={HDR}>Notches</TableCell>
-                  <TableCell sx={HDR}>Movement</TableCell>
-                  <TableCell align="right" sx={HDR}>Exposure</TableCell>
-                  <TableCell sx={HDR}>Key Trigger</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {migrationRows.map((row, idx) => (
-                  <TableRow key={idx} hover>
-                    <TableCell sx={CELL_TEXT}>{row.customerName}</TableCell>
-                    <TableCell sx={CELL_TEXT}>{row.sector}</TableCell>
-                    <TableCell sx={CELL}>{row.priorRating}</TableCell>
-                    <TableCell sx={{ ...CELL, color: row.migrationDirection.toLowerCase() === 'upgrade' ? '#4caf50' : row.migrationDirection.toLowerCase() === 'downgrade' ? '#f44336' : undefined }}>
-                      {row.currentRating}
-                    </TableCell>
-                    <TableCell align="center" sx={CELL}>
-                      {computeNotches(row.priorRating, row.currentRating)}
-                    </TableCell>
-                    <TableCell>{directionChip(row.migrationDirection)}</TableCell>
-                    <TableCell align="right" sx={CELL}>{formatCurrency(row.exposure)}</TableCell>
-                    <TableCell sx={{ ...CELL_TEXT, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {row.triggerReason}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Card>
-
-      {/* ═══════ GROUP E: Sector Summary + Migration Matrix ═══════ */}
+      {/* ═══════ GROUP C: Sector Summary + Migration Matrix ═══════ */}
       <Grid container spacing={2}>
         <Grid item xs={12} md={5}>
           <Card sx={{ p: 2, height: '100%' }}>
@@ -515,6 +444,103 @@ export function CorporateRatingSection({ scope }: Props) {
           <RatingMigrationMatrix data={migrationRows} />
         </Grid>
       </Grid>
+
+      {/* ═══════ GROUP D: Two Pivot Tables ═══════ */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.82rem', mb: 1.5 }}>
+              Value of Disbursement
+            </Typography>
+            <RatingPivotTable
+              data={ratingRows}
+              valueField="disbursement"
+              selectedPeriods={visiblePeriods}
+              formatCurrency={formatCurrency}
+            />
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.82rem', mb: 1.5 }}>
+              Current Principal O/s
+            </Typography>
+            <RatingPivotTable
+              data={ratingRows}
+              valueField="pos"
+              selectedPeriods={visiblePeriods}
+              formatCurrency={formatCurrency}
+            />
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* ═══════ GROUP E: Borrower-Level Rating Change Detail ═══════ */}
+      <Card sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
+            Borrower-Level Rating Change Detail
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>Show</Typography>
+            <FormControl size="small" sx={{ minWidth: 72 }}>
+              <Select
+                value={borrowerLimit}
+                onChange={(e) => setBorrowerLimit(e.target.value as number)}
+                sx={{ fontSize: '0.72rem', height: 28, fontFamily: 'IBM Plex Mono, monospace' }}
+              >
+                {[10, 20, 50, 100].map((n) => (
+                  <MenuItem key={n} value={n} sx={{ fontSize: '0.72rem' }}>{n}</MenuItem>
+                ))}
+                <MenuItem value={-1} sx={{ fontSize: '0.72rem' }}>All</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+              of {migrationRows.length} borrowers
+            </Typography>
+          </Box>
+        </Box>
+        {migrationRows.length === 0 ? (
+          <Typography variant="caption" color="text.secondary">No migration data available</Typography>
+        ) : (
+          <TableContainer sx={{ maxHeight: 520 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={HDR}>Borrower Name</TableCell>
+                  <TableCell sx={HDR}>Sector</TableCell>
+                  <TableCell sx={HDR}>Previous Rating</TableCell>
+                  <TableCell sx={HDR}>New Rating</TableCell>
+                  <TableCell align="center" sx={HDR}>Notches</TableCell>
+                  <TableCell sx={HDR}>Movement</TableCell>
+                  <TableCell align="right" sx={HDR}>Exposure</TableCell>
+                  <TableCell sx={HDR}>Key Trigger</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(borrowerLimit === -1 ? migrationRows : migrationRows.slice(0, borrowerLimit)).map((row, idx) => (
+                  <TableRow key={idx} hover>
+                    <TableCell sx={CELL_TEXT}>{row.customerName}</TableCell>
+                    <TableCell sx={CELL_TEXT}>{row.sector}</TableCell>
+                    <TableCell sx={CELL}>{row.priorRating}</TableCell>
+                    <TableCell sx={{ ...CELL, color: row.migrationDirection.toLowerCase() === 'upgrade' ? '#4caf50' : row.migrationDirection.toLowerCase() === 'downgrade' ? '#f44336' : undefined }}>
+                      {row.currentRating}
+                    </TableCell>
+                    <TableCell align="center" sx={CELL}>
+                      {computeNotches(row.priorRating, row.currentRating)}
+                    </TableCell>
+                    <TableCell>{directionChip(row.migrationDirection)}</TableCell>
+                    <TableCell align="right" sx={CELL}>{formatCurrency(row.exposure)}</TableCell>
+                    <TableCell sx={{ ...CELL_TEXT, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {row.triggerReason}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Card>
     </Box>
   );
 }
