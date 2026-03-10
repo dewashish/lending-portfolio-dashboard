@@ -120,7 +120,7 @@ export function ConsumerNonStarterSection({ scope, filters }: Props) {
   const { getColor } = useRiskAppetite();
   const { formatCurrencyMM } = useCurrencyFormat();
 
-  const { data: nonStarters, isLoading } = useNonStarters(scope, filters, categoryFilter);
+  const { data: nonStarters, isLoading, error } = useNonStarters(scope, filters, categoryFilter);
 
   const augmented = useMemo(
     () => augmentNonStarterRows(nonStarters ?? []),
@@ -133,6 +133,19 @@ export function ConsumerNonStarterSection({ scope, filters }: Props) {
   );
 
   if (isLoading) return <LoadingSkeleton />;
+
+  if (error) {
+    return (
+      <Card sx={{ p: 3, border: '1px solid', borderColor: 'error.main' }}>
+        <Typography variant="subtitle2" color="error" gutterBottom>
+          Failed to load Non-Starter data
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {error?.message ?? String(error)}
+        </Typography>
+      </Card>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
