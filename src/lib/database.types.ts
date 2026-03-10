@@ -1434,6 +1434,41 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      // ── User Session Tracking ───────────────────────────────────
+      user_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          login_at: string;
+          last_active_at: string;
+          signed_out_at: string | null;
+          ip_address: string | null;
+          user_agent: string | null;
+          is_active: boolean;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          login_at?: string;
+          last_active_at?: string;
+          signed_out_at?: string | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          login_at?: string;
+          last_active_at?: string;
+          signed_out_at?: string | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       v_group_aum_summary: {

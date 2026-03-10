@@ -31,10 +31,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid username or password.' }, { status: 401 });
     }
 
+    // Record login event in user_sessions
+    let sessionId: string | undefined;
+    try {
+      const { data: session } = await supabase
+        .from('user_sessions')
+        .insert({
+          user_id: user.id,
+          ip_address: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? null,
+          user_agent: request.headers.get('user-agent') ?? null,
+        } as Record<string, unknown>)
+        .select('id')
+        .single();
+      sessionId = (session as { id: string } | null)?.id;
+    } catch {
+      // Session tracking is non-critical — login should not fail
+    }
+
     const token = await createSessionToken({
       sub: user.id,
       username: user.username,
       role: user.role,
+      session_id: sessionId,
     });
 
     const response = NextResponse.json({ ok: true });

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { DM_Sans, IBM_Plex_Mono } from 'next/font/google';
 import { ThemeRegistry } from '@/components/shell/ThemeRegistry';
 import { UserProvider } from '@/lib/user-context';
+import { SessionHeartbeat } from '@/components/shell/SessionHeartbeat';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable}`}>
       <body>
         <ThemeRegistry>
-          <UserProvider>{children}</UserProvider>
+          <UserProvider>
+            <SessionHeartbeat />
+            {children}
+          </UserProvider>
         </ThemeRegistry>
       </body>
     </html>
