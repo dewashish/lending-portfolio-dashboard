@@ -291,10 +291,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}
 
-      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} fillHeight={false} />
-
-      {/* Static Pool Analysis */}
-      <Divider sx={{ my: 0.5 }} />
+      {/* Static Pool Analysis — always shows current data, unaffected by period filter */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           Static Pool Analysis
@@ -314,6 +311,10 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
       {l2 ? <ChartGridSkeleton /> : (
         <VintageHeatmap data={aggregatedVintage} metricType={vintageMetric} fillHeight={false} />
       )}
+
+      <Divider sx={{ my: 0.5 }} />
+
+      <NetFlowWaterfall data={netFlow ?? []} selectedPeriod={selectedPeriod ?? undefined} fillHeight={false} />
     </Box>
   );
 }

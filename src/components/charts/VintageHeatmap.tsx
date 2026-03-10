@@ -17,9 +17,19 @@ interface Props {
 }
 
 const ROW_H = 28;
-const MIN_CELL_W = 56;
+const MIN_CELL_W = 48;
 const LA_COL_W = 60;
 const MARGIN = { top: 24, right: 16, bottom: 36, left: 72 };
+const MOB_CAP = 18;
+const MOB_OVERFLOW = MOB_CAP + 1; // 19 = internal value representing "18+"
+const TOOLTIP_CLASS = 'vintage-heatmap-tooltip';
+
+interface CellDatum {
+  vintage: string;
+  mob: number;
+  rate: number;
+  loanAmount: number;
+}
 
 export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
   const { d3Tokens } = useThemeMode();
@@ -31,6 +41,7 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
   );
 
   const { vintages, mobs, maxRate, cellMap, vintageLoanMap } = useMemo(() => {
+    // Sort vintages chronologically
     const vintageSet = Array.from(new Set(filtered.map((d) => d.vintage)));
     const sorted = vintageSet.sort((a, b) => {
       const parseV = (s: string) => {
@@ -48,24 +59,50 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
       return parseV(a) - parseV(b);
     });
 
-    const mobSet = Array.from(new Set(filtered.map((d) => d.mob))).sort((a, b) => a - b);
-    const max = d3.max(filtered, (d) => d.delinquencyRate) ?? 0.1;
-
-    // Build lookup map for rates
-    const map = new Map<string, number>();
+    // Group MOBs > 18 into a single "18+" bucket (mob = 19 internally)
+    // Use weighted average by loan amount for the grouped bucket
+    const grouped = new Map<string, { weightedSum: number; totalWeight: number }>();
     filtered.forEach((d) => {
-      map.set(`${d.vintage}|${d.mob}`, d.delinquencyRate);
-    });
-
-    // Build loan amount per vintage (take from MOB 1 which exists for all vintages)
-    const laMap = new Map<string, number>();
-    filtered.forEach((d) => {
-      if (d.mob === 1) {
-        laMap.set(d.vintage, d.loanAmount);
+      const mob = d.mob > MOB_CAP ? MOB_OVERFLOW : d.mob;
+      const key = `${d.vintage}|${mob}`;
+      const g = grouped.get(key);
+      if (g) {
+        g.weightedSum += d.delinquencyRate * d.loanAmount;
+        g.totalWeight += d.loanAmount;
+      } else {
+        grouped.set(key, { weightedSum: d.delinquencyRate * d.loanAmount, totalWeight: d.loanAmount });
       }
     });
 
-    return { vintages: sorted, mobs: mobSet, maxRate: max, cellMap: map, vintageLoanMap: laMap };
+    // Build cellMap with grouped data
+    const map = new Map<string, CellDatum>();
+    grouped.forEach((val, key) => {
+      const [vintage, mobStr] = key.split('|');
+      const mob = parseInt(mobStr);
+      const rate = val.totalWeight > 0 ? val.weightedSum / val.totalWeight : 0;
+      map.set(key, { vintage, mob, rate, loanAmount: val.totalWeight });
+    });
+
+    // Collect MOBs that exist in the data (after grouping)
+    const mobSet = new Set<number>();
+    map.forEach((d) => mobSet.add(d.mob));
+    const mobArr = Array.from(mobSet).sort((a, b) => a - b);
+
+    // Max rate for color scale
+    let max = 0;
+    map.forEach((d) => { if (d.rate > max) max = d.rate; });
+    if (max === 0) max = 0.1;
+
+    // Loan amount per vintage (from MOB 1)
+    const laMap = new Map<string, number>();
+    filtered.forEach((d) => {
+      if (d.mob === 1) {
+        const existing = laMap.get(d.vintage) ?? 0;
+        laMap.set(d.vintage, existing + d.loanAmount);
+      }
+    });
+
+    return { vintages: sorted, mobs: mobArr, maxRate: max, cellMap: map, vintageLoanMap: laMap };
   }, [filtered]);
 
   const chartHeight = Math.max(300, vintages.length * ROW_H + MARGIN.top + MARGIN.bottom);
@@ -73,6 +110,9 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
 
   const ref = useD3Chart(
     (svg, width, height) => {
+      // Clean up any previous tooltip
+      d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
+
       const margin = MARGIN;
       const w = width - margin.left - margin.right - LA_COL_W;
       const h = height - margin.top - margin.bottom;
@@ -95,6 +135,53 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .scaleSequential(d3.interpolateRdYlGn)
         .domain([maxRate, 0]);
 
+      // ── Tooltip ──────────────────────────────────────────────────────
+      const tooltip = d3.select('body').append('div')
+        .attr('class', TOOLTIP_CLASS)
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', '0')
+        .style('background', d3Tokens.tooltipBg)
+        .style('border', `1px solid ${d3Tokens.tooltipBorder}`)
+        .style('border-radius', '8px')
+        .style('padding', '10px 14px')
+        .style('font-size', '11px')
+        .style('color', d3Tokens.tooltipText)
+        .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)')
+        .style('z-index', '9999')
+        .style('max-width', '280px')
+        .style('line-height', '1.6')
+        .style('transition', 'opacity 0.15s ease');
+
+      const mutedColor = d3Tokens.textMuted;
+
+      function showTooltip(event: MouseEvent, d: CellDatum) {
+        const mobLabel = d.mob === MOB_OVERFLOW ? '18+' : `${d.mob}`;
+        const la = vintageLoanMap.get(d.vintage) ?? 0;
+        const absAmt = d.rate * la;
+
+        tooltip.html(
+          `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${d.vintage} — MOB ${mobLabel}</div>` +
+          `<div><span style="color:${mutedColor}">${metricType} Rate:</span> <b>${formatPercent(d.rate, 2)}</b></div>` +
+          `<div><span style="color:${mutedColor}">Delinquent Amt:</span> <b>${formatCurrency(absAmt)}</b></div>` +
+          `<div><span style="color:${mutedColor}">Loan Amount:</span> <b>${formatCurrency(la)}</b></div>`
+        ).style('opacity', '1');
+
+        positionTooltip(event);
+      }
+
+      function positionTooltip(event: MouseEvent) {
+        const ttNode = tooltip.node() as HTMLDivElement;
+        const ttW = ttNode.offsetWidth;
+        const ttH = ttNode.offsetHeight;
+        let left = event.pageX + 12;
+        let top = event.pageY - 10;
+        if (left + ttW > window.innerWidth - 8) left = event.pageX - ttW - 12;
+        if (top + ttH > window.innerHeight + window.scrollY - 8) top = event.pageY - ttH - 10;
+        if (top < window.scrollY + 4) top = window.scrollY + 4;
+        tooltip.style('left', `${left}px`).style('top', `${top}px`);
+      }
+
       // ── LA column header ────────────────────────────────────────────
       g.append('text')
         .attr('x', LA_COL_W / 2)
@@ -108,7 +195,6 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
       // ── LA values per vintage ───────────────────────────────────────
       vintages.forEach((v) => {
         const la = vintageLoanMap.get(v);
-        // Background cell
         g.append('rect')
           .attr('x', 2)
           .attr('y', y(v)!)
@@ -116,7 +202,6 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
           .attr('height', y.bandwidth())
           .attr('fill', 'rgba(128,128,128,0.08)')
           .attr('rx', 2);
-        // Value
         g.append('text')
           .attr('x', LA_COL_W / 2)
           .attr('y', y(v)! + y.bandwidth() / 2)
@@ -128,14 +213,12 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
           .text(la != null ? formatCurrency(la) : '—');
       });
 
-      // ── Build cell data (only cells with data → triangular) ─────────
-      const cells: { vintage: string; mob: number; rate: number }[] = [];
+      // ── Build cell data from grouped cellMap ────────────────────────
+      const cells: CellDatum[] = [];
       vintages.forEach((v) => {
         mobs.forEach((m) => {
-          const rate = cellMap.get(`${v}|${m}`);
-          if (rate != null) {
-            cells.push({ vintage: v, mob: m, rate });
-          }
+          const d = cellMap.get(`${v}|${m}`);
+          if (d) cells.push(d);
         });
       });
 
@@ -151,11 +234,16 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .attr('fill', (d) => colorScale(d.rate))
         .attr('rx', 2)
         .attr('opacity', 0.92)
-        .on('mouseover', function () {
+        .on('mouseover', function (_event, d) {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          showTooltip(_event as unknown as MouseEvent, d);
+        })
+        .on('mousemove', function (_event) {
+          positionTooltip(_event as unknown as MouseEvent);
         })
         .on('mouseout', function () {
           d3.select(this).attr('opacity', 0.92).attr('stroke', 'none');
+          tooltip.style('opacity', '0');
         });
 
       // ── Rate labels inside cells ────────────────────────────────────
@@ -188,7 +276,11 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
       // ── X axis (MOB numbers) ───────────────────────────────────────
       g.append('g')
         .attr('transform', `translate(0,${h})`)
-        .call(d3.axisBottom(x).tickSize(0).tickFormat((d) => `${d}`))
+        .call(
+          d3.axisBottom(x)
+            .tickSize(0)
+            .tickFormat((d) => (d === MOB_OVERFLOW ? '18+' : `${d}`)),
+        )
         .selectAll('text')
         .attr('fill', d3Tokens.textFaint)
         .attr('font-size', '9px');
@@ -204,7 +296,7 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .attr('font-size', '9px')
         .text('Months on Book (MOB)');
     },
-    [filtered, vintages, mobs, maxRate, cellMap, vintageLoanMap, d3Tokens, formatCurrency],
+    [filtered, vintages, mobs, maxRate, cellMap, vintageLoanMap, d3Tokens, formatCurrency, metricType],
   );
 
   return (

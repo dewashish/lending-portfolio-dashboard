@@ -789,10 +789,12 @@ function buildVintagePoints(): Row[] {
     return securedProducts.has(product) ? 0.7 : 1.3;
   }
 
-  // S-curve for delinquency
+  // Hump-shaped delinquency curve: rises, peaks ~MOB 10-12, then settles
   function delinqCurve(mob: number): number {
     if (mob <= 0) return 0;
-    return 0.065 * (1 - Math.exp(-0.35 * mob));
+    const rise = 1 - Math.exp(-0.25 * mob);
+    const settle = Math.exp(-0.04 * Math.max(0, mob - 12));
+    return 0.075 * rise * (0.3 + 0.7 * settle);
   }
 
   // Older vintages are worse
@@ -816,7 +818,7 @@ function buildVintagePoints(): Row[] {
 
         // Only generate MOBs that have elapsed (diagonal/triangular pattern)
         const monthsElapsed = currentMonth - parseVintageMonth(vintages[vi]);
-        const maxMob = Math.min(13, monthsElapsed);
+        const maxMob = monthsElapsed;
 
         for (let mob = 1; mob <= maxMob; mob++) {
           const base30 = delinqCurve(mob) * quality * sub.delinqMult * pMult;
