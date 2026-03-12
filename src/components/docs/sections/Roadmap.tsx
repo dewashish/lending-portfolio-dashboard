@@ -61,6 +61,9 @@ const PHASES = [
       'Corporate Finance: Collateral & LTV with maturity, tooltips, Sanctioned/Disbursed/POS',
       'Corporate Finance: Covenants redesign with D3 donuts, 14-column detail table, filters',
       'Documentation overhaul: renamed, updated feature inventory, roadmap alignment',
+      'Limit utilization: Sanction Limit & Disbursement Limit with POS/SL% and POS/DL% analysis',
+      'Collateral & Maturity: 3-basis distribution tabs (POS/Sanctioned/Disbursed) with Group-scope aggregation',
+      'Disbursement Flow: utilization rows with fund-based/non-fund-based breakdown',
     ],
   },
   {

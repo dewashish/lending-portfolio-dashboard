@@ -61,6 +61,12 @@ const CELL_TEXT = { fontSize: '0.72rem' };
 const SECTION_TITLE = { fontWeight: 700, fontSize: '0.82rem', mb: 1.5 };
 const HDR_BG = 'rgba(0,0,0,0.03)';
 // ── Helpers ──────────────────────────────────────────────────────
+function utilizationColor(ratio: number): string {
+  if (ratio <= 0.75) return '#4caf50';
+  if (ratio <= 0.90) return '#ff9800';
+  return '#f44336';
+}
+
 function sortPeriods(periods: string[]): string[] {
   const monthOrder: Record<string, number> = {
     Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
@@ -220,6 +226,9 @@ function TopNTable({
 }) {
   const totalAmount = data.reduce((s, r) => s + r[amountField], 0);
   const totalPCE = data.reduce((s, r) => s + r.pceAmount, 0);
+  const totalSL = data.reduce((s, r) => s + r.sanctionedLimit, 0);
+  const totalDL = data.reduce((s, r) => s + r.disbursementLimit, 0);
+  const totalPOS = data.reduce((s, r) => s + r.currentPOS, 0);
 
   if (data.length === 0) return <Typography variant="caption" color="text.secondary">No data available</Typography>;
 
@@ -230,8 +239,12 @@ function TopNTable({
           <TableRow>
             <TableCell sx={HDR}>#</TableCell>
             <TableCell sx={HDR}>Customer</TableCell>
+            <TableCell align="right" sx={HDR}>Sanction Limit</TableCell>
+            <TableCell align="right" sx={HDR}>Disburse Limit</TableCell>
             <TableCell align="right" sx={HDR}>{amountLabel}</TableCell>
-            <TableCell align="right" sx={HDR}>% Total</TableCell>
+            <TableCell align="right" sx={HDR}>POS</TableCell>
+            <TableCell align="right" sx={HDR}>POS/SL %</TableCell>
+            <TableCell align="right" sx={HDR}>POS/DL %</TableCell>
             <TableCell align="right" sx={HDR}>PCE</TableCell>
             <TableCell align="right" sx={HDR}>IRR</TableCell>
             <TableCell sx={HDR}>Rating</TableCell>
@@ -242,25 +255,37 @@ function TopNTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((row, idx) => (
-            <TableRow key={idx} hover>
-              <TableCell sx={CELL}>{idx + 1}</TableCell>
-              <TableCell sx={{ ...CELL_TEXT, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.customerName}</TableCell>
-              <TableCell align="right" sx={CELL}>{formatCurrency(row[amountField])}</TableCell>
-              <TableCell align="right" sx={CELL}>{totalAmount > 0 ? formatPercent(row[amountField] / totalAmount) : '—'}</TableCell>
-              <TableCell align="right" sx={CELL}>{formatCurrency(row.pceAmount)}</TableCell>
-              <TableCell align="right" sx={CELL}>{row.irr != null ? formatPercent(row.irr) : '—'}</TableCell>
-              <TableCell sx={CELL_TEXT}>{row.riskRating}</TableCell>
-              <TableCell sx={CELL_TEXT}>{row.securityType}</TableCell>
-              <TableCell align="right" sx={CELL}>{row.securityCover > 0 ? `${row.securityCover.toFixed(1)}x` : '—'}</TableCell>
-              <TableCell sx={CELL_TEXT}>{row.industry}</TableCell>
-              <TableCell sx={CELL_TEXT}>{row.sector}</TableCell>
-            </TableRow>
-          ))}
+          {data.map((row, idx) => {
+            const posSL = row.sanctionedLimit > 0 ? row.currentPOS / row.sanctionedLimit : null;
+            const posDL = row.disbursementLimit > 0 ? row.currentPOS / row.disbursementLimit : null;
+            return (
+              <TableRow key={idx} hover>
+                <TableCell sx={CELL}>{idx + 1}</TableCell>
+                <TableCell sx={{ ...CELL_TEXT, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.customerName}</TableCell>
+                <TableCell align="right" sx={CELL}>{formatCurrency(row.sanctionedLimit)}</TableCell>
+                <TableCell align="right" sx={CELL}>{formatCurrency(row.disbursementLimit)}</TableCell>
+                <TableCell align="right" sx={CELL}>{formatCurrency(row[amountField])}</TableCell>
+                <TableCell align="right" sx={CELL}>{formatCurrency(row.currentPOS)}</TableCell>
+                <TableCell align="right" sx={{ ...CELL, color: posSL != null ? utilizationColor(posSL) : undefined }}>{posSL != null ? formatPercent(posSL) : '—'}</TableCell>
+                <TableCell align="right" sx={{ ...CELL, color: posDL != null ? utilizationColor(posDL) : undefined }}>{posDL != null ? formatPercent(posDL) : '—'}</TableCell>
+                <TableCell align="right" sx={CELL}>{formatCurrency(row.pceAmount)}</TableCell>
+                <TableCell align="right" sx={CELL}>{row.irr != null ? formatPercent(row.irr) : '—'}</TableCell>
+                <TableCell sx={CELL_TEXT}>{row.riskRating}</TableCell>
+                <TableCell sx={CELL_TEXT}>{row.securityType}</TableCell>
+                <TableCell align="right" sx={CELL}>{row.securityCover > 0 ? `${row.securityCover.toFixed(1)}x` : '—'}</TableCell>
+                <TableCell sx={CELL_TEXT}>{row.industry}</TableCell>
+                <TableCell sx={CELL_TEXT}>{row.sector}</TableCell>
+              </TableRow>
+            );
+          })}
           <TableRow sx={{ bgcolor: HDR_BG }}>
             <TableCell sx={{ ...CELL, fontWeight: 700 }} colSpan={2}>Total</TableCell>
+            <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(totalSL)}</TableCell>
+            <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(totalDL)}</TableCell>
             <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(totalAmount)}</TableCell>
-            <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>100%</TableCell>
+            <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(totalPOS)}</TableCell>
+            <TableCell align="right" sx={{ ...CELL, fontWeight: 700, color: totalSL > 0 ? utilizationColor(totalPOS / totalSL) : undefined }}>{totalSL > 0 ? formatPercent(totalPOS / totalSL) : '—'}</TableCell>
+            <TableCell align="right" sx={{ ...CELL, fontWeight: 700, color: totalDL > 0 ? utilizationColor(totalPOS / totalDL) : undefined }}>{totalDL > 0 ? formatPercent(totalPOS / totalDL) : '—'}</TableCell>
             <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(totalPCE)}</TableCell>
             <TableCell colSpan={6} />
           </TableRow>
@@ -399,6 +424,57 @@ export function CorporateOverviewSection({ scope }: Props) {
     return (portfolio ?? []).filter((r) => flowParticulars.includes(r.particular));
   }, [portfolio]);
 
+  // Utilization rows (SL % and DL %) for disbursement flow table
+  const utilizationRows = useMemo(() => {
+    if (!portfolio?.length) return [];
+    const outstandingRow = portfolio.find((r) => r.particular === 'Outstanding');
+    const sanctionedRow = portfolio.find((r) => r.particular === 'Sanctioned Limit');
+    const disbLimitRow = portfolio.find((r) => r.particular === 'Disbursement Limit');
+
+    if (!outstandingRow || !sanctionedRow) return [];
+
+    const num = (v: number | string): number => (typeof v === 'number' ? v : 0);
+    const rows: typeof portfolio = [];
+
+    // Utilization (SL %)
+    const slMonths: Record<string, { total: number; fundBased: number; nonFB: number }> = {};
+    Object.keys(outstandingRow.months).forEach((period) => {
+      const o = outstandingRow.months[period];
+      const s = sanctionedRow.months[period];
+      if (o && s) {
+        const oT = num(o.total), oF = num(o.fundBased), oN = num(o.nonFB);
+        const sT = num(s.total), sF = num(s.fundBased), sN = num(s.nonFB);
+        slMonths[period] = {
+          total: sT > 0 ? oT / sT : 0,
+          fundBased: sF > 0 ? oF / sF : 0,
+          nonFB: sN > 0 ? oN / sN : 0,
+        };
+      }
+    });
+    rows.push({ particular: 'Utilization (SL %)', months: slMonths });
+
+    // Utilization (DL %)
+    if (disbLimitRow) {
+      const dlMonths: Record<string, { total: number; fundBased: number; nonFB: number }> = {};
+      Object.keys(outstandingRow.months).forEach((period) => {
+        const o = outstandingRow.months[period];
+        const d = disbLimitRow.months[period];
+        if (o && d) {
+          const oT = num(o.total), oF = num(o.fundBased), oN = num(o.nonFB);
+          const dT = num(d.total), dF = num(d.fundBased), dN = num(d.nonFB);
+          dlMonths[period] = {
+            total: dT > 0 ? oT / dT : 0,
+            fundBased: dF > 0 ? oF / dF : 0,
+            nonFB: dN > 0 ? oN / dN : 0,
+          };
+        }
+      });
+      rows.push({ particular: 'Utilization (DL %)', months: dlMonths });
+    }
+
+    return rows;
+  }, [portfolio]);
+
   // KPI items from latest period
   const kpiItems = useMemo((): KPIItem[] => {
     if (!portfolio?.length || !visiblePeriods.length) return [];
@@ -501,11 +577,36 @@ export function CorporateOverviewSection({ scope }: Props) {
     }));
   }, [maturity]);
 
+  // Collateral aggregated by collateralType (dedup for Group scope)
+  const aggregatedCollateral = useMemo(() => {
+    const rows = collateral ?? [];
+    const map = new Map<string, CorporateCollateralRow>();
+    rows.forEach((r) => {
+      const existing = map.get(r.collateralType);
+      if (existing) {
+        existing.facilityCount += r.facilityCount;
+        existing.collateralValue += r.collateralValue;
+        existing.exposureCovered += r.exposureCovered;
+        existing.sanctionedAmount += r.sanctionedAmount;
+        existing.disbursedAmount += r.disbursedAmount;
+        existing.principalOS += r.principalOS;
+      } else {
+        map.set(r.collateralType, { ...r });
+      }
+    });
+    // Recompute coverage ratio and principal share
+    const totalPOS = Array.from(map.values()).reduce((s, r) => s + r.principalOS, 0);
+    map.forEach((r) => {
+      r.coverageRatio = r.exposureCovered > 0 ? r.collateralValue / r.exposureCovered : 0;
+      r.principalShare = totalPOS > 0 ? r.principalOS / totalPOS : 0;
+    });
+    return Array.from(map.values());
+  }, [collateral]);
+
   // Collateral filtered by donut click
   const visibleCollateral = useMemo(() => {
-    const rows = collateral ?? [];
-    return collateralFilter ? rows.filter((r) => r.collateralType === collateralFilter) : rows;
-  }, [collateral, collateralFilter]);
+    return collateralFilter ? aggregatedCollateral.filter((r) => r.collateralType === collateralFilter) : aggregatedCollateral;
+  }, [aggregatedCollateral, collateralFilter]);
 
   // ── Period toggle helpers ──
   const togglePeriod = (p: string) => {
@@ -522,7 +623,6 @@ export function CorporateOverviewSection({ scope }: Props) {
   // ── Loading ──
   if (l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8) return <LoadingSkeleton />;
 
-  const collateralRows = collateral ?? [];
   const pdRows = pdDist ?? [];
   const pipelineRows = pipelineData ?? [];
   const maturityRows = maturity ?? [];
@@ -627,6 +727,21 @@ export function CorporateOverviewSection({ scope }: Props) {
                       </TableRow>
                     );
                   })}
+                  {utilizationRows.map((row, idx) => (
+                    <TableRow key={`util-${idx}`} hover sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
+                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic' }}>{row.particular}</TableCell>
+                      {visiblePeriods.map((p) => {
+                        const v = row.months[p];
+                        if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
+                        const t = Number(v.total), f = Number(v.fundBased), n = Number(v.nonFB);
+                        return [
+                          <TableCell key={`${p}-t`} align="right" sx={{ ...CELL, color: utilizationColor(t) }}>{formatPercent(t)}</TableCell>,
+                          <TableCell key={`${p}-f`} align="right" sx={{ ...CELL, color: utilizationColor(f) }}>{formatPercent(f)}</TableCell>,
+                          <TableCell key={`${p}-n`} align="right" sx={{ ...CELL, color: utilizationColor(n) }}>{formatPercent(n)}</TableCell>,
+                        ];
+                      })}
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -711,7 +826,7 @@ export function CorporateOverviewSection({ scope }: Props) {
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <OverviewCollateralDonut
-            data={collateralRows}
+            data={aggregatedCollateral}
             activeFilter={collateralFilter}
             onSliceClick={setCollateralFilter}
           />

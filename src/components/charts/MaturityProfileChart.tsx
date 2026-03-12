@@ -8,13 +8,28 @@ import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { CorporateMaturityRow } from '@/lib/types';
 
+type ValueField = 'balance' | 'sanctionedAmount' | 'disbursedAmount';
+
 interface Props {
   data: CorporateMaturityRow[];
+  valueField?: ValueField;
 }
 
-export function MaturityProfileChart({ data }: Props) {
+const FIELD_LABELS: Record<ValueField, string> = {
+  balance: 'POS',
+  sanctionedAmount: 'Sanctioned',
+  disbursedAmount: 'Disbursed',
+};
+
+export function MaturityProfileChart({ data, valueField = 'balance' }: Props) {
   const { d3Tokens } = useThemeMode();
   const { formatCurrencyMM } = useCurrencyFormat();
+
+  const subtitleMap: Record<ValueField, string> = {
+    balance: 'POS by maturity band and facility type',
+    sanctionedAmount: 'Sanctioned amount by maturity band and facility type',
+    disbursedAmount: 'Disbursed amount by maturity band and facility type',
+  };
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -66,11 +81,11 @@ export function MaturityProfileChart({ data }: Props) {
         .range([0, x0.bandwidth()])
         .padding(0.08);
 
-      // Y scale: balance
-      const maxBalance = d3.max(data, (d) => d.balance) ?? 0;
+      // Y scale: uses selected valueField
+      const maxValue = d3.max(data, (d) => d[valueField]) ?? 0;
       const y = d3
         .scaleLinear()
-        .domain([0, maxBalance * 1.15])
+        .domain([0, maxValue * 1.15])
         .nice()
         .range([h, 0]);
 
@@ -90,6 +105,9 @@ export function MaturityProfileChart({ data }: Props) {
       g.selectAll('.domain').remove();
       g.selectAll('.tick line').attr('stroke', d3Tokens.gridLine);
 
+      // Compute total for portfolio share based on selected field
+      const totalForField = data.reduce((s, d) => s + d[valueField], 0);
+
       // Bars
       const bandGroups = g
         .selectAll('.band-group')
@@ -107,21 +125,31 @@ export function MaturityProfileChart({ data }: Props) {
           .data(groupData)
           .join('rect')
           .attr('x', (d) => x1(d.facilityBasis) ?? 0)
-          .attr('y', (d) => y(d.balance))
+          .attr('y', (d) => y(d[valueField]))
           .attr('width', x1.bandwidth())
-          .attr('height', (d) => h - y(d.balance))
+          .attr('height', (d) => h - y(d[valueField]))
           .attr('fill', (d) => colorMap[d.facilityBasis] ?? '#42a5f5')
           .attr('rx', 3)
           .attr('opacity', 0.9)
           .style('cursor', 'pointer')
           .on('mouseover', function (event, d) {
             d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+
+            // Build tooltip: primary metric (bold), then the other two as context
+            const share = totalForField > 0 ? d[valueField] / totalForField : 0;
+            const allFields: ValueField[] = ['balance', 'sanctionedAmount', 'disbursedAmount'];
+            const primaryLabel = FIELD_LABELS[valueField];
+            const primaryLine = `<strong>${primaryLabel}: ${formatCurrencyMM(d[valueField])}</strong>`;
+            const contextLines = allFields
+              .filter((f) => f !== valueField)
+              .map((f) => `${FIELD_LABELS[f]}: ${formatCurrencyMM(d[f])}`)
+              .join('<br/>');
+
             tooltip.html(
               `<strong>${d.maturityBand} &middot; ${d.facilityBasis}</strong><br/>` +
-              `Balance: ${formatCurrencyMM(d.balance)}<br/>` +
-              `Portfolio Share: ${formatPercent(d.portfolioShare)}<br/>` +
-              `Sanctioned Amt: ${formatCurrencyMM(d.sanctionedAmount)}<br/>` +
-              `Disbursed Amt: ${formatCurrencyMM(d.disbursedAmount)}<br/>` +
+              `${primaryLine}<br/>` +
+              `${contextLines}<br/>` +
+              `Portfolio Share: ${formatPercent(share)}<br/>` +
               `Facility Count: ${formatNumber(d.facilityCount)}`
             ).style('opacity', '1');
             const ttNode = tooltip.node() as HTMLDivElement;
@@ -137,19 +165,19 @@ export function MaturityProfileChart({ data }: Props) {
             tooltip.style('opacity', '0');
           });
 
-        // Portfolio share labels on top of bars
+        // Portfolio share labels on top of bars (recomputed from selected field total)
         group
           .selectAll('.share-label')
           .data(groupData)
           .join('text')
           .attr('class', 'share-label')
           .attr('x', (d) => (x1(d.facilityBasis) ?? 0) + x1.bandwidth() / 2)
-          .attr('y', (d) => y(d.balance) - 6)
+          .attr('y', (d) => y(d[valueField]) - 6)
           .attr('text-anchor', 'middle')
           .attr('fill', d3Tokens.textMuted)
           .attr('font-size', '9px')
           .attr('font-family', 'IBM Plex Mono, monospace')
-          .text((d) => formatPercent(d.portfolioShare));
+          .text((d) => formatPercent(totalForField > 0 ? d[valueField] / totalForField : 0));
       });
 
       // X axis
@@ -192,12 +220,12 @@ export function MaturityProfileChart({ data }: Props) {
           .text(ft);
       });
     },
-    [data, d3Tokens, formatCurrencyMM],
+    [data, d3Tokens, formatCurrencyMM, valueField],
   );
 
   return (
-    <ChartContainer title="Maturity Profile" subtitle="Balance by maturity band and facility type" height={400} empty={!data.length}>
-      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
+    <ChartContainer title="Maturity Profile" subtitle={subtitleMap[valueField]} height={400} empty={!data.length}>
+      <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible', minHeight: 360 }} />
     </ChartContainer>
   );
 }

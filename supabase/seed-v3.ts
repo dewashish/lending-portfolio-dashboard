@@ -294,6 +294,7 @@ function buildCorporateTopCustomers(): Row[] {
       const facility = pick(CORP_FACILITY_TYPES, sub.id * 200 + idx);
       const sanctioned = +(baseLimit * n * (1 - idx * 0.035)).toFixed(2);
       const disbursed = +(sanctioned * noiseRange(0.6, 0.95, sub.id, idx, 1)).toFixed(2);
+      const disbursementLimit = +Math.max(disbursed, sanctioned * noiseRange(0.70, 0.95, sub.id, idx, 500)).toFixed(2);
       const pos = +(disbursed * noiseRange(0.7, 1.0, sub.id, idx, 2)).toFixed(2);
       const dpd = idx < 15 ? 0 : Math.round(noiseRange(0, 90, sub.id, idx, 3));
       const stage = dpd > 60 ? 'Stage 3' : dpd > 30 ? 'Stage 2' : 'Stage 1';
@@ -310,6 +311,8 @@ function buildCorporateTopCustomers(): Row[] {
         sector,
         sanctioned_limit: sanctioned,
         sanctioned_limit_usd: toUSD(sanctioned, sub.currencyCode),
+        disbursement_limit: disbursementLimit,
+        disbursement_limit_usd: toUSD(disbursementLimit, sub.currencyCode),
         disbursed_amount: disbursed,
         disbursed_amount_usd: toUSD(disbursed, sub.currencyCode),
         current_pos: pos,

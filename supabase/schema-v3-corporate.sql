@@ -220,3 +220,10 @@ ALTER TABLE corporate_covenants
   ADD COLUMN IF NOT EXISTS rm_name TEXT DEFAULT '',
   ADD COLUMN IF NOT EXISTS breached BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS days_since_breach INTEGER DEFAULT 0;
+
+-- ============================================================================
+-- v0.4.2: Add disbursement_limit to corporate_top_customers
+-- ============================================================================
+ALTER TABLE corporate_top_customers
+  ADD COLUMN IF NOT EXISTS disbursement_limit NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS disbursement_limit_usd NUMERIC;

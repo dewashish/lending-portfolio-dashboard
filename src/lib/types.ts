@@ -502,6 +502,7 @@ export interface CorporateTopCustomerRow {
   customerName: string;
   sector: string;
   sanctionedLimit: number;
+  disbursementLimit: number;
   disbursedAmount: number;
   currentPOS: number;
   facilityType: string;

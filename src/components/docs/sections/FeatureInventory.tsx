@@ -65,10 +65,10 @@ const FEATURE_MAP: TabFeatures[] = [
     color: '#ff9800',
     icon: 'Business',
     features: [
-      { subTab: 'Overview', components: 'CorporateOverviewSection', keyMetrics: 'Total POS, Disbursement, Delinquency Rate, NPA Rate, Security Cover' },
+      { subTab: 'Overview', components: 'CorporateOverviewSection, TopNTable, Disbursement Flow', keyMetrics: 'Sanction Limit, Disbursement Limit, POS, POS/SL%, POS/DL% utilization, fund-based/non-fund-based flow, collateral donut with aggregation' },
       { subTab: 'Industry', components: 'IndustryBarChart, ConcentrationTreemap, drill-down detail table', keyMetrics: 'D3 horizontal bar chart by sector, period filters, sector drill-down, row limits, IRR, % of Total Disbursement' },
-      { subTab: 'Collateral & LTV', components: 'CollateralDonut, LTVDistributionChart, MaturityProfileChart + 3 detail tables', keyMetrics: 'Collateral coverage with tooltips, LTV bands, maturity profile, Sanctioned/Disbursed/POS columns' },
-      { subTab: 'Maturity', components: 'CorporateMaturitySection, MaturityProfileChart', keyMetrics: 'Maturity band analysis, concentration by tenor' },
+      { subTab: 'Collateral & LTV', components: 'CollateralDonut (3 basis tabs), LTVDistributionChart, MaturityProfileChart + 3 detail tables', keyMetrics: 'Distribution by POS/Sanctioned/Disbursed, collateral aggregation, LTV bands, coverage ratios' },
+      { subTab: 'Maturity', components: 'MaturityProfileChart (3 basis tabs), CorporateMaturitySection', keyMetrics: 'Maturity bands by POS/Sanctioned/Disbursed, fund-based/non-fund-based, dynamic portfolio share' },
       { subTab: 'Provisioning', components: 'CorporateProvisioningSection, ProvisioningTrendChart', keyMetrics: 'IFRS 9 stage provisioning (ECL), provision coverage ratio trend' },
       { subTab: 'Rating Analysis', components: 'CorporateRatingSection, RatingDistributionBar', keyMetrics: 'Credit rating distribution, rating migration matrix' },
       { subTab: 'Watchlist', components: 'CorporateWatchlistSection', keyMetrics: 'Flagged borrowers, sectors, exposure, EWS triggers, status' },

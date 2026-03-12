@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import {
   Box,
@@ -12,6 +13,8 @@ import {
   TableCell,
   TableContainer,
   Grid,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { ChartContainer } from '@/components/charts/ChartContainer';
@@ -41,9 +44,21 @@ interface Props {
 // ── Collateral Donut with Tooltip ────────────────────────────────
 const TOOLTIP_CLASS = 'collateral-donut-tooltip';
 
-function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
+function CollateralDonut({ data, valueField }: { data: CorporateCollateralRow[]; valueField: 'principalOS' | 'sanctionedAmount' | 'disbursedAmount' }) {
   const { formatCurrency } = useCurrencyFormat();
   const { d3Tokens } = useThemeMode();
+
+  const metricLabel: Record<typeof valueField, string> = {
+    principalOS: 'Total POS',
+    sanctionedAmount: 'Total Sanctioned',
+    disbursedAmount: 'Total Disbursed',
+  };
+
+  const metricName: Record<typeof valueField, string> = {
+    principalOS: 'POS',
+    sanctionedAmount: 'Sanctioned',
+    disbursedAmount: 'Disbursed',
+  };
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -79,7 +94,7 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
 
       const pie = d3
         .pie<CorporateCollateralRow>()
-        .value((d) => d.collateralValue)
+        .value((d) => d[valueField])
         .sort(null)
         .padAngle(0.02);
 
@@ -89,13 +104,17 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
         .outerRadius(radius)
         .cornerRadius(4);
 
-      const total = d3.sum(data, (d) => d.collateralValue);
+      const total = d3.sum(data, (d) => d[valueField]);
 
       // Slices
       const arcs = g.selectAll('.slice')
         .data(pie(data))
         .join('g')
         .attr('class', 'slice');
+
+      // All three metric fields for tooltip context
+      const allFields: Array<'principalOS' | 'sanctionedAmount' | 'disbursedAmount'> = ['principalOS', 'sanctionedAmount', 'disbursedAmount'];
+      const otherFields = allFields.filter((f) => f !== valueField);
 
       arcs.append('path')
         .attr('d', arc)
@@ -104,13 +123,14 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
         .style('cursor', 'pointer')
         .on('mouseover', function (_event, d) {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 2);
-          const share = total > 0 ? d.data.collateralValue / total : 0;
+          const share = total > 0 ? d.data[valueField] / total : 0;
           tooltip.html(
             `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${d.data.collateralType}</div>` +
-            `<div><span style="color:${mutedColor}">Collateral Value:</span> <b>${formatCurrency(d.data.collateralValue)}</b></div>` +
-            `<div><span style="color:${mutedColor}">Exposure Covered:</span> <b>${formatCurrency(d.data.exposureCovered)}</b></div>` +
-            `<div><span style="color:${mutedColor}">Coverage Ratio:</span> <b>${formatPercent(d.data.coverageRatio)}</b></div>` +
-            `<div><span style="color:${mutedColor}">Facilities:</span> <b>${d.data.facilityCount}</b></div>` +
+            `<div><span style="color:${mutedColor}">${metricName[valueField]}:</span> <b>${formatCurrency(d.data[valueField])}</b></div>` +
+            otherFields.map((f) => `<div><span style="color:${mutedColor}">${metricName[f]}:</span> ${formatCurrency(d.data[f])}</div>`).join('') +
+            `<div><span style="color:${mutedColor}">Collateral Value:</span> ${formatCurrency(d.data.collateralValue)}</div>` +
+            `<div><span style="color:${mutedColor}">Coverage Ratio:</span> ${formatPercent(d.data.coverageRatio)}</div>` +
+            `<div><span style="color:${mutedColor}">Facilities:</span> ${d.data.facilityCount}</div>` +
             `<div><span style="color:${mutedColor}">Share:</span> <b>${formatPercent(share, 1)}</b></div>`
           ).style('opacity', '1');
           const ttNode = tooltip.node() as HTMLDivElement;
@@ -141,7 +161,7 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
         .innerRadius(radius * 0.78)
         .outerRadius(radius * 0.78);
 
-      arcs.filter(d => total > 0 && d.data.collateralValue / total > 0.10)
+      arcs.filter(d => total > 0 && d.data[valueField] / total > 0.10)
         .append('text')
         .attr('transform', d => `translate(${labelArc.centroid(d)})`)
         .attr('text-anchor', 'middle')
@@ -149,7 +169,7 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
         .attr('font-size', '11px')
         .attr('font-weight', 700)
         .attr('pointer-events', 'none')
-        .text(d => formatPercent(d.data.collateralValue / total, 1));
+        .text(d => formatPercent(d.data[valueField] / total, 1));
 
       // Center label
       g.append('text')
@@ -158,7 +178,7 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
         .attr('fill', d3Tokens.text)
         .attr('font-size', '11px')
         .attr('font-weight', 700)
-        .text('Total');
+        .text(metricLabel[valueField]);
       g.append('text')
         .attr('text-anchor', 'middle')
         .attr('dy', '1em')
@@ -174,14 +194,14 @@ function CollateralDonut({ data }: { data: CorporateCollateralRow[] }) {
         const row = legend.append('g').attr('transform', `translate(0,${i * 16})`);
         row.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', color(d.collateralType));
         row.append('text').attr('x', 14).attr('y', 9).attr('fill', d3Tokens.textMuted).attr('font-size', '9px')
-          .text(d.collateralType.length > 14 ? d.collateralType.slice(0, 13) + '…' : d.collateralType);
+          .text(d.collateralType.length > 14 ? d.collateralType.slice(0, 13) + '...' : d.collateralType);
       });
     },
-    [data, d3Tokens, formatCurrency],
+    [data, d3Tokens, formatCurrency, valueField],
   );
 
   return (
-    <ChartContainer title="Collateral Breakdown" subtitle="By collateral type" empty={!data.length}>
+    <ChartContainer title="Collateral Breakdown" subtitle={`By collateral type (${metricName[valueField]})`} empty={!data.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );
@@ -194,28 +214,66 @@ export function CorporateCollateralSection({ scope }: Props) {
   const { data: ltv, isLoading: loadingLTV } = useCorporateLTVDistribution(scope);
   const { data: maturity, isLoading: loadingMaturity } = useCorporateMaturityProfile(scope);
 
+  // Distribution basis state
+  const [distBasis, setDistBasis] = useState<'pos' | 'sanctioned' | 'disbursed'>('pos');
+
+  // Aggregate collateral rows by type (dedup at Group scope)
+  const aggregatedCollateral = useMemo(() => {
+    const rows = collateral ?? [];
+    const map = new Map<string, CorporateCollateralRow>();
+    rows.forEach((r) => {
+      const existing = map.get(r.collateralType);
+      if (existing) {
+        existing.facilityCount += r.facilityCount;
+        existing.collateralValue += r.collateralValue;
+        existing.exposureCovered += r.exposureCovered;
+        existing.sanctionedAmount += r.sanctionedAmount;
+        existing.disbursedAmount += r.disbursedAmount;
+        existing.principalOS += r.principalOS;
+      } else {
+        map.set(r.collateralType, { ...r });
+      }
+    });
+    const totalPOS = Array.from(map.values()).reduce((s, r) => s + r.principalOS, 0);
+    map.forEach((r) => {
+      r.coverageRatio = r.exposureCovered > 0 ? r.collateralValue / r.exposureCovered : 0;
+      r.principalShare = totalPOS > 0 ? r.principalOS / totalPOS : 0;
+    });
+    return Array.from(map.values());
+  }, [collateral]);
+
   if (loadingCollateral || loadingLTV || loadingMaturity) return <LoadingSkeleton />;
 
-  const collateralRows = collateral ?? [];
   const ltvRows = ltv ?? [];
   const maturityRows = maturity ?? [];
 
   // Totals for collateral table
   const collateralTotals = {
-    facilityCount: collateralRows.reduce((s, r) => s + r.facilityCount, 0),
-    sanctionedAmount: collateralRows.reduce((s, r) => s + r.sanctionedAmount, 0),
-    disbursedAmount: collateralRows.reduce((s, r) => s + r.disbursedAmount, 0),
-    principalOS: collateralRows.reduce((s, r) => s + r.principalOS, 0),
-    collateralValue: collateralRows.reduce((s, r) => s + r.collateralValue, 0),
-    exposureCovered: collateralRows.reduce((s, r) => s + r.exposureCovered, 0),
+    facilityCount: aggregatedCollateral.reduce((s, r) => s + r.facilityCount, 0),
+    sanctionedAmount: aggregatedCollateral.reduce((s, r) => s + r.sanctionedAmount, 0),
+    disbursedAmount: aggregatedCollateral.reduce((s, r) => s + r.disbursedAmount, 0),
+    principalOS: aggregatedCollateral.reduce((s, r) => s + r.principalOS, 0),
+    collateralValue: aggregatedCollateral.reduce((s, r) => s + r.collateralValue, 0),
+    exposureCovered: aggregatedCollateral.reduce((s, r) => s + r.exposureCovered, 0),
   };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      {/* Distribution basis selector */}
+      <Tabs
+        value={distBasis}
+        onChange={(_, v) => setDistBasis(v)}
+        sx={{ mb: 2, minHeight: 32, '& .MuiTab-root': { minHeight: 32, py: 0.5, textTransform: 'none', fontSize: '0.75rem', fontWeight: 600 } }}
+      >
+        <Tab label="By POS" value="pos" />
+        <Tab label="By Sanctioned" value="sanctioned" />
+        <Tab label="By Disbursed" value="disbursed" />
+      </Tabs>
+
       {/* Charts row: 3 charts */}
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <CollateralDonut data={collateralRows} />
+          <CollateralDonut data={aggregatedCollateral} valueField={distBasis === 'pos' ? 'principalOS' : distBasis === 'sanctioned' ? 'sanctionedAmount' : 'disbursedAmount'} />
         </Grid>
         <Grid item xs={12} md={4}>
           <LTVDistributionChart data={ltvRows} />
@@ -230,7 +288,7 @@ export function CorporateCollateralSection({ scope }: Props) {
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', mb: 2 }}>
           Collateral Coverage Detail
         </Typography>
-        {collateralRows.length === 0 ? (
+        {aggregatedCollateral.length === 0 ? (
           <Typography variant="caption" color="text.secondary">No collateral data available</Typography>
         ) : (
           <TableContainer sx={{ maxHeight: 480 }}>
@@ -240,9 +298,9 @@ export function CorporateCollateralSection({ scope }: Props) {
                   <TableCell sx={HDR}>Collateral Type</TableCell>
                   <TableCell sx={HDR}>Particulars</TableCell>
                   <TableCell align="right" sx={HDR}>Facilities</TableCell>
-                  <TableCell align="right" sx={HDR}>Sanctioned</TableCell>
-                  <TableCell align="right" sx={HDR}>Disbursed</TableCell>
-                  <TableCell align="right" sx={HDR}>POS</TableCell>
+                  <TableCell align="right" sx={{ ...HDR, ...(distBasis === 'sanctioned' && { bgcolor: 'rgba(25,118,210,0.08)', fontWeight: 800 }) }}>Sanctioned</TableCell>
+                  <TableCell align="right" sx={{ ...HDR, ...(distBasis === 'disbursed' && { bgcolor: 'rgba(25,118,210,0.08)', fontWeight: 800 }) }}>Disbursed</TableCell>
+                  <TableCell align="right" sx={{ ...HDR, ...(distBasis === 'pos' && { bgcolor: 'rgba(25,118,210,0.08)', fontWeight: 800 }) }}>POS</TableCell>
                   <TableCell align="right" sx={HDR}>Collateral Value</TableCell>
                   <TableCell align="right" sx={HDR}>Exposure Covered</TableCell>
                   <TableCell align="right" sx={HDR}>Coverage Ratio</TableCell>
@@ -250,16 +308,16 @@ export function CorporateCollateralSection({ scope }: Props) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {collateralRows.map((row, idx) => (
+                {aggregatedCollateral.map((row, idx) => (
                   <TableRow key={idx} hover>
                     <TableCell sx={CELL_TEXT}>{row.collateralType}</TableCell>
                     <TableCell sx={{ ...CELL_TEXT, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.particulars || '—'}
                     </TableCell>
                     <TableCell align="right" sx={CELL}>{formatNumber(row.facilityCount)}</TableCell>
-                    <TableCell align="right" sx={CELL}>{formatCurrency(row.sanctionedAmount)}</TableCell>
-                    <TableCell align="right" sx={CELL}>{formatCurrency(row.disbursedAmount)}</TableCell>
-                    <TableCell align="right" sx={CELL}>{formatCurrency(row.principalOS)}</TableCell>
+                    <TableCell align="right" sx={{ ...CELL, ...(distBasis === 'sanctioned' && { fontWeight: 700, bgcolor: 'rgba(25,118,210,0.04)' }) }}>{formatCurrency(row.sanctionedAmount)}</TableCell>
+                    <TableCell align="right" sx={{ ...CELL, ...(distBasis === 'disbursed' && { fontWeight: 700, bgcolor: 'rgba(25,118,210,0.04)' }) }}>{formatCurrency(row.disbursedAmount)}</TableCell>
+                    <TableCell align="right" sx={{ ...CELL, ...(distBasis === 'pos' && { fontWeight: 700, bgcolor: 'rgba(25,118,210,0.04)' }) }}>{formatCurrency(row.principalOS)}</TableCell>
                     <TableCell align="right" sx={CELL}>{formatCurrency(row.collateralValue)}</TableCell>
                     <TableCell align="right" sx={CELL}>{formatCurrency(row.exposureCovered)}</TableCell>
                     <TableCell
@@ -279,9 +337,9 @@ export function CorporateCollateralSection({ scope }: Props) {
                   <TableCell sx={{ ...CELL_TEXT, fontWeight: 700 }}>Total</TableCell>
                   <TableCell sx={CELL_TEXT} />
                   <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatNumber(collateralTotals.facilityCount)}</TableCell>
-                  <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(collateralTotals.sanctionedAmount)}</TableCell>
-                  <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(collateralTotals.disbursedAmount)}</TableCell>
-                  <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(collateralTotals.principalOS)}</TableCell>
+                  <TableCell align="right" sx={{ ...CELL, fontWeight: 700, ...(distBasis === 'sanctioned' && { bgcolor: 'rgba(25,118,210,0.06)' }) }}>{formatCurrency(collateralTotals.sanctionedAmount)}</TableCell>
+                  <TableCell align="right" sx={{ ...CELL, fontWeight: 700, ...(distBasis === 'disbursed' && { bgcolor: 'rgba(25,118,210,0.06)' }) }}>{formatCurrency(collateralTotals.disbursedAmount)}</TableCell>
+                  <TableCell align="right" sx={{ ...CELL, fontWeight: 700, ...(distBasis === 'pos' && { bgcolor: 'rgba(25,118,210,0.06)' }) }}>{formatCurrency(collateralTotals.principalOS)}</TableCell>
                   <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(collateralTotals.collateralValue)}</TableCell>
                   <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>{formatCurrency(collateralTotals.exposureCovered)}</TableCell>
                   <TableCell align="right" sx={{ ...CELL, fontWeight: 700 }}>

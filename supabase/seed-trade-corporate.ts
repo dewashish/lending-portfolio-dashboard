@@ -1361,7 +1361,7 @@ function buildCorporatePARTrend(): Row[] {
 function buildCorporatePortfolioMetrics(): Row[] {
   const rows: Row[] = [];
 
-  const particulars = ['Sanctioned Limit', 'Outstanding', 'Stage 2+3', 'Provisions', 'Disbursement (for the month)', 'Repayments (for the month)', 'Net Change', 'Growth Rate (in % vs earlier year)'];
+  const particulars = ['Sanctioned Limit', 'Disbursement Limit', 'Outstanding', 'Stage 2+3', 'Provisions', 'Disbursement (for the month)', 'Repayments (for the month)', 'Net Change', 'Growth Rate (in % vs earlier year)'];
   const periods = ["Jun'25", "Jul'25", "Aug'25"];
 
   for (const sub of SUBSIDIARIES) {
@@ -1381,6 +1381,13 @@ function buildCorporatePortfolioMetrics(): Row[] {
           case 'Sanctioned Limit': {
             total = +(corpBook * noiseRange(1.2, 1.5, sub.id, pi, 1502) * n).toFixed(2);
             fundBased = +(total * noiseRange(0.65, 0.75, sub.id, pi, 1503)).toFixed(2);
+            nonFundBased = +(total - fundBased).toFixed(2);
+            break;
+          }
+          case 'Disbursement Limit': {
+            const sanctionedTotal = +(corpBook * noiseRange(1.2, 1.5, sub.id, pi, 1502) * n).toFixed(2);
+            total = +(sanctionedTotal * noiseRange(0.80, 0.90, sub.id, pi, 1530)).toFixed(2);
+            fundBased = +(total * noiseRange(0.67, 0.73, sub.id, pi, 1531)).toFixed(2);
             nonFundBased = +(total - fundBased).toFixed(2);
             break;
           }
