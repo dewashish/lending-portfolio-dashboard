@@ -43,8 +43,6 @@ interface BarSegment {
   stage: string;
   /** This stage's contribution to total CC: stage_provision / total_gross × 100 */
   contributionPct: number;
-  /** This stage's own credit cost: stage_provision / stage_gross × 100 */
-  stageCreditCostPct: number;
   /** Cumulative bottom (sum of stages below) */
   y0: number;
   /** Cumulative top (y0 + contributionPct) */
@@ -55,7 +53,7 @@ interface PeriodSummary {
   period: string;
   periodType: 'Actual' | 'Estimated' | 'Projected';
   totalCCPct: number;
-  stages: Record<string, { contributionPct: number; creditCostPct: number }>;
+  stages: Record<string, { contributionPct: number }>;
 }
 
 export function ProvisioningTrendChart({ data }: Props) {
@@ -92,27 +90,24 @@ export function ProvisioningTrendChart({ data }: Props) {
       const totalCCPct = totalGross > 0 ? (totalProvision / totalGross) * 100 : 0;
       const pt = ptMap.get(period) ?? 'Actual';
 
-      const stageInfo: Record<string, { contributionPct: number; creditCostPct: number }> = {};
+      const stageInfo: Record<string, { contributionPct: number }> = {};
       let cumulative = 0;
 
       STACK_STAGES.forEach((stage) => {
         const stageRows = periodRows.filter((r) => r.ifrsStage === stage);
         const stageProv = d3.sum(stageRows, (r) => r.provisionAmount);
-        const stageGross = d3.sum(stageRows, (r) => r.grossExposure);
 
-        // Contribution to total CC = stage_provision / total_gross
+        // Credit cost = stage_provision / total_gross (contribution to total CC)
+        // Stage 1 CC + Stage 2 CC + Stage 3 CC = Total CC
         const contributionPct = totalGross > 0 ? (stageProv / totalGross) * 100 : 0;
-        // Stage's own credit cost
-        const creditCostPct = stageGross > 0 ? (stageProv / stageGross) * 100 : 0;
 
-        stageInfo[stage] = { contributionPct, creditCostPct };
+        stageInfo[stage] = { contributionPct };
 
         segments.push({
           period,
           periodType: pt,
           stage,
           contributionPct,
-          stageCreditCostPct: creditCostPct,
           y0: cumulative,
           y1: cumulative + contributionPct,
         });
@@ -248,7 +243,7 @@ export function ProvisioningTrendChart({ data }: Props) {
           if (!info) return;
           const sColor = STAGE_COLORS[stage];
           const bold = stage === highlightStage ? 'font-weight:800;' : '';
-          rows += `<div style="${bold}"><span style="color:${mutedColor}">${stage}:</span> <b style="color:${sColor}">${info.creditCostPct.toFixed(2)}%</b></div>`;
+          rows += `<div style="${bold}"><span style="color:${mutedColor}">${stage}:</span> <b style="color:${sColor}">${info.contributionPct.toFixed(2)}%</b></div>`;
         });
         rows += `<div style="border-top:1px solid ${d3Tokens.tooltipBorder};margin-top:4px;padding-top:4px;font-weight:700"><span style="color:${mutedColor}">Total CC:</span> <b style="color:${STAGE_COLORS['Total CC']}">${summary.totalCCPct.toFixed(2)}%</b></div>`;
 

@@ -531,18 +531,24 @@ function buildCorporateProvisioningECL(): Row[] {
   ];
 
   SUBS.forEach((sub) => {
+    // Total POS = aumBase * 0.60 — same as industry_concentration totalPOS
+    // This ensures cross-table consistency: total gross exposure in provisioning
+    // matches total POS in industry concentration for the same subsidiary.
     const totalGross = sub.aumBase * 0.60;
 
     PROV_PERIODS.forEach((pp, pIdx) => {
+      // Normalize noised shares so they sum exactly to 1.0 → stage gross sums to totalGross
+      const rawShares = STAGES.map((_, sIdx) => STAGE_GROSS_SHARE[sIdx] * noise(sub.id, pIdx, sIdx + 1100));
+      const shareSum = rawShares.reduce((a, b) => a + b, 0);
+      const normShares = rawShares.map((s) => s / shareSum);
+
       STAGES.forEach((stage, sIdx) => {
-        const n = noise(sub.id, pIdx, sIdx + 1100);
-        const stageGross = +(totalGross * STAGE_GROSS_SHARE[sIdx] * n).toFixed(2);
-        // Credit cost = stage contribution to total CC (stage_prov / total_gross)
-        // Stages sum to Total CC: Stage1_CC + Stage2_CC + Stage3_CC = Total_CC
+        const stageGross = +(totalGross * normShares[sIdx]).toFixed(2);
+        // Credit cost = stage contribution to total CC = stage_prov / totalGross
+        // By definition: Stage1_CC + Stage2_CC + Stage3_CC = Total_CC
         const cc = +(STAGE_CC_BASE[sIdx] * pp.drift * noise(sub.id, pIdx, sIdx + 1200)).toFixed(6);
-        // Provision derived from total gross, not stage gross
         const provision = +(totalGross * cc).toFixed(2);
-        // PCR = provision / stage_gross (different metric from credit cost)
+        // PCR (provision coverage ratio) = provision / stage_gross — a different metric
         const pcr = stageGross > 0 ? +(provision / stageGross).toFixed(6) : 0;
 
         rows.push({
