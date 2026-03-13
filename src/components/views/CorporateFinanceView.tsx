@@ -61,6 +61,7 @@ export function CorporateFinanceView({ scope, initialSubTab }: Props) {
         color: getColor('corp_delinquency_rate', summary.delinquencyRate),
         metricKey: 'corp_delinquency_rate',
         rawValue: summary.delinquencyRate,
+        info: '% of accounts with DPD > 0 (1+ days past due)',
       },
       {
         label: 'NPA Rate',

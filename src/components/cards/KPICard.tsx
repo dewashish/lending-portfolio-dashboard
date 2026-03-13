@@ -1,6 +1,7 @@
 'use client';
 
-import { Card, Typography, Box, Stack } from '@mui/material';
+import { Card, Typography, Box, Stack, Tooltip } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
@@ -22,6 +23,8 @@ interface Props {
   metricKey?: string;
   rawValue?: number;
   thresholdContext?: ThresholdContext;
+  /** Tooltip text shown via a small info icon next to the label */
+  info?: string;
 }
 
 /** Tiny inline SVG sparkline — no D3 dependency */
@@ -60,7 +63,7 @@ function Sparkline({ data, color, height = 24, width = 72 }: { data: number[]; c
   );
 }
 
-export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext }: Props) {
+export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext, info }: Props) {
   // For inverted metrics (delinquency, FPD): down is green, up is red
   const getTrendColor = () => {
     if (!trend) return undefined;
@@ -85,18 +88,25 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
     <Card sx={{ p: 2, flex: '1 1 0', minWidth: 130, position: 'relative', overflow: 'visible' }}>
       <Stack spacing={0.75}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-          <Typography
-            variant="subtitle2"
-            sx={{
-              fontSize: '0.65rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              color: 'text.secondary',
-              lineHeight: 1.2,
-            }}
-          >
-            {label}
-          </Typography>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'text.secondary',
+                lineHeight: 1.2,
+              }}
+            >
+              {label}
+            </Typography>
+            {info && (
+              <Tooltip title={info} arrow placement="top">
+                <InfoOutlinedIcon sx={{ fontSize: 12, color: 'text.disabled', cursor: 'help' }} />
+              </Tooltip>
+            )}
+          </Box>
           {icon && (
             <Box sx={{ color: color || 'primary.main', opacity: 0.7 }}>
               {icon}

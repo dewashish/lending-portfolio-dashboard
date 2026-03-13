@@ -1335,8 +1335,10 @@ function buildCorporateDelinquency(): Row[] {
       const ratingMap: Record<number, string> = { 2: 'AA+', 3: 'AA', 4: 'A+', 5: 'A', 6: 'BBB+', 7: 'BBB', 8: 'BB+', 9: 'BB' };
 
       const renewalDone = noiseRange(0, 1, sub.id, di, 1409) > 0.4;
-      const dpdAtMonthEnd = Math.round(noiseRange(1, 150, sub.id, di, 1410) * sub.delinqMult);
-      const currentDpd = Math.round(noiseRange(1, 120, sub.id, di, 1411) * sub.delinqMult);
+      // ~30% of accounts are performing (DPD = 0), rest are delinquent
+      const isPerforming = noiseRange(0, 1, sub.id, di, 1417) < 0.30;
+      const dpdAtMonthEnd = isPerforming ? 0 : Math.round(noiseRange(1, 150, sub.id, di, 1410) * sub.delinqMult);
+      const currentDpd = isPerforming ? 0 : Math.round(noiseRange(1, 120, sub.id, di, 1411) * sub.delinqMult);
 
       const reason = pick(DELINQUENCY_REASONS, sub.id, di, 1412);
       const lastRemedial = pick(REMEDIAL_ACTIONS, sub.id, di, 1413);

@@ -19,6 +19,7 @@ export interface KPIItem {
   metricKey?: string;
   rawValue?: number;
   thresholdContext?: ThresholdContext;
+  info?: string;
 }
 
 interface Props {
