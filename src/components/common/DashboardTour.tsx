@@ -35,6 +35,12 @@ const ALL_STEPS: Step[] = [
     title: 'Export Reports',
   },
   {
+    target: '#tour-sql-query',
+    content: 'Open the Supabase SQL editor in a new tab to run ad-hoc queries directly against the database.',
+    disableBeacon: true,
+    title: 'SQL Query Editor',
+  },
+  {
     target: '#tour-currency-toggle',
     content: 'Toggle between US Dollar ($) and UAE Dirham (AED) display. All monetary values across the dashboard convert instantly.',
     disableBeacon: true,

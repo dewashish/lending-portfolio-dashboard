@@ -11,6 +11,7 @@ import { ExcelExportButton } from '@/components/export/ExcelExportButton';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsIcon from '@mui/icons-material/Settings';
+import StorageIcon from '@mui/icons-material/Storage';
 import PublicIcon from '@mui/icons-material/Public';
 import MapIcon from '@mui/icons-material/Map';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -43,6 +44,10 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
   const { profile } = useUser();
   const [alertsAnchorEl, setAlertsAnchorEl] = useState<HTMLElement | null>(null);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
+
+  const handleOpenSql = () => {
+    window.open('https://supabase.com/dashboard/project/wnkrllrureljmezcoryf/sql/new', '_blank');
+  };
 
   const initials = profile?.displayName
     ? profile.displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -147,6 +152,11 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
         <Box id="tour-export-area" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <ExecutiveSummaryButton activeTab={activeTab ?? 0} scope={scope} />
           <ExcelExportButton activeTab={activeTab ?? 0} scope={scope} />
+          <Tooltip title="Open SQL Query Editor">
+            <IconButton id="tour-sql-query" size="small" onClick={handleOpenSql} sx={{ color: 'text.secondary' }}>
+              <StorageIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         <Tooltip title="Switch currency display">
