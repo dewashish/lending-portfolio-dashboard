@@ -11,6 +11,7 @@ export interface SessionPayload {
   sub: string;       // user id
   username: string;
   role: string;
+  email?: string;
   session_id?: string;  // links to user_sessions.id
 }
 
@@ -29,6 +30,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       sub: payload.sub as string,
       username: payload.username as string,
       role: payload.role as string,
+      email: (payload.email as string) ?? undefined,
       session_id: (payload.session_id as string) ?? undefined,
     };
   } catch {

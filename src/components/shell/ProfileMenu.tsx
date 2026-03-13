@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Menu, MenuItem, Box, Typography, Divider,
   ListItemIcon, ListItemText,
@@ -10,10 +11,12 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ExploreIcon from '@mui/icons-material/Explore';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useUser, type UserRole } from '@/lib/user-context';
 import { useRouter } from 'next/navigation';
 import { APP_VERSION } from '@/lib/version';
 import { useTour } from '@/lib/tour-context';
+import { ProfileSettingsDialog } from '@/components/shell/ProfileSettingsDialog';
 
 interface Props {
   anchorEl: HTMLElement | null;
@@ -39,6 +42,7 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
   const { profile } = useUser();
   const router = useRouter();
   const { startTour } = useTour();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleNavigate = (path: string) => {
     router.push(path);
@@ -60,6 +64,7 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
   };
 
   return (
+    <>
     <Menu
       anchorEl={anchorEl}
       open={open}
@@ -96,6 +101,11 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
       <MenuItem onClick={() => handleNavigate('/dashboard/about')} sx={{ fontSize: '0.85rem' }}>
         <ListItemIcon><InfoOutlinedIcon fontSize="small" /></ListItemIcon>
         <ListItemText primaryTypographyProps={{ fontSize: '0.85rem' }}>About Us</ListItemText>
+      </MenuItem>
+
+      <MenuItem onClick={() => { setSettingsOpen(true); onClose(); }} sx={{ fontSize: '0.85rem' }}>
+        <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
+        <ListItemText primaryTypographyProps={{ fontSize: '0.85rem' }}>Profile Settings</ListItemText>
       </MenuItem>
 
       <MenuItem
@@ -136,5 +146,7 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
         </ListItemText>
       </MenuItem>
     </Menu>
+    <ProfileSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
   );
 }

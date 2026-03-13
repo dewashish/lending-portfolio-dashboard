@@ -8,6 +8,7 @@ export interface UserProfile {
   id: string;
   displayName: string;
   role: UserRole | null;
+  email: string | null;
 }
 
 interface UserContextValue {
@@ -34,6 +35,7 @@ function parseSessionCookie(): UserProfile | null {
       id: payload.sub,
       displayName: payload.username,
       role: payload.role as UserRole,
+      email: payload.email ?? null,
     };
   } catch {
     return null;

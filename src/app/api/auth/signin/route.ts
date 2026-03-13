@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     const { data: user } = await supabase
       .from('app_users')
-      .select('id, username, password_hash, role')
+      .select('id, username, password_hash, role, email')
       .eq('username', username)
       .single();
 
@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       sub: user.id,
       username: user.username,
       role: user.role,
+      email: user.email ?? undefined,
       session_id: sessionId,
     });
 

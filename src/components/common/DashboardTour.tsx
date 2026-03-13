@@ -30,7 +30,7 @@ const ALL_STEPS: Step[] = [
   },
   {
     target: '#tour-export-area',
-    content: 'Export Portfolio Quality Reports (Excel) or Executive Summaries (PDF) for the current view.',
+    content: 'Export Portfolio Quality Reports (Excel) or generate AI-powered Executive Summaries (PDF) with macro outlook, KPI snapshots, trends, and recommendations. You can download or email the report.',
     disableBeacon: true,
     title: 'Export Reports',
   },
