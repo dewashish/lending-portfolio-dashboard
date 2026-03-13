@@ -61,7 +61,7 @@ export function CorporateFinanceView({ scope, initialSubTab }: Props) {
         color: getColor('corp_delinquency_rate', summary.delinquencyRate),
         metricKey: 'corp_delinquency_rate',
         rawValue: summary.delinquencyRate,
-        info: '% of accounts with DPD > 0 (1+ days past due)',
+        info: 'Count-based: # of accounts with DPD > 0 / total accounts. See Delinquency tab for exposure-weighted PAR X+.',
       },
       {
         label: 'NPA Rate',
@@ -69,6 +69,7 @@ export function CorporateFinanceView({ scope, initialSubTab }: Props) {
         color: getColor('corp_npa_rate', summary.npaRate),
         metricKey: 'corp_npa_rate',
         rawValue: summary.npaRate,
+        info: 'Count-based: # of accounts with DPD > 90 / total accounts. See Delinquency tab for exposure-weighted PAR 90+.',
       },
       {
         label: 'Security Cover',

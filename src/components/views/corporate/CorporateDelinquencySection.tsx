@@ -213,18 +213,21 @@ export function CorporateDelinquencySection({ scope }: Props) {
         value: formatPercent(parXRate),
         color: '#42a5f5',
         subtitle: 'Portfolio at risk (all delinquent)',
+        info: 'Exposure-weighted: delinquent POS (DPD > 0) / total POS',
       },
       {
         label: 'PAR 30+ Rate',
         value: formatPercent(par30Rate),
         color: '#ff9800',
         subtitle: 'Past due 30+ days',
+        info: 'Exposure-weighted: POS with DPD > 30 / total POS',
       },
       {
         label: 'PAR 90+ (NPA)',
         value: formatPercent(par90Rate),
         color: '#b71c1c',
         subtitle: 'Non-performing assets',
+        info: 'Exposure-weighted: POS with DPD > 90 / total POS',
       },
       {
         label: 'Total Delinquent POS',
