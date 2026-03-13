@@ -296,10 +296,12 @@ export async function fetchCorporateProvisioningECL(scope?: ScopeSelection): Pro
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return ((data ?? []) as any[]).map((r) => ({
     period: r.period,
+    periodType: r.period_type ?? 'Actual',
     ifrsStage: r.ifrs_stage,
     grossExposure: r.gross_exposure_usd ?? r.gross_exposure ?? 0,
     provisionAmount: r.provision_amount_usd ?? r.provision_amount ?? 0,
     pcrPct: r.pcr_pct ?? 0,
+    creditCost: r.credit_cost ?? r.pcr_pct ?? 0,
   }));
 }
 

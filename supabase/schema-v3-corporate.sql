@@ -227,3 +227,10 @@ ALTER TABLE corporate_covenants
 ALTER TABLE corporate_top_customers
   ADD COLUMN IF NOT EXISTS disbursement_limit NUMERIC DEFAULT 0,
   ADD COLUMN IF NOT EXISTS disbursement_limit_usd NUMERIC;
+
+-- ============================================================================
+-- v0.4.3: Add period_type and credit_cost to corporate_provisioning_ecl
+-- ============================================================================
+ALTER TABLE corporate_provisioning_ecl
+  ADD COLUMN IF NOT EXISTS period_type TEXT DEFAULT 'Actual',
+  ADD COLUMN IF NOT EXISTS credit_cost NUMERIC DEFAULT 0;

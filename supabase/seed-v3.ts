@@ -514,29 +514,44 @@ function buildCorporateMaturityProfile(): Row[] {
 // -- 6. corporate_provisioning_ecl --
 function buildCorporateProvisioningECL(): Row[] {
   const rows: Row[] = [];
-  // PCR by stage: Stage 1 ~1-2%, Stage 2 ~15-25%, Stage 3 ~60-80%
-  const STAGE_PCR = [0.015, 0.20, 0.70];
+  // Credit cost (PCR) by stage: Stage 1 ~0.10-0.30%, Stage 2 ~0.35-0.75%, Stage 3 ~1.25-2.25%
+  const STAGE_CC_BASE = [0.0010, 0.0035, 0.0125];
   const STAGE_GROSS_SHARE = [0.82, 0.12, 0.06]; // % of total in each stage
+
+  // 8 periods with Actual/Estimated/Projected types
+  const PROV_PERIODS: { period: string; type: 'Actual' | 'Estimated' | 'Projected'; drift: number }[] = [
+    { period: "Aug'25", type: 'Actual', drift: 1.00 },
+    { period: "Sep'25", type: 'Actual', drift: 1.04 },
+    { period: "Oct'25", type: 'Actual', drift: 1.08 },
+    { period: "Nov'25", type: 'Actual', drift: 1.12 },
+    { period: "Dec'25", type: 'Actual', drift: 1.18 },
+    { period: "Jan'26", type: 'Estimated', drift: 1.25 },
+    { period: "Feb'26", type: 'Estimated', drift: 1.32 },
+    { period: "Mar'26", type: 'Projected', drift: 1.40 },
+  ];
 
   SUBS.forEach((sub) => {
     const totalGross = sub.aumBase * 0.60;
 
-    PERIODS.forEach((period, pIdx) => {
+    PROV_PERIODS.forEach((pp, pIdx) => {
       STAGES.forEach((stage, sIdx) => {
         const n = noise(sub.id, pIdx, sIdx + 1100);
         const gross = +(totalGross * STAGE_GROSS_SHARE[sIdx] * n).toFixed(2);
-        const pcr = +(STAGE_PCR[sIdx] * noise(sub.id, pIdx, sIdx + 1200)).toFixed(4);
-        const provision = +(gross * pcr).toFixed(2);
+        // Credit cost drifts upward over time (Actual→Estimated→Projected)
+        const cc = +(STAGE_CC_BASE[sIdx] * pp.drift * noise(sub.id, pIdx, sIdx + 1200)).toFixed(6);
+        const provision = +(gross * cc).toFixed(2);
 
         rows.push({
           subsidiary_id: sub.id,
-          period,
+          period: pp.period,
+          period_type: pp.type,
           ifrs_stage: stage,
           gross_exposure: gross,
           gross_exposure_usd: toUSD(gross, sub.currencyCode),
           provision_amount: provision,
           provision_amount_usd: toUSD(provision, sub.currencyCode),
-          pcr_pct: pcr,
+          pcr_pct: cc,
+          credit_cost: cc,
           report_date: REPORT_DATE,
         });
       });

@@ -585,10 +585,12 @@ export interface CorporatePipelineRow {
 // ── Corporate Provisioning & ECL ─────────────────────────────────
 export interface CorporateProvisioningRow {
   period: string;
+  periodType: 'Actual' | 'Estimated' | 'Projected';
   ifrsStage: string;
   grossExposure: number;
   provisionAmount: number;
   pcrPct: number;
+  creditCost: number;
 }
 
 // ── Corporate Rating Analysis ────────────────────────────────────
