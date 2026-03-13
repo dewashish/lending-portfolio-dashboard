@@ -19,7 +19,7 @@ const STAGE_COLORS: Record<string, string> = {
   'Total CC': '#1976d2',
 };
 
-const STAGE_ORDER = ['Stage 1', 'Stage 2', 'Stage 3', 'Total CC'];
+const STACK_STAGES = ['Stage 1', 'Stage 2', 'Stage 3'] as const;
 
 const TOOLTIP_CLASS = 'provisioning-trend-tooltip';
 
@@ -30,63 +30,100 @@ function periodTypeSuffix(pt: 'Actual' | 'Estimated' | 'Projected'): string {
   return '(P)';
 }
 
-/** Dash array for a given period type. */
-function dashForType(pt: 'Actual' | 'Estimated' | 'Projected'): string | null {
-  if (pt === 'Actual') return null; // solid
-  if (pt === 'Estimated') return '6,3';
-  return '2,3'; // Projected
+/** Opacity for period type bars. */
+function opacityForType(pt: 'Actual' | 'Estimated' | 'Projected'): number {
+  if (pt === 'Actual') return 1.0;
+  if (pt === 'Estimated') return 0.75;
+  return 0.55;
 }
 
-interface PlotPoint {
+interface BarSegment {
   period: string;
   periodType: 'Actual' | 'Estimated' | 'Projected';
-  creditCostPct: number; // already multiplied by 100
   stage: string;
+  /** This stage's contribution to total CC: stage_provision / total_gross × 100 */
+  contributionPct: number;
+  /** This stage's own credit cost: stage_provision / stage_gross × 100 */
+  stageCreditCostPct: number;
+  /** Cumulative bottom (sum of stages below) */
+  y0: number;
+  /** Cumulative top (y0 + contributionPct) */
+  y1: number;
+}
+
+interface PeriodSummary {
+  period: string;
+  periodType: 'Actual' | 'Estimated' | 'Projected';
+  totalCCPct: number;
+  stages: Record<string, { contributionPct: number; creditCostPct: number }>;
 }
 
 export function ProvisioningTrendChart({ data }: Props) {
   const { d3Tokens } = useThemeMode();
 
-  // Build sorted periods and compute Total CC
-  const { plotData, periods, periodTypeMap } = useMemo(() => {
-    if (!data.length) return { plotData: [] as PlotPoint[], periods: [] as string[], periodTypeMap: new Map<string, 'Actual' | 'Estimated' | 'Projected'>() };
+  const { barData, periodSummaries, periods, periodTypeMap } = useMemo(() => {
+    if (!data.length)
+      return {
+        barData: [] as BarSegment[],
+        periodSummaries: [] as PeriodSummary[],
+        periods: [] as string[],
+        periodTypeMap: new Map<string, 'Actual' | 'Estimated' | 'Projected'>(),
+      };
 
-    const allPeriods = sortPeriodsChronologically(Array.from(new Set(data.map((d) => d.period))));
+    const allPeriods = sortPeriodsChronologically(
+      Array.from(new Set(data.map((d) => d.period))),
+    );
 
-    // Map period -> periodType (take the first occurrence)
+    // Map period -> periodType
     const ptMap = new Map<string, 'Actual' | 'Estimated' | 'Projected'>();
     data.forEach((d) => {
       if (!ptMap.has(d.period)) ptMap.set(d.period, d.periodType);
     });
 
-    const points: PlotPoint[] = [];
+    const summaries: PeriodSummary[] = [];
+    const segments: BarSegment[] = [];
 
-    // Per-stage credit cost points
-    data.forEach((d) => {
-      points.push({
-        period: d.period,
-        periodType: d.periodType,
-        creditCostPct: d.creditCost * 100,
-        stage: d.ifrsStage,
-      });
-    });
-
-    // Compute Total CC per period
     allPeriods.forEach((period) => {
       const periodRows = data.filter((d) => d.period === period);
       if (periodRows.length === 0) return;
+
       const totalProvision = d3.sum(periodRows, (d) => d.provisionAmount);
-      const totalExposure = d3.sum(periodRows, (d) => d.grossExposure);
-      const totalCC = totalExposure > 0 ? totalProvision / totalExposure : 0;
-      points.push({
-        period,
-        periodType: ptMap.get(period) ?? 'Actual',
-        creditCostPct: totalCC * 100,
-        stage: 'Total CC',
+      const totalGross = d3.sum(periodRows, (d) => d.grossExposure);
+      const totalCCPct = totalGross > 0 ? (totalProvision / totalGross) * 100 : 0;
+      const pt = ptMap.get(period) ?? 'Actual';
+
+      const stageInfo: Record<string, { contributionPct: number; creditCostPct: number }> = {};
+      let cumulative = 0;
+
+      STACK_STAGES.forEach((stage) => {
+        const stageRows = periodRows.filter((r) => r.ifrsStage === stage);
+        const stageProv = d3.sum(stageRows, (r) => r.provisionAmount);
+        const stageGross = d3.sum(stageRows, (r) => r.grossExposure);
+
+        // Contribution to total CC = stage_provision / total_gross
+        const contributionPct = totalGross > 0 ? (stageProv / totalGross) * 100 : 0;
+        // Stage's own credit cost
+        const creditCostPct = stageGross > 0 ? (stageProv / stageGross) * 100 : 0;
+
+        stageInfo[stage] = { contributionPct, creditCostPct };
+
+        segments.push({
+          period,
+          periodType: pt,
+          stage,
+          contributionPct,
+          stageCreditCostPct: creditCostPct,
+          y0: cumulative,
+          y1: cumulative + contributionPct,
+        });
+
+        cumulative += contributionPct;
       });
+
+      summaries.push({ period, periodType: pt, totalCCPct, stages: stageInfo });
     });
 
-    return { plotData: points, periods: allPeriods, periodTypeMap: ptMap };
+    return { barData: segments, periodSummaries: summaries, periods: allPeriods, periodTypeMap: ptMap };
   }, [data]);
 
   const ref = useD3Chart(
@@ -94,24 +131,20 @@ export function ProvisioningTrendChart({ data }: Props) {
       // Clean up stale tooltips
       d3.selectAll(`.${TOOLTIP_CLASS}`).remove();
 
-      const margin = { top: 32, right: 30, bottom: 60, left: 60 };
+      const margin = { top: 36, right: 30, bottom: 60, left: 60 };
       const w = width - margin.left - margin.right;
       const h = height - margin.top - margin.bottom;
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-      if (!plotData.length || !periods.length) return;
-
-      // Determine which stages are present
-      const stages = STAGE_ORDER.filter((s) => plotData.some((p) => p.stage === s));
+      if (!barData.length || !periods.length) return;
 
       // ── Scales ──────────────────────────────────────────────────────
-      const x = d3.scalePoint().domain(periods).range([0, w]).padding(0.5);
+      const x = d3.scaleBand().domain(periods).range([0, w]).padding(0.3);
 
-      const allValues = plotData.map((p) => p.creditCostPct);
-      const maxVal = d3.max(allValues) ?? 1;
-      const y = d3.scaleLinear().domain([0, maxVal * 1.2]).nice().range([h, 0]);
+      const maxTotal = d3.max(periodSummaries, (s) => s.totalCCPct) ?? 1;
+      const y = d3.scaleLinear().domain([0, maxTotal * 1.25]).nice().range([h, 0]);
 
-      // ── Grid lines ─────────────────────────────────────────────────
+      // ── Grid lines ────────────────────────────────────────────────
       g.append('g')
         .call(
           d3.axisLeft(y)
@@ -127,94 +160,45 @@ export function ProvisioningTrendChart({ data }: Props) {
       g.selectAll('.domain').remove();
       g.selectAll('.tick line').attr('stroke', d3Tokens.gridLine);
 
-      // ── Legend (top of chart area) ─────────────────────────────────
-      const legend = g.append('g').attr('transform', 'translate(0, -16)');
+      // ── Legend (top of chart area) ──────────────────────────────────
+      const legendItems = [...STACK_STAGES, 'Total CC'] as const;
+      const legend = g.append('g').attr('transform', 'translate(0, -20)');
       let legendX = 0;
-      stages.forEach((stage) => {
-        const color = STAGE_COLORS[stage] ?? '#64b5f6';
-        const isTotal = stage === 'Total CC';
+      legendItems.forEach((item) => {
+        const color = STAGE_COLORS[item] ?? '#64b5f6';
+        const isTotal = item === 'Total CC';
         const lg = legend.append('g').attr('transform', `translate(${legendX}, 0)`);
-        lg.append('line')
-          .attr('x1', 0)
-          .attr('y1', 5)
-          .attr('x2', 16)
-          .attr('y2', 5)
-          .attr('stroke', color)
-          .attr('stroke-width', isTotal ? 3 : 2.5);
-        lg.append('circle')
-          .attr('cx', 8)
-          .attr('cy', 5)
-          .attr('r', 3)
-          .attr('fill', color);
+
+        if (isTotal) {
+          // Dashed line for total CC trend
+          lg.append('line')
+            .attr('x1', 0).attr('y1', 5).attr('x2', 16).attr('y2', 5)
+            .attr('stroke', color)
+            .attr('stroke-width', 2.5)
+            .attr('stroke-dasharray', '4,2');
+          lg.append('circle')
+            .attr('cx', 8).attr('cy', 5).attr('r', 3)
+            .attr('fill', color);
+        } else {
+          // Colored rectangle for bar
+          lg.append('rect')
+            .attr('x', 0).attr('y', 0).attr('width', 14).attr('height', 10)
+            .attr('rx', 2)
+            .attr('fill', color)
+            .attr('opacity', 0.85);
+        }
+
         lg.append('text')
-          .attr('x', 20)
+          .attr('x', isTotal ? 20 : 18)
           .attr('y', 9)
           .attr('fill', d3Tokens.textMuted)
           .attr('font-size', '10px')
-          .text(stage);
-        legendX += stage.length * 7 + 35;
+          .text(item);
+
+        legendX += item.length * 7 + 32;
       });
 
-      // ── Build per-period lookup for tooltip ────────────────────────
-      const periodLookup = new Map<string, Map<string, number>>();
-      plotData.forEach((p) => {
-        if (!periodLookup.has(p.period)) periodLookup.set(p.period, new Map());
-        periodLookup.get(p.period)!.set(p.stage, p.creditCostPct);
-      });
-
-      // ── Draw lines (segmented by period type) ─────────────────────
-      const lineGen = d3
-        .line<PlotPoint>()
-        .x((d) => x(d.period)!)
-        .y((d) => y(d.creditCostPct))
-        .curve(d3.curveMonotoneX);
-
-      stages.forEach((stage) => {
-        const stagePoints = plotData
-          .filter((p) => p.stage === stage)
-          .sort((a, b) => periods.indexOf(a.period) - periods.indexOf(b.period));
-
-        if (stagePoints.length === 0) return;
-
-        const color = STAGE_COLORS[stage] ?? '#64b5f6';
-        const isTotal = stage === 'Total CC';
-        const strokeWidth = isTotal ? 3 : 2.5;
-
-        // Split into segments of consecutive same-periodType, overlapping by 1 point
-        const segments: PlotPoint[][] = [];
-        let currentSegment: PlotPoint[] = [stagePoints[0]];
-
-        for (let i = 1; i < stagePoints.length; i++) {
-          if (stagePoints[i].periodType !== stagePoints[i - 1].periodType) {
-            segments.push(currentSegment);
-            // Start new segment with the last point of previous segment for continuity
-            currentSegment = [stagePoints[i - 1], stagePoints[i]];
-          } else {
-            currentSegment.push(stagePoints[i]);
-          }
-        }
-        segments.push(currentSegment);
-
-        // Draw each segment with appropriate dash style
-        segments.forEach((seg) => {
-          // Use the period type of the last point in the segment (the "new" type for overlap segments)
-          const segType = seg[seg.length - 1].periodType;
-          const dash = dashForType(segType);
-
-          const path = g.append('path')
-            .datum(seg)
-            .attr('fill', 'none')
-            .attr('stroke', color)
-            .attr('stroke-width', strokeWidth)
-            .attr('d', lineGen);
-
-          if (dash) {
-            path.attr('stroke-dasharray', dash);
-          }
-        });
-      });
-
-      // ── Tooltip (body-appended) ────────────────────────────────────
+      // ── Tooltip (body-appended) ──────────────────────────────────
       const tooltip = d3.select('body').append('div')
         .attr('class', TOOLTIP_CLASS)
         .style('position', 'absolute')
@@ -246,84 +230,145 @@ export function ProvisioningTrendChart({ data }: Props) {
         tooltip.style('left', `${left}px`).style('top', `${top}px`);
       }
 
-      // ── Draw dots (styled by period type) ─────────────────────────
-      stages.forEach((stage) => {
-        const stagePoints = plotData
-          .filter((p) => p.stage === stage)
-          .sort((a, b) => periods.indexOf(a.period) - periods.indexOf(b.period));
+      function showTooltip(event: MouseEvent, period: string, highlightStage?: string) {
+        const summary = periodSummaries.find((s) => s.period === period);
+        if (!summary) return;
 
-        if (stagePoints.length === 0) return;
+        const pt = summary.periodType;
+        const ptBadge =
+          pt === 'Estimated'
+            ? '<span style="color:#ff9800;font-weight:700">(E)</span>'
+            : pt === 'Projected'
+              ? '<span style="color:#2196f3;font-weight:700">(P)</span>'
+              : '<span style="font-weight:700">(A)</span>';
 
-        const color = STAGE_COLORS[stage] ?? '#64b5f6';
-        const safeClass = stage.replace(/\s/g, '-');
-
-        const dots = g.selectAll(`.dot-${safeClass}`)
-          .data(stagePoints)
-          .join('circle')
-          .attr('class', `dot-${safeClass}`)
-          .attr('cx', (d) => x(d.period)!)
-          .attr('cy', (d) => y(d.creditCostPct))
-          .attr('r', 4)
-          .style('cursor', 'pointer')
-          .style('transition', 'r 150ms ease');
-
-        // Style dots by period type
-        dots.each(function (d) {
-          const el = d3.select(this);
-          if (d.periodType === 'Actual') {
-            // Filled circle
-            el.attr('fill', color)
-              .attr('stroke', d3Tokens.bg)
-              .attr('stroke-width', 2);
-          } else if (d.periodType === 'Estimated') {
-            // White fill, colored stroke
-            el.attr('fill', d3Tokens.bg)
-              .attr('stroke', color)
-              .attr('stroke-width', 2);
-          } else {
-            // Projected: white fill, colored dashed stroke
-            el.attr('fill', d3Tokens.bg)
-              .attr('stroke', color)
-              .attr('stroke-width', 2)
-              .attr('stroke-dasharray', '2,2');
-          }
+        let rows = '';
+        STACK_STAGES.forEach((stage) => {
+          const info = summary.stages[stage];
+          if (!info) return;
+          const sColor = STAGE_COLORS[stage];
+          const bold = stage === highlightStage ? 'font-weight:800;' : '';
+          rows += `<div style="${bold}"><span style="color:${mutedColor}">${stage}:</span> <b style="color:${sColor}">${info.creditCostPct.toFixed(2)}%</b></div>`;
         });
+        rows += `<div style="border-top:1px solid ${d3Tokens.tooltipBorder};margin-top:4px;padding-top:4px;font-weight:700"><span style="color:${mutedColor}">Total CC:</span> <b style="color:${STAGE_COLORS['Total CC']}">${summary.totalCCPct.toFixed(2)}%</b></div>`;
 
-        // Hover events on dots — show ALL stages for that period
-        dots
-          .on('mouseover', function (_event, d) {
-            d3.select(this).attr('r', 6);
+        tooltip.html(
+          `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${period} ${ptBadge}</div>` +
+          `<div style="border-top:1px solid ${d3Tokens.tooltipBorder};margin-bottom:4px"></div>` +
+          rows,
+        ).style('opacity', '1');
 
-            const periodValues = periodLookup.get(d.period);
-            const pt = periodTypeMap.get(d.period) ?? d.periodType;
+        positionTooltip(event);
+      }
 
-            let rows = '';
-            STAGE_ORDER.forEach((s) => {
-              const val = periodValues?.get(s);
-              if (val != null) {
-                const sColor = STAGE_COLORS[s] ?? d3Tokens.tooltipText;
-                rows += `<div><span style="color:${mutedColor}">${s}:</span> <b style="color:${sColor}">${val.toFixed(2)}%</b></div>`;
-              }
-            });
+      // ── Draw stacked bars ─────────────────────────────────────────
+      const barWidth = x.bandwidth();
 
-            tooltip.html(
-              `<div style="font-weight:700;font-size:12px;margin-bottom:4px">${d.period} (${pt})</div>` +
-              `<div style="border-top:1px solid ${d3Tokens.tooltipBorder};margin-bottom:4px"></div>` +
-              rows,
-            ).style('opacity', '1');
+      barData.forEach((seg) => {
+        const xPos = x(seg.period);
+        if (xPos == null) return;
+        const opacity = opacityForType(seg.periodType);
+        const color = STAGE_COLORS[seg.stage] ?? '#64b5f6';
 
-            positionTooltip(_event as unknown as MouseEvent);
+        g.append('rect')
+          .attr('x', xPos)
+          .attr('y', y(seg.y1))
+          .attr('width', barWidth)
+          .attr('height', Math.max(0, y(seg.y0) - y(seg.y1)))
+          .attr('fill', color)
+          .attr('opacity', opacity)
+          .attr('rx', seg.stage === 'Stage 3' ? 3 : 0) // round top corners on top segment
+          .style('cursor', 'pointer')
+          .on('mouseover', function (event) {
+            d3.select(this).attr('opacity', Math.min(1, opacity + 0.15));
+            showTooltip(event as unknown as MouseEvent, seg.period, seg.stage);
           })
-          .on('mousemove', function (_event) {
-            positionTooltip(_event as unknown as MouseEvent);
+          .on('mousemove', function (event) {
+            positionTooltip(event as unknown as MouseEvent);
           })
           .on('mouseout', function () {
-            d3.select(this).attr('r', 4);
+            d3.select(this).attr('opacity', opacity);
             tooltip.style('opacity', '0');
           });
       });
 
-      // ── X-axis ─────────────────────────────────────────────────────
+      // ── Period type indicator stripe below bars ─────────────────────
+      const TYPE_STRIPE_COLORS: Record<string, string> = {
+        Actual: '#9e9e9e',
+        Estimated: '#ff9800',
+        Projected: '#2196f3',
+      };
+
+      periods.forEach((period) => {
+        const xPos = x(period);
+        if (xPos == null) return;
+        const pt = periodTypeMap.get(period) ?? 'Actual';
+        g.append('rect')
+          .attr('x', xPos)
+          .attr('y', h + 2)
+          .attr('width', barWidth)
+          .attr('height', 3)
+          .attr('rx', 1.5)
+          .attr('fill', TYPE_STRIPE_COLORS[pt] ?? '#9e9e9e')
+          .attr('opacity', 0.6);
+      });
+
+      // ── Total CC trend line overlay ──────────────────────────────
+      const lineGen = d3
+        .line<PeriodSummary>()
+        .x((d) => (x(d.period) ?? 0) + barWidth / 2)
+        .y((d) => y(d.totalCCPct))
+        .curve(d3.curveMonotoneX);
+
+      g.append('path')
+        .datum(periodSummaries)
+        .attr('fill', 'none')
+        .attr('stroke', STAGE_COLORS['Total CC'])
+        .attr('stroke-width', 2.5)
+        .attr('stroke-dasharray', '6,3')
+        .attr('d', lineGen);
+
+      // Total CC dots
+      g.selectAll('.dot-total-cc')
+        .data(periodSummaries)
+        .join('circle')
+        .attr('class', 'dot-total-cc')
+        .attr('cx', (d) => (x(d.period) ?? 0) + barWidth / 2)
+        .attr('cy', (d) => y(d.totalCCPct))
+        .attr('r', 4)
+        .attr('fill', STAGE_COLORS['Total CC'])
+        .attr('stroke', d3Tokens.bg)
+        .attr('stroke-width', 2)
+        .style('cursor', 'pointer')
+        .style('transition', 'r 150ms ease')
+        .on('mouseover', function (event, d) {
+          d3.select(this).attr('r', 6);
+          showTooltip(event as unknown as MouseEvent, d.period);
+        })
+        .on('mousemove', function (event) {
+          positionTooltip(event as unknown as MouseEvent);
+        })
+        .on('mouseout', function () {
+          d3.select(this).attr('r', 4);
+          tooltip.style('opacity', '0');
+        });
+
+      // ── Total CC value labels above bars ─────────────────────────
+      periodSummaries.forEach((s) => {
+        const xPos = x(s.period);
+        if (xPos == null) return;
+        g.append('text')
+          .attr('x', xPos + barWidth / 2)
+          .attr('y', y(s.totalCCPct) - 8)
+          .attr('text-anchor', 'middle')
+          .attr('fill', STAGE_COLORS['Total CC'])
+          .attr('font-size', '9px')
+          .attr('font-weight', 700)
+          .attr('font-family', 'IBM Plex Mono, monospace')
+          .text(`${s.totalCCPct.toFixed(2)}%`);
+      });
+
+      // ── X-axis ──────────────────────────────────────────────────
       g.append('g')
         .attr('transform', `translate(0,${h})`)
         .call(
@@ -345,13 +390,13 @@ export function ProvisioningTrendChart({ data }: Props) {
 
       g.selectAll('.domain').attr('stroke', d3Tokens.axisDomain);
     },
-    [plotData, periods, periodTypeMap, d3Tokens],
+    [barData, periodSummaries, periods, periodTypeMap, d3Tokens],
   );
 
   return (
     <ChartContainer
       title="Credit Cost Trend"
-      subtitle="Credit cost by IFRS stage over time (Actual \u2192 Estimated \u2192 Projected)"
+      subtitle="Stacked credit cost by IFRS stage (Actual \u2192 Estimated \u2192 Projected)"
       empty={!data.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible', minHeight: 360 }} />
