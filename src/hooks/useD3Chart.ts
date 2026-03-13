@@ -12,6 +12,8 @@ export function useD3Chart(
   deps: unknown[],
 ) {
   const ref = useRef<SVGSVGElement>(null);
+  const renderFnRef = useRef(renderFn);
+  renderFnRef.current = renderFn;
 
   useEffect(() => {
     if (!ref.current) return;
@@ -19,7 +21,7 @@ export function useD3Chart(
     svg.selectAll('*').remove();
     const rect = ref.current.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
-    renderFn(svg, rect.width, rect.height);
+    renderFnRef.current(svg, rect.width, rect.height);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
@@ -34,7 +36,7 @@ export function useD3Chart(
       svg.selectAll('*').remove();
       const rect = ref.current.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
-      renderFn(svg, rect.width, rect.height);
+      renderFnRef.current(svg, rect.width, rect.height);
     });
 
     observer.observe(parent);
