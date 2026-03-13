@@ -242,3 +242,31 @@ ALTER TABLE corporate_covenants
   ADD COLUMN IF NOT EXISTS rm_email TEXT DEFAULT '',
   ADD COLUMN IF NOT EXISTS rm_phone TEXT DEFAULT '',
   ADD COLUMN IF NOT EXISTS rm_department TEXT DEFAULT '';
+
+-- ============================================================================
+-- v0.4.9: Corporate watchlist trend (monthly summary for 6-month trend chart)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS corporate_watchlist_trend (
+  id SERIAL PRIMARY KEY,
+  subsidiary_id INTEGER NOT NULL REFERENCES subsidiaries(id),
+  period TEXT NOT NULL,
+  active_count INTEGER DEFAULT 0,
+  escalated_count INTEGER DEFAULT 0,
+  monitoring_count INTEGER DEFAULT 0,
+  review_pending_count INTEGER DEFAULT 0,
+  total_count INTEGER DEFAULT 0,
+  total_exposure NUMERIC DEFAULT 0,
+  total_exposure_usd NUMERIC,
+  new_additions INTEGER DEFAULT 0,
+  removals INTEGER DEFAULT 0,
+  report_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  data_source_id INTEGER REFERENCES data_sources(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_cwt_subsidiary ON corporate_watchlist_trend(subsidiary_id);
+CREATE INDEX IF NOT EXISTS idx_cwt_period ON corporate_watchlist_trend(subsidiary_id, period);
+
+ALTER TABLE corporate_watchlist_trend ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anon read corporate_watchlist_trend" ON corporate_watchlist_trend FOR SELECT USING (true);
+CREATE POLICY "Allow anon insert corporate_watchlist_trend" ON corporate_watchlist_trend FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon delete corporate_watchlist_trend" ON corporate_watchlist_trend FOR DELETE USING (true);

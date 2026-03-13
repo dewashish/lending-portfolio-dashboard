@@ -2,6 +2,7 @@ import { supabase } from '../supabase';
 import type { Database } from '../database.types';
 import type {
   CorporateWatchlistRow,
+  WatchlistTrendRow,
   CovenantTrackingRow,
   CorporateDelinquencyRow,
   CorporatePortfolioRow,
@@ -50,6 +51,25 @@ export async function fetchCorporateWatchlist(scope?: ScopeSelection): Promise<C
     remedialAction: r.remedial_action ?? '',
     dateAdded: r.date_added ?? '',
     daysOnWatchlist: r.days_on_watchlist ?? 0,
+  }));
+}
+
+export async function fetchCorporateWatchlistTrend(scope?: ScopeSelection): Promise<WatchlistTrendRow[]> {
+  let query = supabase.from('corporate_watchlist_trend').select('*').order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    period: r.period,
+    activeCount: r.active_count ?? 0,
+    escalatedCount: r.escalated_count ?? 0,
+    monitoringCount: r.monitoring_count ?? 0,
+    reviewPendingCount: r.review_pending_count ?? 0,
+    totalCount: r.total_count ?? 0,
+    totalExposure: r.total_exposure_usd ?? r.total_exposure ?? 0,
+    newAdditions: r.new_additions ?? 0,
+    removals: r.removals ?? 0,
   }));
 }
 

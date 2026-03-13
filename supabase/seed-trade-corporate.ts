@@ -1095,6 +1095,66 @@ function buildCorporateWatchlist(): Row[] {
 }
 
 // =============================================================================
+// 13b. corporate_watchlist_trend (6 months of monthly summary)
+// =============================================================================
+function buildCorporateWatchlistTrend(): Row[] {
+  const rows: Row[] = [];
+  // 6 months ending at REPORT_DATE (Aug'25): Mar'25, Apr'25, May'25, Jun'25, Jul'25, Aug'25
+  const TREND_PERIODS = ["Mar'25", "Apr'25", "May'25", "Jun'25", "Jul'25", "Aug'25"];
+
+  for (const sub of SUBSIDIARIES) {
+    // Base counts — slight upward trend over 6 months (more scrutiny over time)
+    const baseTotal = Math.round(noiseRange(14, 22, sub.id, 2001));
+
+    for (let pIdx = 0; pIdx < TREND_PERIODS.length; pIdx++) {
+      const period = TREND_PERIODS[pIdx];
+
+      // Total count grows slightly each month
+      const growthFactor = 1 + pIdx * 0.04 * noise(sub.id, pIdx, 2002);
+      const totalCount = Math.round(baseTotal * growthFactor);
+
+      // Distribute across statuses with deterministic noise
+      const activeShare = noiseRange(0.35, 0.45, sub.id, pIdx, 2003);
+      const escalatedShare = noiseRange(0.12, 0.22, sub.id, pIdx, 2004);
+      const monitoringShare = noiseRange(0.20, 0.30, sub.id, pIdx, 2005);
+      const reviewShare = 1 - activeShare - escalatedShare - monitoringShare;
+
+      const activeCount = Math.round(totalCount * activeShare);
+      const escalatedCount = Math.round(totalCount * escalatedShare);
+      const monitoringCount = Math.round(totalCount * monitoringShare);
+      const reviewPendingCount = Math.max(0, totalCount - activeCount - escalatedCount - monitoringCount);
+
+      // Exposure: 2-6% of AUM, slight upward drift
+      const exposurePct = noiseRange(0.02, 0.06, sub.id, pIdx, 2006) * (1 + pIdx * 0.02);
+      const totalExposure = +(sub.aumLocal * exposurePct).toFixed(2);
+      const totalExposureUsd = toUSD(totalExposure, sub.currencyCode, FX_MAP);
+
+      // New additions: 2-6 per month
+      const newAdditions = Math.round(noiseRange(2, 6, sub.id, pIdx, 2007));
+      // Removals: 1-4 per month
+      const removals = Math.round(noiseRange(1, 4, sub.id, pIdx, 2008));
+
+      rows.push({
+        subsidiary_id: sub.id,
+        period,
+        active_count: activeCount,
+        escalated_count: escalatedCount,
+        monitoring_count: monitoringCount,
+        review_pending_count: reviewPendingCount,
+        total_count: totalCount,
+        total_exposure: totalExposure,
+        total_exposure_usd: totalExposureUsd,
+        new_additions: newAdditions,
+        removals,
+        report_date: REPORT_DATE,
+        data_source_id: sub.dsOffset,
+      });
+    }
+  }
+  return rows;
+}
+
+// =============================================================================
 // 14. corporate_covenants (~10-15 per subsidiary)
 // =============================================================================
 function buildCorporateCovenants(): Row[] {
@@ -1497,6 +1557,7 @@ async function clearNewTables() {
     'corporate_portfolio_metrics',
     'corporate_delinquency',
     'corporate_covenants',
+    'corporate_watchlist_trend',
     'corporate_watchlist',
     'country_risk',
     'fx_risk',
@@ -1580,6 +1641,9 @@ async function main() {
 
   console.log('Seeding corporate_watchlist...');
   await batchInsert('corporate_watchlist', buildCorporateWatchlist());
+
+  console.log('Seeding corporate_watchlist_trend...');
+  await batchInsert('corporate_watchlist_trend', buildCorporateWatchlistTrend());
 
   console.log('Seeding corporate_covenants...');
   await batchInsert('corporate_covenants', buildCorporateCovenants());

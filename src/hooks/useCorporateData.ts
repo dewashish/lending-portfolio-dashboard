@@ -7,6 +7,10 @@ export function useCorporateWatchlist(scope?: ScopeSelection) {
   return useSWR(scopeKey('corporate-watchlist', scope), () => queries.fetchCorporateWatchlist(scope));
 }
 
+export function useCorporateWatchlistTrend(scope?: ScopeSelection) {
+  return useSWR(scopeKey('corporate-watchlist-trend', scope), () => queries.fetchCorporateWatchlistTrend(scope));
+}
+
 export function useCorporateCovenants(scope?: ScopeSelection) {
   return useSWR(scopeKey('corporate-covenants', scope), () => queries.fetchCorporateCovenants(scope));
 }

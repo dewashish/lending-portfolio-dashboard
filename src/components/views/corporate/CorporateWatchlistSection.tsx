@@ -21,9 +21,10 @@ import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { WatchlistTriggerDonut } from '@/components/charts/corporate/WatchlistTriggerDonut';
 import { WatchlistStatusBar } from '@/components/charts/corporate/WatchlistStatusBar';
 import { WatchlistExposureBar } from '@/components/charts/corporate/WatchlistExposureBar';
+import { WatchlistTrendChart } from '@/components/charts/corporate/WatchlistTrendChart';
 import { KPIRow } from '@/components/cards/KPIRow';
 import type { KPIItem } from '@/components/cards/KPIRow';
-import { useCorporateWatchlist } from '@/hooks/useCorporateData';
+import { useCorporateWatchlist, useCorporateWatchlistTrend } from '@/hooks/useCorporateData';
 import { formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
@@ -124,6 +125,7 @@ function categoryChip(category: string) {
 export function CorporateWatchlistSection({ scope }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { data: watchlist, isLoading } = useCorporateWatchlist(scope);
+  const { data: trendData } = useCorporateWatchlistTrend(scope);
 
   // ── State ──
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -235,7 +237,14 @@ export function CorporateWatchlistSection({ scope }: Props) {
         <KPIRow items={kpiItems} />
       </Card>
 
-      {/* ═══════ GROUP B: Two Charts Side-by-Side ═══════ */}
+      {/* ═══════ GROUP B: Watchlist Trend (6-month) ═══════ */}
+      {trendData && trendData.length > 0 && (
+        <Box sx={{ height: 420 }}>
+          <WatchlistTrendChart data={trendData} />
+        </Box>
+      )}
+
+      {/* ═══════ GROUP C: Two Charts Side-by-Side ═══════ */}
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <WatchlistTriggerDonut

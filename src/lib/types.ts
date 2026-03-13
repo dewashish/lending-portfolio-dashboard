@@ -590,6 +590,19 @@ export interface CorporatePipelineRow {
   pcrPct: number;
 }
 
+// ── Corporate Watchlist Trend ─────────────────────────────────────
+export interface WatchlistTrendRow {
+  period: string;
+  activeCount: number;
+  escalatedCount: number;
+  monitoringCount: number;
+  reviewPendingCount: number;
+  totalCount: number;
+  totalExposure: number;
+  newAdditions: number;
+  removals: number;
+}
+
 // ── Corporate Provisioning & ECL ─────────────────────────────────
 export interface CorporateProvisioningRow {
   period: string;
