@@ -88,50 +88,45 @@ export function CorporateProvisioningSection({ scope }: Props) {
   /* ── Credit Cost Matrix data ─────────────────────────────────── */
 
   const matrixData = useMemo(() => {
-    // For each stage+period, compute weighted-average credit cost
-    // creditCost = sum(provisionAmount) / sum(grossExposure)
-    const stageMap: Record<string, Record<string, { sumProv: number; sumGross: number }>> = {};
+    // Credit Cost per stage = stage_provision / TOTAL_gross × 100
+    // This way Stage 1 + Stage 2 + Stage 3 = Total CC
 
-    for (const stage of STAGE_ORDER) {
-      stageMap[stage] = {};
+    // First compute total gross per period (denominator for all stages)
+    const periodTotalGross: Record<string, number> = {};
+    const periodTotalProv: Record<string, number> = {};
+    for (const r of rows) {
+      periodTotalGross[r.period] = (periodTotalGross[r.period] ?? 0) + r.grossExposure;
+      periodTotalProv[r.period] = (periodTotalProv[r.period] ?? 0) + r.provisionAmount;
     }
 
+    // Per-stage provision sums
+    const stageProvMap: Record<string, Record<string, number>> = {};
+    for (const stage of STAGE_ORDER) {
+      stageProvMap[stage] = {};
+    }
     for (const r of rows) {
       const stage = r.ifrsStage;
-      if (!stageMap[stage]) stageMap[stage] = {};
-      if (!stageMap[stage][r.period]) {
-        stageMap[stage][r.period] = { sumProv: 0, sumGross: 0 };
-      }
-      stageMap[stage][r.period].sumProv += r.provisionAmount;
-      stageMap[stage][r.period].sumGross += r.grossExposure;
+      if (!stageProvMap[stage]) stageProvMap[stage] = {};
+      stageProvMap[stage][r.period] = (stageProvMap[stage][r.period] ?? 0) + r.provisionAmount;
     }
 
-    // Build per-stage rows
+    // Build per-stage rows: credit cost = stage_prov / total_gross
     const stageRows: { stage: string; values: Record<string, number> }[] = [];
     for (const stage of STAGE_ORDER) {
       const vals: Record<string, number> = {};
       for (const period of sortedPeriods) {
-        const bucket = stageMap[stage]?.[period];
-        if (bucket && bucket.sumGross > 0) {
-          vals[period] = (bucket.sumProv / bucket.sumGross) * 100;
-        } else {
-          vals[period] = 0;
-        }
+        const stageProv = stageProvMap[stage]?.[period] ?? 0;
+        const totalGross = periodTotalGross[period] ?? 0;
+        vals[period] = totalGross > 0 ? (stageProv / totalGross) * 100 : 0;
       }
       stageRows.push({ stage, values: vals });
     }
 
-    // Total CC per period
+    // Total CC per period = total_prov / total_gross (= sum of stage credit costs)
     const totalValues: Record<string, number> = {};
     for (const period of sortedPeriods) {
-      let totalProv = 0;
-      let totalGross = 0;
-      for (const r of rows) {
-        if (r.period === period) {
-          totalProv += r.provisionAmount;
-          totalGross += r.grossExposure;
-        }
-      }
+      const totalGross = periodTotalGross[period] ?? 0;
+      const totalProv = periodTotalProv[period] ?? 0;
       totalValues[period] = totalGross > 0 ? (totalProv / totalGross) * 100 : 0;
     }
 

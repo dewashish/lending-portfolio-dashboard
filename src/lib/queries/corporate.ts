@@ -301,7 +301,7 @@ export async function fetchCorporateProvisioningECL(scope?: ScopeSelection): Pro
     grossExposure: r.gross_exposure_usd ?? r.gross_exposure ?? 0,
     provisionAmount: r.provision_amount_usd ?? r.provision_amount ?? 0,
     pcrPct: r.pcr_pct ?? 0,
-    creditCost: r.credit_cost ?? r.pcr_pct ?? 0,
+    creditCost: r.credit_cost ?? 0,
   }));
 }
 

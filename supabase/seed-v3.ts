@@ -536,21 +536,25 @@ function buildCorporateProvisioningECL(): Row[] {
     PROV_PERIODS.forEach((pp, pIdx) => {
       STAGES.forEach((stage, sIdx) => {
         const n = noise(sub.id, pIdx, sIdx + 1100);
-        const gross = +(totalGross * STAGE_GROSS_SHARE[sIdx] * n).toFixed(2);
-        // Credit cost drifts upward over time (Actual→Estimated→Projected)
+        const stageGross = +(totalGross * STAGE_GROSS_SHARE[sIdx] * n).toFixed(2);
+        // Credit cost = stage contribution to total CC (stage_prov / total_gross)
+        // Stages sum to Total CC: Stage1_CC + Stage2_CC + Stage3_CC = Total_CC
         const cc = +(STAGE_CC_BASE[sIdx] * pp.drift * noise(sub.id, pIdx, sIdx + 1200)).toFixed(6);
-        const provision = +(gross * cc).toFixed(2);
+        // Provision derived from total gross, not stage gross
+        const provision = +(totalGross * cc).toFixed(2);
+        // PCR = provision / stage_gross (different metric from credit cost)
+        const pcr = stageGross > 0 ? +(provision / stageGross).toFixed(6) : 0;
 
         rows.push({
           subsidiary_id: sub.id,
           period: pp.period,
           period_type: pp.type,
           ifrs_stage: stage,
-          gross_exposure: gross,
-          gross_exposure_usd: toUSD(gross, sub.currencyCode),
+          gross_exposure: stageGross,
+          gross_exposure_usd: toUSD(stageGross, sub.currencyCode),
           provision_amount: provision,
           provision_amount_usd: toUSD(provision, sub.currencyCode),
-          pcr_pct: cc,
+          pcr_pct: pcr,
           credit_cost: cc,
           report_date: REPORT_DATE,
         });
@@ -755,6 +759,11 @@ async function main() {
 
   console.log('Seeding corporate_maturity_profile...');
   await batchInsert('corporate_maturity_profile', buildCorporateMaturityProfile());
+
+  console.log('Cleaning corporate_provisioning_ecl (remove stale data)...');
+  const { error: delErr } = await supabase.from('corporate_provisioning_ecl').delete().gte('id', 0);
+  if (delErr) console.warn('  Warning: could not clean old provisioning rows:', delErr.message);
+  else console.log('  ✓ Old provisioning rows deleted');
 
   console.log('Seeding corporate_provisioning_ecl...');
   await batchInsert('corporate_provisioning_ecl', buildCorporateProvisioningECL());
