@@ -8,6 +8,7 @@ import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { sortPeriods } from '@/lib/period-utils';
 import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary } from '@/lib/types';
 
 interface Props {
@@ -18,12 +19,13 @@ interface Props {
   onTabChange?: (tabIndex: number) => void;
   unsecuredFPD?: ConsumerMetricRow[];
   groupExposure?: number;
+  consumerNCL?: number | null;
 }
 
 function getLatest(data: ConsumerMetricRow[], name: string): number | null {
   const row = data.find(d => d.metric === name);
   if (!row) return null;
-  const keys = Object.keys(row.values).sort();
+  const keys = sortPeriods(Object.keys(row.values));
   const v = keys.length > 0 ? row.values[keys[keys.length - 1]] : null;
   return typeof v === 'number' ? v : null;
 }
@@ -50,8 +52,8 @@ export function BusinessLineComparisonTable({
   consumerAum,
   onTabChange,
   unsecuredFPD = [],
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   groupExposure,
+  consumerNCL,
 }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
@@ -62,7 +64,7 @@ export function BusinessLineComparisonTable({
 
   const tradeO = tradeSummary?.totalAUM ?? 0;
   const corpPOS = corporateSummary?.totalPOS ?? 0;
-  const totalExposure = consumerAum + tradeO + corpPOS;
+  const totalExposure = groupExposure ?? (consumerAum + tradeO + corpPOS);
 
   // Blended Provision Coverage (exposure-weighted, Trade + Corporate)
   const tradePCR = tradeSummary?.provisionCoverage ?? null;
@@ -71,12 +73,20 @@ export function BusinessLineComparisonTable({
     ? (tradePCR * tradeO + corpPCR * corpPOS) / (tradeO + corpPOS)
     : tradePCR ?? corpPCR;
 
-  // Blended Credit Cost (exposure-weighted, Trade + Corporate)
+  // Blended Credit Cost (exposure-weighted, Consumer + Trade + Corporate)
   const tradeCC = tradeSummary?.creditCost ?? null;
   const corpCC = corporateSummary?.creditCost ?? null;
-  const blendedCC = tradeCC != null && corpCC != null && (tradeO + corpPOS) > 0
-    ? (tradeCC * tradeO + corpCC * corpPOS) / (tradeO + corpPOS)
-    : tradeCC ?? corpCC;
+  const blendedCC = (() => {
+    const parts: { rate: number; weight: number }[] = [];
+    if (consumerNCL != null) parts.push({ rate: consumerNCL, weight: consumerAum });
+    if (tradeCC != null) parts.push({ rate: tradeCC, weight: tradeO });
+    if (corpCC != null) parts.push({ rate: corpCC, weight: corpPOS });
+    if (parts.length === 0) return null;
+    const tw = parts.reduce((s, p) => s + p.weight, 0);
+    return tw > 0
+      ? parts.reduce((s, p) => s + p.rate * p.weight, 0) / tw
+      : parts.reduce((s, p) => s + p.rate, 0) / parts.length;
+  })();
 
   const stagePCR = corporateSummary?.stagePCR;
   const stageCC = corporateSummary?.stageCC;
@@ -136,7 +146,7 @@ export function BusinessLineComparisonTable({
     },
     {
       label: 'Credit Cost',
-      consumer: { value: '—' },
+      consumer: { value: consumerNCL != null ? formatPercent(consumerNCL) : '—' },
       trade: { value: tradeSummary ? formatPercent(tradeSummary.creditCost) : '—' },
       corporate: { value: corporateSummary ? formatPercent(corporateSummary.creditCost) : '—' },
       total: { value: blendedCC != null ? formatPercent(blendedCC) : '—' },

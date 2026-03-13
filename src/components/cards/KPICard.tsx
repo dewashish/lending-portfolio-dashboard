@@ -58,22 +58,25 @@ function Sparkline({ data, color, height = 24, width = 72, labels }: { data: num
       </defs>
       <path d={areaPath} fill={`url(#spark-${lineColor.replace('#', '')})`} />
       <path d={linePath} fill="none" stroke={lineColor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      {/* Interactive dots with tooltips */}
+      {/* Interactive dots with tooltips — large invisible hit area */}
       {points.map((p, i) => {
-        const label = labels?.[labels.length - data.length + i] ?? '';
+        const label = labels?.[i] ?? '';
         const pct = (data[i] * 100).toFixed(2);
         const title = label ? `${label}: ${pct}%` : `${pct}%`;
+        const isLast = i === points.length - 1;
         return (
           <Tooltip key={i} title={title} arrow placement="top">
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={i === points.length - 1 ? 2.5 : 1.5}
-              fill={i === points.length - 1 ? lineColor : 'transparent'}
-              stroke={lineColor}
-              strokeWidth={0.5}
-              style={{ cursor: 'pointer' }}
-            />
+            <g style={{ cursor: 'pointer' }}>
+              <circle cx={p.x} cy={p.y} r={6} fill="transparent" />
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={isLast ? 2.5 : 1.5}
+                fill={isLast ? lineColor : 'transparent'}
+                stroke={lineColor}
+                strokeWidth={0.5}
+              />
+            </g>
           </Tooltip>
         );
       })}

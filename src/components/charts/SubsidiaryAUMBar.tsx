@@ -145,7 +145,7 @@ export function SubsidiaryAUMBar({ data, onBarClick }: Props) {
   }, [sorted, d3Tokens, onBarClick, formatCurrency]);
 
   return (
-    <ChartContainer title="Subsidiary AUM" subtitle={`Consumer + Trade (${currency})`} empty={!sorted.length}>
+    <ChartContainer title="Subsidiary AUM" subtitle={`Consumer + Trade + Corporate (${currency})`} empty={!sorted.length}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

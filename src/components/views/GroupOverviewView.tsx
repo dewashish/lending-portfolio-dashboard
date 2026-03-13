@@ -12,6 +12,7 @@ import { useCurrencyFormat } from '@/lib/currency-context';
 import { RAG_COLORS } from '@/lib/constants';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import type { ScopeSelection, RAGStatus } from '@/lib/types';
+import { sortPeriods } from '@/lib/period-utils';
 import type { RiskHeatmapCell } from '@/components/charts/SubsidiaryRiskHeatmap';
 import { useGroupOverviewSummary } from '@/hooks/useOverviewData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
@@ -36,7 +37,7 @@ function getLatestConsumerMetric(
 ): number | null {
   const row = data.find(d => d.metric === name);
   if (!row) return null;
-  const keys = Object.keys(row.values).sort();
+  const keys = sortPeriods(Object.keys(row.values));
   const v = keys.length > 0 ? row.values[keys[keys.length - 1]] : null;
   return typeof v === 'number' ? v : null;
 }
@@ -47,7 +48,7 @@ function extractSparkline(
 ): number[] {
   const row = data.find(d => d.metric === name);
   if (!row) return [];
-  const keys = Object.keys(row.values).sort();
+  const keys = sortPeriods(Object.keys(row.values));
   return keys.slice(-6).map(k => {
     const v = row.values[k];
     return typeof v === 'number' ? v : 0;
@@ -80,6 +81,8 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
   const countryRisk = useMemo(() => data?.countryRisk ?? [], [data?.countryRisk]);
   const tradeAssetQuality = useMemo(() => data?.tradeAssetQuality ?? [], [data?.tradeAssetQuality]);
   const tradeEntityPerf = useMemo(() => data?.tradeEntityPerf ?? [], [data?.tradeEntityPerf]);
+  const corporatePOSBySubsidiary = useMemo(() => data?.corporatePOSBySubsidiary ?? {}, [data?.corporatePOSBySubsidiary]);
+  const corporateStageBalances = useMemo(() => data?.corporateStageBalances ?? { stage1: 0, stage2: 0, stage3: 0 }, [data?.corporateStageBalances]);
 
   // ── Derived KPIs ────────────────────────────────────────────────
   const totalConsumerAum = scorecard.reduce((s, r) => s + (r.consumerAumUsd ?? 0), 0);
@@ -108,13 +111,20 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       : (tradePCR + corpPCR) / 2
     : tradePCR ?? corpPCR;
 
+  const consumerNCL = getLatestConsumerMetric(consumerOverall, 'Net Credit Loss');
   const tradeCreditCost = tradeSummary?.creditCost ?? null;
   const corpCreditCost = corporateSummary?.creditCost ?? null;
-  const blendedCreditCost = tradeCreditCost != null && corpCreditCost != null
-    ? (totalTradeOutstanding + corporatePOS) > 0
-      ? (tradeCreditCost * totalTradeOutstanding + corpCreditCost * corporatePOS) / (totalTradeOutstanding + corporatePOS)
-      : (tradeCreditCost + corpCreditCost) / 2
-    : tradeCreditCost ?? corpCreditCost;
+  const blendedCreditCost = (() => {
+    const parts: { rate: number; weight: number }[] = [];
+    if (consumerNCL != null) parts.push({ rate: consumerNCL, weight: totalConsumerAum });
+    if (tradeCreditCost != null) parts.push({ rate: tradeCreditCost, weight: totalTradeOutstanding });
+    if (corpCreditCost != null) parts.push({ rate: corpCreditCost, weight: corporatePOS });
+    if (parts.length === 0) return null;
+    const totalWeight = parts.reduce((s, p) => s + p.weight, 0);
+    return totalWeight > 0
+      ? parts.reduce((s, p) => s + p.rate * p.weight, 0) / totalWeight
+      : parts.reduce((s, p) => s + p.rate, 0) / parts.length;
+  })();
 
   const kpis: KPIItem[] = [
     { label: 'Group AUM', value: formatCurrencyMM(groupAum) },
@@ -146,11 +156,12 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       label: 'Provision Coverage',
       value: blendedPCR != null ? formatPercent(blendedPCR) : '—',
       color: blendedPCR != null ? getColor('corp_pcr', blendedPCR) : undefined,
+      info: 'Exposure-weighted Trade + Corporate (Consumer: N/A)',
     },
     {
       label: 'Credit Cost',
       value: blendedCreditCost != null ? formatPercent(blendedCreditCost) : '—',
-      info: 'Blended: total provisions / total exposure (Trade + Corporate)',
+      info: 'Exposure-weighted: Consumer NCL + Trade + Corporate',
     },
   ];
 
@@ -302,6 +313,8 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         tradeOutstanding={totalTradeOutstanding}
         corporatePOS={corporatePOS}
         tradeAssetQuality={tradeAssetQuality}
+        corporatePOSBySubsidiary={corporatePOSBySubsidiary}
+        corporateStageBalances={corporateStageBalances}
         onTabChange={onTabChange}
         onScopeChange={onScopeChange}
       />
@@ -333,6 +346,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         onTabChange={onTabChange}
         unsecuredFPD={unsecuredFPD}
         groupExposure={groupAum}
+        consumerNCL={consumerNCL}
       />
 
       {/* Section 7: Enhanced Consolidated Scorecard */}

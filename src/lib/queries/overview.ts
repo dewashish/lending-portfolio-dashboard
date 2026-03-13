@@ -14,7 +14,7 @@ import type {
 import { applyScopeAsync } from './shared';
 import { fetchConsumerOverall, fetchConsumerUnsecuredFPD } from './consumer';
 import { fetchTradeExecutiveSummary, fetchTradeAssetQuality, fetchTradeEntityPerformance } from './trade';
-import { fetchCorporateExecutiveSummary } from './corporate';
+import { fetchCorporateExecutiveSummary, fetchCorporatePOSBySubsidiary, fetchCorporateStageBalances } from './corporate';
 import { fetchEWSEntitySummary, fetchFXRisk, fetchCountryRisk } from './risk';
 
 // ── Consolidated Scorecard Row ───────────────────────────────────
@@ -92,6 +92,8 @@ export interface GroupOverviewSummary {
   tradeAssetQuality: AssetQualityByEntity[];
   tradeEntityPerf: EntityPerformance[];
   unsecuredFPD: ConsumerMetricRow[];
+  corporatePOSBySubsidiary: Record<number, number>;
+  corporateStageBalances: { stage1: number; stage2: number; stage3: number };
 }
 
 export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise<GroupOverviewSummary> {
@@ -106,6 +108,8 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     tradeAssetQuality,
     tradeEntityPerf,
     unsecuredFPD,
+    corporatePOSBySubsidiary,
+    corporateStageBalances,
   ] = await Promise.all([
     fetchConsolidatedScorecard(scope).catch(() => [] as ConsolidatedScorecardRow[]),
     fetchTradeExecutiveSummary(scope).catch(() => null),
@@ -117,6 +121,8 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     fetchTradeAssetQuality(scope).catch(() => [] as AssetQualityByEntity[]),
     fetchTradeEntityPerformance(scope).catch(() => [] as EntityPerformance[]),
     fetchConsumerUnsecuredFPD(scope).catch(() => [] as ConsumerMetricRow[]),
+    fetchCorporatePOSBySubsidiary(scope).catch(() => ({} as Record<number, number>)),
+    fetchCorporateStageBalances(scope).catch(() => ({ stage1: 0, stage2: 0, stage3: 0 })),
   ]);
   return {
     scorecard,
@@ -129,5 +135,7 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     tradeAssetQuality,
     tradeEntityPerf,
     unsecuredFPD,
+    corporatePOSBySubsidiary,
+    corporateStageBalances,
   };
 }

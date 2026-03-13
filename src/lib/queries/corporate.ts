@@ -488,3 +488,47 @@ export async function fetchCorporatePipeline(scope?: ScopeSelection): Promise<Co
     pcrPct: r.pcr_pct ?? 0,
   }));
 }
+
+// ── Corporate POS by Subsidiary ──────────────────────────────────
+export async function fetchCorporatePOSBySubsidiary(
+  scope?: ScopeSelection,
+): Promise<Record<number, number>> {
+  let query = supabase
+    .from('corporate_portfolio')
+    .select('subsidiary_id, principal_outstanding');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  const result: Record<number, number> = {};
+  for (const r of (data ?? []) as Record<string, unknown>[]) {
+    const subId = r.subsidiary_id as number;
+    const pos = r.principal_outstanding as number;
+    result[subId] = (result[subId] ?? 0) + pos;
+  }
+  return result;
+}
+
+// ── Corporate Stage Balances (latest period) ─────────────────────
+export async function fetchCorporateStageBalances(
+  scope?: ScopeSelection,
+): Promise<{ stage1: number; stage2: number; stage3: number }> {
+  let query = supabase
+    .from('corporate_provisioning_ecl')
+    .select('ifrs_stage, gross_exposure, period');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  const rows = (data ?? []) as Record<string, unknown>[];
+  const periods = Array.from(new Set(rows.map(r => r.period as string))).sort();
+  const latestPeriod = periods[periods.length - 1] ?? '';
+  const latest = rows.filter(r => (r.period as string) === latestPeriod);
+  const result = { stage1: 0, stage2: 0, stage3: 0 };
+  for (const r of latest) {
+    const stage = r.ifrs_stage as string;
+    const exp = r.gross_exposure as number;
+    if (stage === 'Stage 1') result.stage1 += exp;
+    else if (stage === 'Stage 2') result.stage2 += exp;
+    else if (stage === 'Stage 3') result.stage3 += exp;
+  }
+  return result;
+}

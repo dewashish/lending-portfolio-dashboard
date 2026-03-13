@@ -13,6 +13,8 @@ interface Props {
   tradeOutstanding: number;
   corporatePOS: number;
   tradeAssetQuality: AssetQualityByEntity[];
+  corporatePOSBySubsidiary?: Record<number, number>;
+  corporateStageBalances?: { stage1: number; stage2: number; stage3: number };
   onTabChange?: (tabIndex: number) => void;
   onScopeChange?: (scope: ScopeSelection) => void;
 }
@@ -23,6 +25,8 @@ export function GroupPortfolioComposition({
   tradeOutstanding,
   corporatePOS,
   tradeAssetQuality,
+  corporatePOSBySubsidiary = {},
+  corporateStageBalances,
   onTabChange,
   onScopeChange,
 }: Props) {
@@ -35,7 +39,7 @@ export function GroupPortfolioComposition({
     name: s.subsidiary,
     shortCode: s.shortCode,
     subsidiaryId: s.subsidiaryId,
-    aum: (s.consumerAumUsd ?? 0) + (s.tradeOutstandingUsd ?? 0),
+    aum: (s.consumerAumUsd ?? 0) + (s.tradeOutstandingUsd ?? 0) + (corporatePOSBySubsidiary[s.subsidiaryId] ?? 0),
     rag: (s.ewsRagStatus as RAGStatus) ?? 'Green',
   }));
 
@@ -56,7 +60,7 @@ export function GroupPortfolioComposition({
         />
       </Box>
       <Box sx={{ minHeight: 360 }}>
-        <StagingDonut data={tradeAssetQuality} />
+        <StagingDonut data={tradeAssetQuality} corporateStages={corporateStageBalances} />
       </Box>
     </Box>
   );

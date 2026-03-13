@@ -12,6 +12,7 @@ const TOOLTIP_CLASS = 'staging-donut-tooltip';
 
 interface Props {
   data: AssetQualityByEntity[];
+  corporateStages?: { stage1: number; stage2: number; stage3: number };
 }
 
 const STAGE_COLORS: Record<string, string> = {
@@ -20,11 +21,11 @@ const STAGE_COLORS: Record<string, string> = {
   'Stage 3': '#f44336',
 };
 
-export function StagingDonut({ data }: Props) {
+export function StagingDonut({ data, corporateStages }: Props) {
   const { d3Tokens } = useThemeMode();
   const { formatCurrency } = useCurrencyFormat();
 
-  // Aggregate balances across all entities
+  // Aggregate balances across all entities (Trade + Corporate)
   const aggregated = data.reduce(
     (acc, row) => {
       acc['Stage 1'] += row.stage1Balance;
@@ -32,7 +33,11 @@ export function StagingDonut({ data }: Props) {
       acc['Stage 3'] += row.stage3Balance;
       return acc;
     },
-    { 'Stage 1': 0, 'Stage 2': 0, 'Stage 3': 0 } as Record<string, number>,
+    {
+      'Stage 1': corporateStages?.stage1 ?? 0,
+      'Stage 2': corporateStages?.stage2 ?? 0,
+      'Stage 3': corporateStages?.stage3 ?? 0,
+    } as Record<string, number>,
   );
 
   const pieData = Object.entries(aggregated).map(([stage, balance]) => ({
@@ -187,7 +192,7 @@ export function StagingDonut({ data }: Props) {
   );
 
   return (
-    <ChartContainer title="IFRS 9 Staging Distribution" height={340} empty={!data.length}>
+    <ChartContainer title="IFRS 9 Staging Distribution" subtitle="Trade + Corporate" height={340} empty={!data.length}>
       <svg ref={ref} width="100%" height={340} style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

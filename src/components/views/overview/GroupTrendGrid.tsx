@@ -3,6 +3,7 @@
 import { Box, Paper, Typography } from '@mui/material';
 import { KPICard } from '@/components/cards/KPICard';
 import { formatPercent } from '@/lib/format';
+import { sortPeriods } from '@/lib/period-utils';
 import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary } from '@/lib/types';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 function extractSparkline(data: ConsumerMetricRow[], metricName: string): number[] {
   const row = data.find(d => d.metric === metricName);
   if (!row) return [];
-  const keys = Object.keys(row.values).sort();
+  const keys = sortPeriods(Object.keys(row.values));
   return keys.slice(-6).map(k => {
     const v = row.values[k];
     return typeof v === 'number' ? v : 0;
@@ -25,7 +26,7 @@ function extractSparkline(data: ConsumerMetricRow[], metricName: string): number
 function extractLatest(data: ConsumerMetricRow[], metricName: string): number | null {
   const row = data.find(d => d.metric === metricName);
   if (!row) return null;
-  const keys = Object.keys(row.values).sort();
+  const keys = sortPeriods(Object.keys(row.values));
   const v = keys.length > 0 ? row.values[keys[keys.length - 1]] : null;
   return typeof v === 'number' ? v : null;
 }
@@ -33,7 +34,7 @@ function extractLatest(data: ConsumerMetricRow[], metricName: string): number | 
 function computeMoMTrend(data: ConsumerMetricRow[], metricName: string): number | undefined {
   const row = data.find(d => d.metric === metricName);
   if (!row) return undefined;
-  const keys = Object.keys(row.values).sort();
+  const keys = sortPeriods(Object.keys(row.values));
   if (keys.length < 2) return undefined;
   const curr = row.values[keys[keys.length - 1]];
   const prev = row.values[keys[keys.length - 2]];
@@ -44,7 +45,20 @@ function computeMoMTrend(data: ConsumerMetricRow[], metricName: string): number 
 function extractSparklineLabels(data: ConsumerMetricRow[], metricName: string): string[] {
   const row = data.find(d => d.metric === metricName);
   if (!row) return [];
-  return Object.keys(row.values).sort().slice(-6);
+  return sortPeriods(Object.keys(row.values)).slice(-6);
+}
+
+function buildSubtitle(data: ConsumerMetricRow[], metricName: string): string | undefined {
+  const row = data.find(d => d.metric === metricName);
+  if (!row) return undefined;
+  const keys = sortPeriods(Object.keys(row.values));
+  const last3 = keys.slice(-3);
+  if (last3.length === 0) return undefined;
+  return last3.map(k => {
+    const v = row.values[k];
+    const shortMonth = k.replace(/'.*/, '');
+    return `${shortMonth}: ${typeof v === 'number' ? (v * 100).toFixed(1) + '%' : '—'}`;
+  }).join('  ');
 }
 
 export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary, unsecuredFPD = [] }: Props) {
@@ -58,6 +72,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: '30+ DPD',
       value: dpd30 != null ? formatPercent(dpd30) : '—',
+      subtitle: buildSubtitle(consumerOverall, '30+ Amt%'),
       sparkline: extractSparkline(consumerOverall, '30+ Amt%'),
       sparklineLabels: extractSparklineLabels(consumerOverall, '30+ Amt%'),
       trend: computeMoMTrend(consumerOverall, '30+ Amt%'),
@@ -69,6 +84,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: '60+ DPD',
       value: dpd60 != null ? formatPercent(dpd60) : '—',
+      subtitle: buildSubtitle(consumerOverall, '60+ Amt%'),
       sparkline: extractSparkline(consumerOverall, '60+ Amt%'),
       sparklineLabels: extractSparklineLabels(consumerOverall, '60+ Amt%'),
       trend: computeMoMTrend(consumerOverall, '60+ Amt%'),
@@ -80,6 +96,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: '90+ DPD',
       value: dpd90 != null ? formatPercent(dpd90) : '—',
+      subtitle: buildSubtitle(consumerOverall, '90+ Amt%'),
       sparkline: extractSparkline(consumerOverall, '90+ Amt%'),
       sparklineLabels: extractSparklineLabels(consumerOverall, '90+ Amt%'),
       trend: computeMoMTrend(consumerOverall, '90+ Amt%'),
@@ -91,6 +108,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: 'FPD% (Unsecured)',
       value: unsecuredFpd != null ? formatPercent(unsecuredFpd) : '—',
+      subtitle: buildSubtitle(unsecuredFPD, 'FPD% (Unsecured)'),
       sparkline: extractSparkline(unsecuredFPD, 'FPD% (Unsecured)'),
       sparklineLabels: extractSparklineLabels(unsecuredFPD, 'FPD% (Unsecured)'),
       trend: computeMoMTrend(unsecuredFPD, 'FPD% (Unsecured)'),
@@ -102,6 +120,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: 'Net Credit Loss',
       value: ncl != null ? formatPercent(ncl) : '—',
+      subtitle: buildSubtitle(consumerOverall, 'Net Credit Loss'),
       sparkline: extractSparkline(consumerOverall, 'Net Credit Loss'),
       sparklineLabels: extractSparklineLabels(consumerOverall, 'Net Credit Loss'),
       trend: computeMoMTrend(consumerOverall, 'Net Credit Loss'),
@@ -113,6 +132,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: 'Trade NPL',
       value: tradeSummary ? formatPercent(tradeSummary.nplRatio) : '—',
+      subtitle: undefined as string | undefined,
       sparkline: undefined as number[] | undefined,
       sparklineLabels: undefined as string[] | undefined,
       trend: undefined as number | undefined,
@@ -124,6 +144,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
     {
       label: 'Corp NPA',
       value: corporateSummary ? formatPercent(corporateSummary.npaRate) : '—',
+      subtitle: undefined as string | undefined,
       sparkline: undefined as number[] | undefined,
       sparklineLabels: undefined as string[] | undefined,
       trend: undefined as number | undefined,
@@ -145,6 +166,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
             key={c.label}
             label={c.label}
             value={c.value}
+            subtitle={c.subtitle}
             sparkline={c.sparkline}
             sparklineLabels={c.sparklineLabels}
             trend={c.trend != null ? { value: c.trend } : undefined}
