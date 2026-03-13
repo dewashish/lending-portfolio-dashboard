@@ -158,13 +158,39 @@ export async function fetchCorporatePARTrend(scope?: ScopeSelection): Promise<Co
   const { data, error } = await query;
   if (error) throw error;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data ?? []) as any[]).map((r) => ({
-    period: r.period,
-    dpdBucket: r.dpd_bucket,
-    parRate: r.par_rate ?? 0,
-    totalPOS: r.total_pos_usd ?? r.total_pos ?? 0,
-    delinquentPOS: r.delinquent_pos_usd ?? r.delinquent_pos ?? 0,
+  const rawRows = ((data ?? []) as any[]).map((r) => ({
+    period: r.period as string,
+    dpdBucket: r.dpd_bucket as string,
+    parRate: (r.par_rate ?? 0) as number,
+    totalPOS: ((r.total_pos_usd ?? r.total_pos ?? 0) as number),
+    delinquentPOS: ((r.delinquent_pos_usd ?? r.delinquent_pos ?? 0) as number),
   }));
+
+  // Aggregate by (period, dpdBucket) — at Group/Region level multiple subsidiaries
+  // contribute rows for the same period+bucket; compute exposure-weighted PAR rate.
+  const grouped = new Map<string, { totalPOS: number; delinquentPOS: number; period: string; dpdBucket: string }>();
+  rawRows.forEach((r) => {
+    const key = `${r.period}||${r.dpdBucket}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.totalPOS += r.totalPOS;
+      existing.delinquentPOS += r.delinquentPOS;
+    } else {
+      grouped.set(key, { period: r.period, dpdBucket: r.dpdBucket, totalPOS: r.totalPOS, delinquentPOS: r.delinquentPOS });
+    }
+  });
+
+  const result: CorporatePARTrendRow[] = [];
+  grouped.forEach((g) => {
+    result.push({
+      period: g.period,
+      dpdBucket: g.dpdBucket,
+      parRate: g.totalPOS > 0 ? g.delinquentPOS / g.totalPOS : 0,
+      totalPOS: g.totalPOS,
+      delinquentPOS: g.delinquentPOS,
+    });
+  });
+  return result;
 }
 
 export async function fetchCorporatePortfolioMetrics(scope?: ScopeSelection): Promise<CorporatePortfolioRow[]> {
