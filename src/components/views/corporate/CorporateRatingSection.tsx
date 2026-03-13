@@ -240,23 +240,34 @@ export function CorporateRatingSection({ scope }: Props) {
     const rows = migrationData ?? [];
     const upgrades = rows.filter((r) => r.migrationDirection.toLowerCase() === 'upgrade');
     const downgrades = rows.filter((r) => r.migrationDirection.toLowerCase() === 'downgrade');
+    const stable = rows.filter((r) => r.migrationDirection.toLowerCase() === 'stable');
     const net = upgrades.length - downgrades.length;
     const watchToNpa = rows.filter(
       (r) => ['C/D', 'Unrated'].includes(r.currentRating) && !['C/D', 'Unrated'].includes(r.priorRating),
     ).length;
+
+    const upgradeExposure = upgrades.reduce((s, r) => s + r.exposure, 0);
+    const downgradeExposure = downgrades.reduce((s, r) => s + r.exposure, 0);
+    const stableExposure = stable.reduce((s, r) => s + r.exposure, 0);
 
     return [
       {
         label: 'Total Upgrades (Month)',
         value: String(upgrades.length),
         color: '#4caf50',
-        subtitle: 'Borrowers upgraded this month',
+        subtitle: `Exposure: ${formatCurrency(upgradeExposure)}`,
       },
       {
         label: 'Total Downgrades (Month)',
         value: String(downgrades.length),
         color: '#f44336',
-        subtitle: 'Borrowers downgraded this month',
+        subtitle: `Exposure: ${formatCurrency(downgradeExposure)}`,
+      },
+      {
+        label: 'Stable Ratings (Month)',
+        value: String(stable.length),
+        color: '#78909c',
+        subtitle: `Exposure: ${formatCurrency(stableExposure)}`,
       },
       {
         label: 'Net Rating Movement',
@@ -271,7 +282,7 @@ export function CorporateRatingSection({ scope }: Props) {
         subtitle: 'Accounts moved to NPA this month',
       },
     ];
-  }, [migrationData]);
+  }, [migrationData, formatCurrency]);
 
   // ── Bar chart data (latest visible period) ──
   const latestPeriod = visiblePeriods[visiblePeriods.length - 1] ?? '';
