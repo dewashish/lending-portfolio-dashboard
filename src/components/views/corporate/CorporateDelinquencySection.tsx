@@ -201,10 +201,12 @@ export function CorporateDelinquencySection({ scope }: Props) {
   const kpiItems = useMemo((): KPIItem[] => {
     const delinqPOS = rows.filter((r) => r.currentDPD > 0).reduce((s, r) => s + r.currentPOS, 0);
     const par30POS = rows.filter((r) => r.currentDPD > 30).reduce((s, r) => s + r.currentPOS, 0);
+    const par60POS = rows.filter((r) => r.currentDPD > 60).reduce((s, r) => s + r.currentPOS, 0);
     const par90POS = rows.filter((r) => r.currentDPD > 90).reduce((s, r) => s + r.currentPOS, 0);
 
     const parXRate = totalPOS > 0 ? delinqPOS / totalPOS : 0;
     const par30Rate = totalPOS > 0 ? par30POS / totalPOS : 0;
+    const par60Rate = totalPOS > 0 ? par60POS / totalPOS : 0;
     const par90Rate = totalPOS > 0 ? par90POS / totalPOS : 0;
 
     return [
@@ -221,6 +223,13 @@ export function CorporateDelinquencySection({ scope }: Props) {
         color: '#ff9800',
         subtitle: 'Past due 30+ days',
         info: 'Exposure-weighted: POS with DPD > 30 / total POS',
+      },
+      {
+        label: 'PAR 60+ Rate',
+        value: formatPercent(par60Rate),
+        color: '#e65100',
+        subtitle: 'Past due 60+ days',
+        info: 'Exposure-weighted: POS with DPD > 60 / total POS',
       },
       {
         label: 'PAR 90+ (NPA)',
