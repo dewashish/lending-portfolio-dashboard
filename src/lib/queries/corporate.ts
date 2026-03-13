@@ -271,6 +271,33 @@ export async function fetchCorporateTopDisbursements(scope?: ScopeSelection): Pr
   }));
 }
 
+export async function fetchCorporateTopSanctioned(scope?: ScopeSelection): Promise<CorporateTopCustomerRow[]> {
+  let query = supabase.from('corporate_top_customers').select('*').order('sanctioned_limit_usd', { ascending: false });
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    customerName: r.customer_name,
+    sector: r.sector,
+    sanctionedLimit: r.sanctioned_limit_usd ?? r.sanctioned_limit ?? 0,
+    disbursementLimit: r.disbursement_limit_usd ?? r.disbursement_limit ?? 0,
+    disbursedAmount: r.disbursed_amount_usd ?? r.disbursed_amount ?? 0,
+    currentPOS: r.current_pos_usd ?? r.current_pos ?? 0,
+    facilityType: r.facility_type ?? '',
+    riskRating: r.risk_rating ?? '',
+    dpd: r.dpd ?? 0,
+    ifrsStage: r.ifrs_stage ?? 'Stage 1',
+    rankByDisbursement: r.rank_by_disbursement ?? 0,
+    rankByPOS: r.rank_by_pos ?? 0,
+    pceAmount: r.pce_amount_usd ?? r.pce_amount ?? 0,
+    irr: r.irr ?? null,
+    securityType: r.security_type ?? '',
+    securityCover: r.security_cover ?? 0,
+    industry: r.industry ?? '',
+  }));
+}
+
 export async function fetchCorporateIndustryConcentration(scope?: ScopeSelection): Promise<CorporateIndustryConcentrationRow[]> {
   let query = supabase.from('corporate_industry_concentration').select('*').order('portfolio_share', { ascending: false });
   query = await applyScopeAsync(query, scope);

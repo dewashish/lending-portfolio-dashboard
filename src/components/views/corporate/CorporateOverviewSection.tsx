@@ -35,6 +35,7 @@ import {
   useCorporatePortfolioMetrics,
   useCorporateTopCustomers,
   useCorporateTopDisbursements,
+  useCorporateTopSanctioned,
   useCorporateIndustryConcentration,
   useCorporateCollateralAnalysis,
   useCorporateMaturityProfile,
@@ -220,7 +221,7 @@ function TopNTable({
   formatCurrency,
 }: {
   data: CorporateTopCustomerRow[];
-  amountField: 'disbursedAmount' | 'currentPOS';
+  amountField: 'disbursedAmount' | 'currentPOS' | 'sanctionedLimit';
   amountLabel: string;
   formatCurrency: (v: number) => string;
 }) {
@@ -388,6 +389,7 @@ export function CorporateOverviewSection({ scope }: Props) {
   const { data: portfolio, isLoading: l1 } = useCorporatePortfolioMetrics(scope);
   const { data: topDisbursements, isLoading: l2 } = useCorporateTopDisbursements(scope);
   const { data: topCustomers, isLoading: l3 } = useCorporateTopCustomers(scope);
+  const { data: topSanctioned, isLoading: l9 } = useCorporateTopSanctioned(scope);
   const { data: industry, isLoading: l4 } = useCorporateIndustryConcentration(scope);
   const { data: collateral, isLoading: l5 } = useCorporateCollateralAnalysis(scope);
   const { data: maturity, isLoading: l6 } = useCorporateMaturityProfile(scope);
@@ -397,7 +399,7 @@ export function CorporateOverviewSection({ scope }: Props) {
   // ── State ──
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
   const [topN, setTopN] = useState<number>(20);
-  const [customerTab, setCustomerTab] = useState<'disbursement' | 'pos'>('disbursement');
+  const [customerTab, setCustomerTab] = useState<'disbursement' | 'pos' | 'sanctioned'>('disbursement');
   const [sectorTab, setSectorTab] = useState<'disbursement' | 'pos'>('disbursement');
   const [collateralFilter, setCollateralFilter] = useState<string | null>(null);
 
@@ -562,9 +564,13 @@ export function CorporateOverviewSection({ scope }: Props) {
 
   // Top N customer data based on tab
   const visibleTopCustomers = useMemo(() => {
-    const source = customerTab === 'disbursement' ? (topDisbursements ?? []) : (topCustomers ?? []);
+    const source = customerTab === 'disbursement'
+      ? (topDisbursements ?? [])
+      : customerTab === 'sanctioned'
+        ? (topSanctioned ?? [])
+        : (topCustomers ?? []);
     return topN === -1 ? source : source.slice(0, topN);
-  }, [customerTab, topDisbursements, topCustomers, topN]);
+  }, [customerTab, topDisbursements, topCustomers, topSanctioned, topN]);
 
   // Maturity pivot
   const maturityPivot = useMemo(() => {
@@ -621,7 +627,7 @@ export function CorporateOverviewSection({ scope }: Props) {
   };
 
   // ── Loading ──
-  if (l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8) return <LoadingSkeleton />;
+  if (l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9) return <LoadingSkeleton />;
 
   const pdRows = pdDist ?? [];
   const pipelineRows = pipelineData ?? [];
@@ -763,6 +769,7 @@ export function CorporateOverviewSection({ scope }: Props) {
           >
             <Tab label="Top Disbursements" value="disbursement" />
             <Tab label="Top Principal O/s" value="pos" />
+            <Tab label="Top Sanctioned" value="sanctioned" />
           </Tabs>
           <FormControl size="small" sx={{ minWidth: 90 }}>
             <InputLabel sx={{ fontSize: '0.72rem' }}>Show</InputLabel>
@@ -784,14 +791,14 @@ export function CorporateOverviewSection({ scope }: Props) {
             <SectorBreakdownChart
               data={industry ?? []}
               period={visiblePeriods[visiblePeriods.length - 1] ?? ''}
-              valueField={customerTab === 'disbursement' ? 'disbursement' : 'pos'}
+              valueField={customerTab === 'pos' ? 'pos' : 'disbursement'}
             />
           </Grid>
           <Grid item xs={12} md={8}>
             <TopNTable
               data={visibleTopCustomers}
-              amountField={customerTab === 'disbursement' ? 'disbursedAmount' : 'currentPOS'}
-              amountLabel={customerTab === 'disbursement' ? 'Disbursed' : 'Principal O/s'}
+              amountField={customerTab === 'disbursement' ? 'disbursedAmount' : customerTab === 'sanctioned' ? 'sanctionedLimit' : 'currentPOS'}
+              amountLabel={customerTab === 'disbursement' ? 'Disbursed' : customerTab === 'sanctioned' ? 'Sanctioned' : 'Principal O/s'}
               formatCurrency={formatCurrency}
             />
           </Grid>

@@ -66,6 +66,13 @@ export function useCorporateTopDisbursements(scope?: ScopeSelection) {
   );
 }
 
+export function useCorporateTopSanctioned(scope?: ScopeSelection) {
+  return useSWR(
+    scopeKey('corporate-top-sanctioned', scope),
+    () => queries.fetchCorporateTopSanctioned(scope),
+  );
+}
+
 export function useCorporatePDDistribution(scope?: ScopeSelection) {
   return useSWR(
     scopeKey('corporate-pd-distribution', scope),
