@@ -414,12 +414,20 @@ export interface CovenantTrackingRow {
   covenantType: string;
   covenantDescription: string;
   covenantFrequency: string;
+  creationDate: string;
   submissionDate: string;
   approvalForExtension: string;
+  extendedClosureDate: string | null;
   npaFlag: boolean;
   restructuredFlag: boolean;
   watchlistFlag: boolean;
   writeoffFlag: boolean;
+  rmName: string;
+  rmEmail: string;
+  rmPhone: string;
+  rmDepartment: string;
+  breached: boolean;
+  daysSinceBreach: number;
 }
 
 export interface CorporateWatchlistRow {

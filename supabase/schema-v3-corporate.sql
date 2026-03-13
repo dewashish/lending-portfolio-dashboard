@@ -234,3 +234,11 @@ ALTER TABLE corporate_top_customers
 ALTER TABLE corporate_provisioning_ecl
   ADD COLUMN IF NOT EXISTS period_type TEXT DEFAULT 'Actual',
   ADD COLUMN IF NOT EXISTS credit_cost NUMERIC DEFAULT 0;
+
+-- ============================================================================
+-- v0.4.7: Add RM profile fields to corporate_covenants
+-- ============================================================================
+ALTER TABLE corporate_covenants
+  ADD COLUMN IF NOT EXISTS rm_email TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS rm_phone TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS rm_department TEXT DEFAULT '';

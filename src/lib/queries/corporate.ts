@@ -22,8 +22,7 @@ import type {
 import { applyScopeAsync } from './shared';
 
 // ── Type aliases ─────────────────────────────────────────────────
-// WatchlistDbRow removed — using any[] cast for new columns not in generated types
-type CovenantDbRow = Database['public']['Tables']['corporate_covenants']['Row'];
+// WatchlistDbRow, CovenantDbRow removed — using any[] cast for new columns not in generated types
 type DelinquencyDbRow = Database['public']['Tables']['corporate_delinquency']['Row'];
 type PortfolioMetricDbRow = Database['public']['Tables']['corporate_portfolio_metrics']['Row'];
 
@@ -62,7 +61,8 @@ export async function fetchCorporateCovenants(scope?: ScopeSelection): Promise<C
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
-  return ((data ?? []) as CovenantDbRow[]).map((r) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
     groupId: r.group_id,
     custId: r.cust_id,
     customerName: r.customer_name,
@@ -78,12 +78,20 @@ export async function fetchCorporateCovenants(scope?: ScopeSelection): Promise<C
     covenantType: r.covenant_type ?? '',
     covenantDescription: r.covenant_description ?? '',
     covenantFrequency: r.covenant_frequency ?? '',
+    creationDate: r.creation_date ?? '',
     submissionDate: r.submission_date ?? '',
     approvalForExtension: r.approval_for_extension ?? '',
-    npaFlag: r.npa_flag,
-    restructuredFlag: r.restructured_flag,
-    watchlistFlag: r.watchlist_flag,
-    writeoffFlag: r.writeoff_flag,
+    extendedClosureDate: r.extended_closure_date ?? null,
+    npaFlag: r.npa_flag ?? false,
+    restructuredFlag: r.restructured_flag ?? false,
+    watchlistFlag: r.watchlist_flag ?? false,
+    writeoffFlag: r.writeoff_flag ?? false,
+    rmName: r.rm_name ?? '',
+    rmEmail: r.rm_email ?? '',
+    rmPhone: r.rm_phone ?? '',
+    rmDepartment: r.rm_department ?? '',
+    breached: r.breached ?? false,
+    daysSinceBreach: r.days_since_breach ?? 0,
   }));
 }
 

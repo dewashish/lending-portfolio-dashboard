@@ -16,6 +16,8 @@ import {
   FormControl,
   Select,
   MenuItem,
+  Popover,
+  Link,
 } from '@mui/material';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { KPIRow } from '@/components/cards/KPIRow';
@@ -44,6 +46,8 @@ export function CorporateCovenantSection({ scope }: Props) {
   const [frequencyFilter, setFrequencyFilter] = useState<string | null>(null);
   const [flagFilter, setFlagFilter] = useState<string | null>(null);
   const [rowLimit, setRowLimit] = useState<number>(20);
+  const [rmAnchor, setRmAnchor] = useState<HTMLElement | null>(null);
+  const [rmDetail, setRmDetail] = useState<{ name: string; email: string; phone: string; dept: string } | null>(null);
 
   const rows = useMemo(() => covenants ?? [], [covenants]);
 
@@ -299,6 +303,7 @@ export function CorporateCovenantSection({ scope }: Props) {
               <TableHead>
                 <TableRow sx={{ bgcolor: HDR_BG }}>
                   <TableCell sx={HDR}>Customer</TableCell>
+                  <TableCell sx={HDR}>RM</TableCell>
                   <TableCell sx={HDR}>Facility Type</TableCell>
                   <TableCell align="right" sx={HDR}>Sanctioned</TableCell>
                   <TableCell align="right" sx={HDR}>Disbursed</TableCell>
@@ -310,7 +315,10 @@ export function CorporateCovenantSection({ scope }: Props) {
                   <TableCell sx={HDR}>Covenant Type</TableCell>
                   <TableCell sx={HDR}>Description</TableCell>
                   <TableCell sx={HDR}>Frequency</TableCell>
+                  <TableCell sx={HDR}>Creation Date</TableCell>
                   <TableCell sx={HDR}>Submission Date</TableCell>
+                  <TableCell sx={HDR}>Extension</TableCell>
+                  <TableCell sx={HDR}>Extended Closure</TableCell>
                   <TableCell sx={HDR}>Flags</TableCell>
                 </TableRow>
               </TableHead>
@@ -318,6 +326,24 @@ export function CorporateCovenantSection({ scope }: Props) {
                 {displayRows.map((row, idx) => (
                   <TableRow key={idx} hover>
                     <TableCell sx={CELL_TEXT}>{row.customerName}</TableCell>
+                    <TableCell sx={CELL_TEXT}>
+                      {row.rmName ? (
+                        <Link
+                          component="button"
+                          variant="body2"
+                          underline="hover"
+                          sx={{ fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          onClick={(e) => {
+                            setRmAnchor(e.currentTarget);
+                            setRmDetail({ name: row.rmName, email: row.rmEmail, phone: row.rmPhone, dept: row.rmDepartment });
+                          }}
+                        >
+                          {row.rmName}
+                        </Link>
+                      ) : (
+                        '\u2014'
+                      )}
+                    </TableCell>
                     <TableCell sx={CELL_TEXT}>{row.facilityType}</TableCell>
                     <TableCell align="right" sx={CELL}>{formatCurrency(row.sanctionedLimit)}</TableCell>
                     <TableCell align="right" sx={CELL}>{formatCurrency(row.disbursedAmount)}</TableCell>
@@ -340,7 +366,10 @@ export function CorporateCovenantSection({ scope }: Props) {
                       {row.covenantDescription}
                     </TableCell>
                     <TableCell sx={CELL_TEXT}>{row.covenantFrequency}</TableCell>
+                    <TableCell sx={CELL_TEXT}>{row.creationDate || '\u2014'}</TableCell>
                     <TableCell sx={CELL_TEXT}>{row.submissionDate}</TableCell>
+                    <TableCell sx={CELL_TEXT}>{row.approvalForExtension || '\u2014'}</TableCell>
+                    <TableCell sx={CELL_TEXT}>{row.extendedClosureDate || '\u2014'}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                         {row.npaFlag && (
@@ -364,6 +393,13 @@ export function CorporateCovenantSection({ scope }: Props) {
                             sx={{ fontSize: '0.6rem', height: 18, bgcolor: 'rgba(156,39,176,0.15)', color: '#ce93d8' }}
                           />
                         )}
+                        {row.breached && (
+                          <Chip
+                            label={`Breach ${row.daysSinceBreach}d`}
+                            size="small"
+                            sx={{ fontSize: '0.6rem', height: 18, bgcolor: 'rgba(244,67,54,0.10)', color: '#ef5350' }}
+                          />
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -373,6 +409,40 @@ export function CorporateCovenantSection({ scope }: Props) {
           </TableContainer>
         )}
       </Card>
+
+      {/* RM Profile Popover */}
+      <Popover
+        open={Boolean(rmAnchor)}
+        anchorEl={rmAnchor}
+        onClose={() => { setRmAnchor(null); setRmDetail(null); }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+      >
+        {rmDetail && (
+          <Box sx={{ p: 2, minWidth: 240 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>
+              {rmDetail.name}
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                Department: <strong>{rmDetail.dept}</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Email:{' '}
+                <Link href={`mailto:${rmDetail.email}`} underline="hover" sx={{ fontSize: '0.72rem' }}>
+                  {rmDetail.email}
+                </Link>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Phone:{' '}
+                <Link href={`tel:${rmDetail.phone}`} underline="hover" sx={{ fontSize: '0.72rem' }}>
+                  {rmDetail.phone}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        )}
+      </Popover>
     </Box>
   );
 }

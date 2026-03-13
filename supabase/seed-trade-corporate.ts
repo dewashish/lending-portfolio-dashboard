@@ -1178,9 +1178,28 @@ function buildCorporateCovenants(): Row[] {
       const creationDate = new Date(disbDate);
       creationDate.setDate(creationDate.getDate() - Math.round(noiseRange(5, 30, sub.id, ci, 1321)));
 
-      // RM names pool
-      const rmNames = ['Ahmed Hassan', 'Priya Sharma', 'Milan Jovic', 'Carlos Gutierrez', 'Fatima El-Sayed', 'Raj Patel', 'Maria Rodriguez', 'Chen Wei'];
-      const rmName = rmNames[Math.round(noiseRange(0, rmNames.length - 1, sub.id, ci, 1322))];
+      // Extended closure date: set for approved extensions (30-90 days after submission)
+      let extendedClosureDate: string | null = null;
+      if (approvalForExtension === 'Approved') {
+        const extDate = new Date(submissionDate);
+        extDate.setDate(extDate.getDate() + Math.round(noiseRange(30, 90, sub.id, ci, 1323)));
+        extendedClosureDate = extDate.toISOString().slice(0, 10);
+      }
+
+      // RM profile pool
+      const rmProfiles = [
+        { name: 'Ahmed Hassan', email: 'ahmed.hassan@samman.com', phone: '+91 98765 43210', dept: 'Corporate Banking' },
+        { name: 'Priya Sharma', email: 'priya.sharma@samman.com', phone: '+91 98765 43211', dept: 'Risk Management' },
+        { name: 'Milan Jovic', email: 'milan.jovic@mirabank.rs', phone: '+381 63 123 4567', dept: 'Corporate Banking' },
+        { name: 'Carlos Gutierrez', email: 'carlos.gutierrez@lulobank.co', phone: '+57 310 876 5432', dept: 'Credit Risk' },
+        { name: 'Fatima El-Sayed', email: 'fatima.elsayed@beltone.eg', phone: '+20 100 876 5432', dept: 'Corporate Finance' },
+        { name: 'Raj Patel', email: 'raj.patel@samman.com', phone: '+91 98765 43212', dept: 'Relationship Management' },
+        { name: 'Maria Rodriguez', email: 'maria.rodriguez@lulobank.co', phone: '+57 320 654 3210', dept: 'Corporate Banking' },
+        { name: 'Chen Wei', email: 'chen.wei@fwbl.pk', phone: '+92 321 987 6543', dept: 'Credit Administration' },
+      ];
+      const rmIdx = Math.round(noiseRange(0, rmProfiles.length - 1, sub.id, ci, 1322));
+      const rm = rmProfiles[rmIdx];
+      const rmName = rm.name;
 
       rows.push({
         subsidiary_id: sub.id,
@@ -1209,7 +1228,11 @@ function buildCorporateCovenants(): Row[] {
         watchlist_flag: watchlistFlag,
         writeoff_flag: writeoffFlag,
         creation_date: creationDate.toISOString().slice(0, 10),
+        extended_closure_date: extendedClosureDate,
         rm_name: rmName,
+        rm_email: rm.email,
+        rm_phone: rm.phone,
+        rm_department: rm.dept,
         breached: isBreached,
         days_since_breach: daysSinceBreach,
         report_date: REPORT_DATE,
