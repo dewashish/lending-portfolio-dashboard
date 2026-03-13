@@ -12,7 +12,7 @@ import type {
   CorporatePortfolioSummary,
 } from '../types';
 import { applyScopeAsync } from './shared';
-import { fetchConsumerOverall } from './consumer';
+import { fetchConsumerOverall, fetchConsumerUnsecuredFPD } from './consumer';
 import { fetchTradeExecutiveSummary, fetchTradeAssetQuality, fetchTradeEntityPerformance } from './trade';
 import { fetchCorporateExecutiveSummary } from './corporate';
 import { fetchEWSEntitySummary, fetchFXRisk, fetchCountryRisk } from './risk';
@@ -91,6 +91,7 @@ export interface GroupOverviewSummary {
   countryRisk: CountryRiskRow[];
   tradeAssetQuality: AssetQualityByEntity[];
   tradeEntityPerf: EntityPerformance[];
+  unsecuredFPD: ConsumerMetricRow[];
 }
 
 export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise<GroupOverviewSummary> {
@@ -104,6 +105,7 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     countryRisk,
     tradeAssetQuality,
     tradeEntityPerf,
+    unsecuredFPD,
   ] = await Promise.all([
     fetchConsolidatedScorecard(scope).catch(() => [] as ConsolidatedScorecardRow[]),
     fetchTradeExecutiveSummary(scope).catch(() => null),
@@ -114,6 +116,7 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     fetchCountryRisk(scope).catch(() => [] as CountryRiskRow[]),
     fetchTradeAssetQuality(scope).catch(() => [] as AssetQualityByEntity[]),
     fetchTradeEntityPerformance(scope).catch(() => [] as EntityPerformance[]),
+    fetchConsumerUnsecuredFPD(scope).catch(() => [] as ConsumerMetricRow[]),
   ]);
   return {
     scorecard,
@@ -125,5 +128,6 @@ export async function fetchGroupOverviewSummary(scope?: ScopeSelection): Promise
     countryRisk,
     tradeAssetQuality,
     tradeEntityPerf,
+    unsecuredFPD,
   };
 }

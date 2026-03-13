@@ -421,6 +421,28 @@ export async function fetchCorporateExecutiveSummary(scope?: ScopeSelection): Pr
   const totalProvision = latestProv.reduce((s, r) => s + r.provisionAmount, 0);
   const pcr = totalGross > 0 ? totalProvision / totalGross : 0;
 
+  // Credit cost = total provisions / total gross exposure
+  const creditCost = totalGross > 0 ? totalProvision / totalGross : 0;
+
+  // Stage-level PCR and Credit Cost (latest period only)
+  const provPeriods = Array.from(new Set(latestProv.map(r => r.period))).sort();
+  const latestPeriod = provPeriods[provPeriods.length - 1] ?? '';
+  const latestRows = latestProv.filter(r => r.period === latestPeriod);
+
+  const findStage = (stage: string) => latestRows.find(r => r.ifrsStage === stage) ?? null;
+  const s1 = findStage('Stage 1'), s2 = findStage('Stage 2'), s3 = findStage('Stage 3');
+  const stagePCR = {
+    stage1: s1 && s1.grossExposure > 0 ? s1.provisionAmount / s1.grossExposure : 0,
+    stage2: s2 && s2.grossExposure > 0 ? s2.provisionAmount / s2.grossExposure : 0,
+    stage3: s3 && s3.grossExposure > 0 ? s3.provisionAmount / s3.grossExposure : 0,
+  };
+  const latestTotalGross = latestRows.reduce((s, r) => s + r.grossExposure, 0);
+  const stageCC = {
+    stage1: s1 && latestTotalGross > 0 ? s1.provisionAmount / latestTotalGross : 0,
+    stage2: s2 && latestTotalGross > 0 ? s2.provisionAmount / latestTotalGross : 0,
+    stage3: s3 && latestTotalGross > 0 ? s3.provisionAmount / latestTotalGross : 0,
+  };
+
   return {
     totalPOS,
     totalDisbursement,
@@ -432,6 +454,9 @@ export async function fetchCorporateExecutiveSummary(scope?: ScopeSelection): Pr
     provisionCoverageRatio: pcr,
     watchlistCount: watchlist.length,
     delinquentCount,
+    creditCost,
+    stagePCR,
+    stageCC,
   };
 }
 

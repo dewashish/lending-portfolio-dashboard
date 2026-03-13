@@ -529,6 +529,7 @@ export async function generateTradeExecSummary(scope?: ScopeSelection): Promise<
     avgEWSScore: 0,
     watchlistCount: 0,
     watchlistExposure: 0,
+    creditCost: 0,
   };
 
   const data: TradeExecData = {

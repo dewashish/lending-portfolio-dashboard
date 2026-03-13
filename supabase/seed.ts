@@ -369,6 +369,7 @@ function buildConsumerOverallMetrics(): Row[] {
     { metric_type: 'Delinquency', metric: '30+ Rate', baseValues: [0.062, 0.060, 0.058, 0.055, 0.052, 0.049, 0.047], benchmark: 0.06, isRate: true, isAbsolute: false },
     { metric_type: 'Delinquency', metric: '90+ Rate', baseValues: [0.022, 0.021, 0.020, 0.019, 0.018, 0.017, 0.016], benchmark: 0.02, isRate: true, isAbsolute: false },
     { metric_type: 'Delinquency', metric: '30+ Amt%', baseValues: [0.062, 0.058, 0.055, 0.053, 0.050, 0.048, 0.045], benchmark: 0.06, isRate: true, isAbsolute: false },
+    { metric_type: 'Delinquency', metric: '60+ Amt%', baseValues: [0.040, 0.038, 0.035, 0.033, 0.031, 0.029, 0.027], benchmark: 0.04, isRate: true, isAbsolute: false },
     { metric_type: 'Delinquency', metric: '90+ Amt%', baseValues: [0.022, 0.021, 0.019, 0.018, 0.017, 0.016, 0.015], benchmark: 0.02, isRate: true, isAbsolute: false },
 
     // Origination Quality
@@ -440,6 +441,7 @@ function buildConsumerProductMetrics(): Row[] {
     { metric_type: 'Book Size and Growth', metric: 'New Bookings', baseValues: [0.058, 0.062, 0.060, 0.065, 0.063, 0.068, 0.073], benchmark: null, isRate: false, isAbsolute: false },
     { metric_type: 'Book Size and Growth', metric: 'Wt Avg ROI', baseValues: [0.158, 0.156, 0.162, 0.159, 0.161, 0.160, 0.162], benchmark: 0.15, isRate: false, isAbsolute: true },
     { metric_type: 'Delinquency', metric: '30+ Amt%', baseValues: [0.062, 0.058, 0.055, 0.053, 0.050, 0.048, 0.045], benchmark: 0.06, isRate: true, isAbsolute: false },
+    { metric_type: 'Delinquency', metric: '60+ Amt%', baseValues: [0.040, 0.038, 0.035, 0.033, 0.031, 0.029, 0.027], benchmark: 0.04, isRate: true, isAbsolute: false },
     { metric_type: 'Delinquency', metric: '90+ Amt%', baseValues: [0.022, 0.021, 0.019, 0.018, 0.017, 0.016, 0.015], benchmark: 0.02, isRate: true, isAbsolute: false },
     { metric_type: 'Origination Quality', metric: 'FPD%', baseValues: [0.038, 0.036, 0.035, 0.033, 0.032, 0.031, 0.029], benchmark: 0.035, isRate: true, isAbsolute: false },
     { metric_type: 'Collection Efficiency', metric: 'Collection Efficiency', baseValues: [0.92, 0.925, 0.93, 0.935, 0.94, 0.945, 0.95], benchmark: 0.95, isRate: false, isAbsolute: true },

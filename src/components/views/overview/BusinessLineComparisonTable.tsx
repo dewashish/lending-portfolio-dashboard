@@ -16,6 +16,8 @@ interface Props {
   corporateSummary: CorporatePortfolioSummary | null;
   consumerAum: number;
   onTabChange?: (tabIndex: number) => void;
+  unsecuredFPD?: ConsumerMetricRow[];
+  groupExposure?: number;
 }
 
 function getLatest(data: ConsumerMetricRow[], name: string): number | null {
@@ -26,11 +28,19 @@ function getLatest(data: ConsumerMetricRow[], name: string): number | null {
   return typeof v === 'number' ? v : null;
 }
 
+interface CellData {
+  value: string;
+  metricKey?: string;
+  rawValue?: number;
+}
+
 interface MetricRow {
   label: string;
-  consumer: { value: string; metricKey?: string; rawValue?: number };
-  trade: { value: string; metricKey?: string; rawValue?: number };
-  corporate: { value: string; metricKey?: string; rawValue?: number };
+  indent?: boolean;
+  consumer: CellData;
+  trade: CellData;
+  corporate: CellData;
+  total: CellData;
 }
 
 export function BusinessLineComparisonTable({
@@ -39,12 +49,37 @@ export function BusinessLineComparisonTable({
   corporateSummary,
   consumerAum,
   onTabChange,
+  unsecuredFPD = [],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  groupExposure,
 }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
 
   const dpd30 = getLatest(consumerOverall, '30+ Amt%');
   const dpd90 = getLatest(consumerOverall, '90+ Amt%');
+  const unsecuredFpd = getLatest(unsecuredFPD, 'FPD% (Unsecured)');
+
+  const tradeO = tradeSummary?.totalAUM ?? 0;
+  const corpPOS = corporateSummary?.totalPOS ?? 0;
+  const totalExposure = consumerAum + tradeO + corpPOS;
+
+  // Blended Provision Coverage (exposure-weighted, Trade + Corporate)
+  const tradePCR = tradeSummary?.provisionCoverage ?? null;
+  const corpPCR = corporateSummary?.provisionCoverageRatio ?? null;
+  const blendedPCR = tradePCR != null && corpPCR != null && (tradeO + corpPOS) > 0
+    ? (tradePCR * tradeO + corpPCR * corpPOS) / (tradeO + corpPOS)
+    : tradePCR ?? corpPCR;
+
+  // Blended Credit Cost (exposure-weighted, Trade + Corporate)
+  const tradeCC = tradeSummary?.creditCost ?? null;
+  const corpCC = corporateSummary?.creditCost ?? null;
+  const blendedCC = tradeCC != null && corpCC != null && (tradeO + corpPOS) > 0
+    ? (tradeCC * tradeO + corpCC * corpPOS) / (tradeO + corpPOS)
+    : tradeCC ?? corpCC;
+
+  const stagePCR = corporateSummary?.stagePCR;
+  const stageCC = corporateSummary?.stageCC;
 
   const rows: MetricRow[] = [
     {
@@ -52,37 +87,104 @@ export function BusinessLineComparisonTable({
       consumer: { value: formatCurrency(consumerAum) },
       trade: { value: formatCurrency(tradeSummary?.totalAUM ?? null) },
       corporate: { value: formatCurrency(corporateSummary?.totalPOS ?? null) },
+      total: { value: formatCurrency(totalExposure) },
     },
     {
       label: 'Delinquency',
       consumer: { value: dpd30 != null ? formatPercent(dpd30) : '—', metricKey: 'dpd_30_plus', rawValue: dpd30 ?? undefined },
       trade: { value: tradeSummary ? formatPercent(tradeSummary.stage2Plus3Pct) : '—', metricKey: 'stage_2_3_pct', rawValue: tradeSummary?.stage2Plus3Pct },
       corporate: { value: corporateSummary ? formatPercent(corporateSummary.delinquencyRate) : '—', metricKey: 'corp_delinquency_rate', rawValue: corporateSummary?.delinquencyRate },
+      total: { value: '—' },
     },
     {
       label: 'Severe',
       consumer: { value: dpd90 != null ? formatPercent(dpd90) : '—', metricKey: 'dpd_90_plus', rawValue: dpd90 ?? undefined },
       trade: { value: tradeSummary ? formatPercent(tradeSummary.nplRatio) : '—', metricKey: 'npl_ratio', rawValue: tradeSummary?.nplRatio },
       corporate: { value: corporateSummary ? formatPercent(corporateSummary.npaRate) : '—', metricKey: 'corp_npa_rate', rawValue: corporateSummary?.npaRate },
+      total: { value: '—' },
     },
     {
       label: 'Provision Coverage',
       consumer: { value: '—' },
       trade: { value: tradeSummary ? formatPercent(tradeSummary.provisionCoverage) : '—', metricKey: 'trade_provision_coverage', rawValue: tradeSummary?.provisionCoverage },
       corporate: { value: corporateSummary ? formatPercent(corporateSummary.provisionCoverageRatio) : '—', metricKey: 'corp_pcr', rawValue: corporateSummary?.provisionCoverageRatio },
+      total: { value: blendedPCR != null ? formatPercent(blendedPCR) : '—' },
+    },
+    {
+      label: 'Stage 1',
+      indent: true,
+      consumer: { value: '—' },
+      trade: { value: '—' },
+      corporate: { value: stagePCR ? formatPercent(stagePCR.stage1) : '—' },
+      total: { value: '—' },
+    },
+    {
+      label: 'Stage 2',
+      indent: true,
+      consumer: { value: '—' },
+      trade: { value: '—' },
+      corporate: { value: stagePCR ? formatPercent(stagePCR.stage2) : '—' },
+      total: { value: '—' },
+    },
+    {
+      label: 'Stage 3',
+      indent: true,
+      consumer: { value: '—' },
+      trade: { value: '—' },
+      corporate: { value: stagePCR ? formatPercent(stagePCR.stage3) : '—' },
+      total: { value: '—' },
+    },
+    {
+      label: 'Credit Cost',
+      consumer: { value: '—' },
+      trade: { value: tradeSummary ? formatPercent(tradeSummary.creditCost) : '—' },
+      corporate: { value: corporateSummary ? formatPercent(corporateSummary.creditCost) : '—' },
+      total: { value: blendedCC != null ? formatPercent(blendedCC) : '—' },
+    },
+    {
+      label: 'Stage 1',
+      indent: true,
+      consumer: { value: '—' },
+      trade: { value: '—' },
+      corporate: { value: stageCC ? formatPercent(stageCC.stage1) : '—' },
+      total: { value: '—' },
+    },
+    {
+      label: 'Stage 2',
+      indent: true,
+      consumer: { value: '—' },
+      trade: { value: '—' },
+      corporate: { value: stageCC ? formatPercent(stageCC.stage2) : '—' },
+      total: { value: '—' },
+    },
+    {
+      label: 'Stage 3',
+      indent: true,
+      consumer: { value: '—' },
+      trade: { value: '—' },
+      corporate: { value: stageCC ? formatPercent(stageCC.stage3) : '—' },
+      total: { value: '—' },
+    },
+    {
+      label: 'FPD% (Unsecured)',
+      consumer: { value: unsecuredFpd != null ? formatPercent(unsecuredFpd) : '—', metricKey: 'fpd_pct', rawValue: unsecuredFpd ?? undefined },
+      trade: { value: '—' },
+      corporate: { value: '—' },
+      total: { value: unsecuredFpd != null ? formatPercent(unsecuredFpd) : '—' },
     },
     {
       label: 'Watchlist',
       consumer: { value: '—' },
       trade: { value: tradeSummary ? formatCurrency(tradeSummary.watchlistExposure) : '—' },
       corporate: { value: corporateSummary ? formatNumber(corporateSummary.watchlistCount) : '—' },
+      total: { value: '—' },
     },
   ];
 
   const headerSx = { fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer', '&:hover': { color: 'primary.main' } };
   const cellSx = { fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace' };
 
-  const renderCell = (cell: { value: string; metricKey?: string; rawValue?: number }) => {
+  const renderCell = (cell: CellData) => {
     if (cell.metricKey && cell.rawValue != null) {
       return (
         <BreachBadge metricKey={cell.metricKey} value={cell.rawValue}>
@@ -106,15 +208,24 @@ export function BusinessLineComparisonTable({
               <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(1)}>Consumer</TableCell>
               <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(3)}>Trade</TableCell>
               <TableCell align="right" sx={headerSx} onClick={() => onTabChange?.(2)}>Corporate</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Total</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map(row => (
-              <TableRow key={row.label} hover>
-                <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.label}</TableCell>
+            {rows.map((row, idx) => (
+              <TableRow key={`${row.label}-${idx}`} hover={!row.indent}>
+                <TableCell sx={{
+                  fontSize: row.indent ? '0.7rem' : '0.75rem',
+                  fontWeight: row.indent ? 400 : 600,
+                  color: row.indent ? 'text.secondary' : 'text.primary',
+                  pl: row.indent ? 4 : 2,
+                }}>
+                  {row.label}
+                </TableCell>
                 <TableCell align="right" sx={cellSx}>{renderCell(row.consumer)}</TableCell>
                 <TableCell align="right" sx={cellSx}>{renderCell(row.trade)}</TableCell>
                 <TableCell align="right" sx={cellSx}>{renderCell(row.corporate)}</TableCell>
+                <TableCell align="right" sx={{ ...cellSx, fontWeight: 600 }}>{renderCell(row.total)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

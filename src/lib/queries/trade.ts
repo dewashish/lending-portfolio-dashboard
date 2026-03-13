@@ -265,6 +265,7 @@ export async function fetchTradeExecutiveSummary(scope?: ScopeSelection): Promis
     nplRatio: totalOutstanding > 0 ? totalStage3 / totalOutstanding : 0,
     stage2Plus3Pct,
     provisionCoverage: (totalStage2 + totalStage3) > 0 ? totalProvisions / (totalStage2 + totalStage3) : 0,
+    creditCost: totalOutstanding > 0 ? totalProvisions / totalOutstanding : 0,
     delinquency30Plus: stage2Plus3Pct,
     delinquency90Plus: totalOutstanding > 0 ? totalStage3 / totalOutstanding : 0,
     writeOffRate: 0,

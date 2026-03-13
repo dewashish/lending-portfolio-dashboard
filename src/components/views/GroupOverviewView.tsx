@@ -74,6 +74,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
   const tradeSummary = data?.tradeSummary ?? null;
   const corporateSummary = data?.corporateSummary ?? null;
   const consumerOverall = useMemo(() => data?.consumerOverall ?? [], [data?.consumerOverall]);
+  const unsecuredFPD = useMemo(() => data?.unsecuredFPD ?? [], [data?.unsecuredFPD]);
   const ewsSummary = useMemo(() => data?.ewsSummary ?? [], [data?.ewsSummary]);
   const fxRisk = useMemo(() => data?.fxRisk ?? [], [data?.fxRisk]);
   const countryRisk = useMemo(() => data?.countryRisk ?? [], [data?.countryRisk]);
@@ -107,6 +108,14 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       : (tradePCR + corpPCR) / 2
     : tradePCR ?? corpPCR;
 
+  const tradeCreditCost = tradeSummary?.creditCost ?? null;
+  const corpCreditCost = corporateSummary?.creditCost ?? null;
+  const blendedCreditCost = tradeCreditCost != null && corpCreditCost != null
+    ? (totalTradeOutstanding + corporatePOS) > 0
+      ? (tradeCreditCost * totalTradeOutstanding + corpCreditCost * corporatePOS) / (totalTradeOutstanding + corporatePOS)
+      : (tradeCreditCost + corpCreditCost) / 2
+    : tradeCreditCost ?? corpCreditCost;
+
   const kpis: KPIItem[] = [
     { label: 'Group AUM', value: formatCurrencyMM(groupAum) },
     { label: 'Consumer AUM', value: formatCurrencyMM(totalConsumerAum) },
@@ -137,6 +146,11 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       label: 'Provision Coverage',
       value: blendedPCR != null ? formatPercent(blendedPCR) : '—',
       color: blendedPCR != null ? getColor('corp_pcr', blendedPCR) : undefined,
+    },
+    {
+      label: 'Credit Cost',
+      value: blendedCreditCost != null ? formatPercent(blendedCreditCost) : '—',
+      info: 'Blended: total provisions / total exposure (Trade + Corporate)',
     },
   ];
 
@@ -307,6 +321,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         consumerOverall={consumerOverall}
         tradeSummary={tradeSummary}
         corporateSummary={corporateSummary}
+        unsecuredFPD={unsecuredFPD}
       />
 
       {/* Section 6: Business Line Comparison */}
@@ -316,6 +331,8 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         corporateSummary={corporateSummary}
         consumerAum={totalConsumerAum}
         onTabChange={onTabChange}
+        unsecuredFPD={unsecuredFPD}
+        groupExposure={groupAum}
       />
 
       {/* Section 7: Enhanced Consolidated Scorecard */}

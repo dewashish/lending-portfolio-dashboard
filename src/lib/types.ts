@@ -221,6 +221,7 @@ export interface PortfolioSummary {
   nplRatio: number;
   stage2Plus3Pct: number;
   provisionCoverage: number;
+  creditCost: number;
   delinquency30Plus: number;
   delinquency90Plus: number;
   writeOffRate: number;
@@ -648,6 +649,9 @@ export interface CorporatePortfolioSummary {
   provisionCoverageRatio: number;
   watchlistCount: number;
   delinquentCount: number;
+  creditCost: number;
+  stagePCR: { stage1: number; stage2: number; stage3: number };
+  stageCC: { stage1: number; stage2: number; stage3: number };
 }
 
 // ── Non-Starter Analysis ──────────────────────────────────────────

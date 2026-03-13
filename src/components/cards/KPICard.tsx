@@ -17,6 +17,7 @@ interface Props {
   color?: string;
   icon?: React.ReactNode;
   sparkline?: number[];
+  sparklineLabels?: string[];
   invertTrend?: boolean;
   benchmark?: number;
   benchmarkLabel?: string;
@@ -28,7 +29,7 @@ interface Props {
 }
 
 /** Tiny inline SVG sparkline — no D3 dependency */
-function Sparkline({ data, color, height = 24, width = 72 }: { data: number[]; color?: string; height?: number; width?: number }) {
+function Sparkline({ data, color, height = 24, width = 72, labels }: { data: number[]; color?: string; height?: number; width?: number; labels?: string[] }) {
   if (data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -57,13 +58,30 @@ function Sparkline({ data, color, height = 24, width = 72 }: { data: number[]; c
       </defs>
       <path d={areaPath} fill={`url(#spark-${lineColor.replace('#', '')})`} />
       <path d={linePath} fill="none" stroke={lineColor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      {/* End dot */}
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r={2.5} fill={lineColor} />
+      {/* Interactive dots with tooltips */}
+      {points.map((p, i) => {
+        const label = labels?.[labels.length - data.length + i] ?? '';
+        const pct = (data[i] * 100).toFixed(2);
+        const title = label ? `${label}: ${pct}%` : `${pct}%`;
+        return (
+          <Tooltip key={i} title={title} arrow placement="top">
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r={i === points.length - 1 ? 2.5 : 1.5}
+              fill={i === points.length - 1 ? lineColor : 'transparent'}
+              stroke={lineColor}
+              strokeWidth={0.5}
+              style={{ cursor: 'pointer' }}
+            />
+          </Tooltip>
+        );
+      })}
     </svg>
   );
 }
 
-export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext, info }: Props) {
+export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, sparklineLabels, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext, info }: Props) {
   // For inverted metrics (delinquency, FPD): down is green, up is red
   const getTrendColor = () => {
     if (!trend) return undefined;
@@ -137,7 +155,7 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
 
           {sparkline && sparkline.length >= 2 && (
             <Box sx={{ flexShrink: 0, opacity: 0.85 }}>
-              <Sparkline data={sparkline} color={color || '#00897b'} />
+              <Sparkline data={sparkline} color={color || '#00897b'} labels={sparklineLabels} />
             </Box>
           )}
         </Stack>

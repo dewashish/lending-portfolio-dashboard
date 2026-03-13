@@ -522,3 +522,35 @@ export async function fetchSubsidiaryScorecard(scope?: ScopeSelection): Promise<
     fpdPct: r.fpd_pct as number | null,
   }));
 }
+
+export async function fetchConsumerUnsecuredFPD(scope?: ScopeSelection): Promise<ConsumerMetricRow[]> {
+  const catalog = await fetchProductCatalog(scope);
+  const unsecuredProducts = catalog.filter(p => p.productCategory === 'Unsecured').map(p => p.productName);
+  if (unsecuredProducts.length === 0) return [];
+
+  let query = supabase
+    .from('consumer_product_metrics')
+    .select('subsidiary_id, product_name, metric_type, metric, period, value, value_usd, benchmark')
+    .eq('metric', 'FPD%')
+    .in('product_name', unsecuredProducts)
+    .order('period');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const periodMap = new Map<string, { sum: number; count: number }>();
+  for (const r of (data ?? []) as Record<string, unknown>[]) {
+    const val = r.value as number;
+    if (val == null) continue;
+    const period = r.period as string;
+    const entry = periodMap.get(period) ?? { sum: 0, count: 0 };
+    entry.sum += val;
+    entry.count += 1;
+    periodMap.set(period, entry);
+  }
+
+  const values: Record<string, number> = {};
+  periodMap.forEach((v, k) => { values[k] = v.sum / v.count; });
+
+  return [{ metricType: 'Origination Quality', metric: 'FPD% (Unsecured)', values, benchmark: 0.035 }];
+}
