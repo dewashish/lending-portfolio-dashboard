@@ -67,14 +67,6 @@ export const DEFAULT_FILTERS: FilterState = {
   scope: DEFAULT_SCOPE,
 };
 
-export const ENTITIES = [
-  'Samman Capital',
-  'First Woman Bank Limited',
-  'Beltone',
-  'Mirabank',
-  'LuloBank',
-] as const;
-
 export const TRADE_PRODUCT_TYPES = [
   'Import LC',
   'Export LC',
