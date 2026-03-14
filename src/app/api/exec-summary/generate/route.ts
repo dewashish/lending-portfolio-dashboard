@@ -1266,14 +1266,14 @@ Guidelines:
 - Percentage values should include the % symbol.
 - Be analytical, not generic. Avoid vague statements. Every claim must be traceable to the provided data.`;
 
-    const res = await fetch('https://api.kie.ai/gemini-3-flash/v1/chat/completions', {
+    const res = await fetch('https://api.kie.ai/gpt-4.1/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gemini-3-flash',
+        model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Generate the executive summary for the "${tabName}" view now. Respond with JSON only.` },
@@ -1292,22 +1292,35 @@ Guidelines:
     // Attempt to parse the AI response as JSON
     let parsed: Record<string, unknown>;
     try {
-      // Strip potential markdown code fences
-      const cleaned = rawContent
-        .replace(/^```json\s*/i, '')
-        .replace(/^```\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-      parsed = JSON.parse(cleaned);
+      // Try direct parse first
+      parsed = JSON.parse(rawContent.trim());
     } catch {
-      // Fallback: return raw text as outlook with empty arrays
-      parsed = {
-        outlook: rawContent,
-        kpis: [],
-        trends: [],
-        watchItems: [],
-        recommendations: [],
-      };
+      try {
+        // Strip markdown code fences (```json ... ``` or ``` ... ```)
+        // Handle fences anywhere in the string, not just start/end
+        const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (fenceMatch?.[1]) {
+          parsed = JSON.parse(fenceMatch[1].trim());
+        } else {
+          // Try extracting the first JSON object from the response
+          const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch?.[0]) {
+            parsed = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('No JSON found in response');
+          }
+        }
+      } catch {
+        // Fallback: return raw text as outlook with empty arrays
+        console.error('[exec-summary] Failed to parse AI response as JSON. Raw content length:', rawContent.length);
+        parsed = {
+          outlook: rawContent,
+          kpis: [],
+          trends: [],
+          watchItems: [],
+          recommendations: [],
+        };
+      }
     }
 
     return NextResponse.json({

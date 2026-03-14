@@ -227,14 +227,14 @@ ${context}
 
 Provide a clear, data-driven response. Use specific numbers from the context when available. Keep the answer concise but informative. When comparing entities, highlight RAG statuses and key risk indicators.`;
 
-    const res = await fetch('https://api.kie.ai/gemini-3-flash/v1/chat/completions', {
+    const res = await fetch('https://api.kie.ai/gpt-4.1/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gemini-3-flash',
+        model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question },
