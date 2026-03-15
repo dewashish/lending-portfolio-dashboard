@@ -45,6 +45,27 @@ type LOSMetricDbRow = Database['public']['Tables']['los_metrics']['Row'];
 type LOSFunnelDbRow = Database['public']['Tables']['los_funnel']['Row'];
 type LOSDailyDbRow = Database['public']['Tables']['los_daily']['Row'];
 
+// ── Pagination Helper ──────────────────────────────────────────────
+// Supabase caps responses at 1000 rows per request. Many consumer tables
+// exceed this at group scope. This helper fetches all pages.
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAllPages<T>(buildPage: (offset: number) => Promise<{ data: any; error: any }>): Promise<T[]> {
+  const PAGE = 1000;
+  const all: T[] = [];
+  let offset = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const { data, error } = await buildPage(offset);
+    if (error) throw error;
+    const page = (data ?? []) as T[];
+    all.push(...page);
+    hasMore = page.length === PAGE;
+    offset += PAGE;
+  }
+  return all;
+}
+
 // ── Pivot Helpers ────────────────────────────────────────────────
 
 function pivotToMetricRows(rows: OverallRow[]): ConsumerMetricRow[] {
@@ -321,18 +342,17 @@ export async function fetchConsumerOverall(scope?: ScopeSelection, filters?: Con
 }
 
 export async function fetchProductMetrics(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<ConsumerProductData[]> {
-  let query = supabase
-    .from('consumer_product_metrics')
-    .select('product_name, metric_type, metric, period, value, value_usd, benchmark')
-    .order('id')
-    .limit(15000);
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) query = query.in('product_name', filters.products);
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-
-  const rows = (data ?? []) as (ProductRow & { value_usd: number | null })[];
+  const rows = await fetchAllPages<ProductRow & { value_usd: number | null }>(async (offset) => {
+    let q = supabase
+      .from('consumer_product_metrics')
+      .select('product_name, metric_type, metric, period, value, value_usd, benchmark')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) q = q.in('product_name', filters.products);
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
   const useUsd = !scope || scope.level !== 'subsidiary';
 
   if (useUsd && rows.length > 1) {
@@ -384,59 +404,60 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
 }
 
 export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NetFlowRow[]> {
-  let query = supabase
-    .from('net_flow_rates')
-    .select('portfolio, bucket, period, value, product_name')
-    .order('id')
-    .limit(10000);
-  // Apply all filters BEFORE applyScopeAsync (which implicitly executes the query
-  // because PostgrestBuilder is thenable and async return wraps in Promise.resolve)
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) {
-    query = query.in('product_name', filters.products);
-  } else {
-    query = query.is('product_name', null);
-  }
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return pivotToNetFlowRows((data ?? []) as NetFlowDbRow[]);
+  const rows = await fetchAllPages<NetFlowDbRow>(async (offset) => {
+    let q = supabase
+      .from('net_flow_rates')
+      .select('portfolio, bucket, period, value, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) {
+      q = q.in('product_name', filters.products);
+    } else {
+      q = q.is('product_name', null);
+    }
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return pivotToNetFlowRows(rows);
 }
 
 export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<RollRateTimeSeries[]> {
-  let query = supabase
-    .from('roll_rate_series')
-    .select('bucket, metric, period, value, product_name')
-    .order('id')
-    .limit(10000);
-  // Apply all filters BEFORE applyScopeAsync (see comment above)
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) {
-    query = query.in('product_name', filters.products);
-  } else {
-    query = query.is('product_name', null);
-  }
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return pivotToRollRateSeries((data ?? []) as RollRateDbRow[]);
+  const rows = await fetchAllPages<RollRateDbRow>(async (offset) => {
+    let q = supabase
+      .from('roll_rate_series')
+      .select('bucket, metric, period, value, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) {
+      q = q.in('product_name', filters.products);
+    } else {
+      q = q.is('product_name', null);
+    }
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return pivotToRollRateSeries(rows);
 }
 
 export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<CollectionMetricRow[]> {
-  let query = supabase
-    .from('collection_metrics')
-    .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period, product_name')
-    .order('id');
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) {
-    query = query.in('product_name', filters.products);
-  } else {
-    query = query.is('product_name', null);
-  }
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return ((data ?? []) as CollectionDbRow[]).map((r) => ({
+  const rows = await fetchAllPages<CollectionDbRow>(async (offset) => {
+    let q = supabase
+      .from('collection_metrics')
+      .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) {
+      q = q.in('product_name', filters.products);
+    } else {
+      q = q.is('product_name', null);
+    }
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return rows.map((r) => ({
     portfolio: r.portfolio,
     bucket: r.bucket,
     amount: r.amount ?? 0,
@@ -450,13 +471,18 @@ export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: C
 }
 
 export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelection, products?: string[]): Promise<VintagePoint[]> {
-  let query = supabase.from('vintage_points').select('vintage, loan_amount, mob, delinquency_rate, metric_type, product_name').order('id');
-  if (metricType) query = query.eq('metric_type', metricType);
-  if (products && products.length > 0) query = query.in('product_name', products);
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return ((data ?? []) as (VintageDbRow & { product_name?: string })[]).map((r) => ({
+  const rows = await fetchAllPages<VintageDbRow & { product_name?: string }>(async (offset) => {
+    let q = supabase
+      .from('vintage_points')
+      .select('vintage, loan_amount, mob, delinquency_rate, metric_type, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (metricType) q = q.eq('metric_type', metricType);
+    if (products && products.length > 0) q = q.in('product_name', products);
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return rows.map((r) => ({
     vintage: r.vintage,
     loanAmount: r.loan_amount ?? 0,
     mob: r.mob,
@@ -466,19 +492,20 @@ export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelec
 }
 
 export async function fetchNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters, category?: string): Promise<NonStarterRow[]> {
-  let query = supabase
-    .from('non_starters')
-    .select('category, product, metric, period, value, value_usd')
-    .order('id');
-  // Apply custom filters BEFORE applyScopeAsync (async + thenable = premature execution)
-  if (category) query = query.eq('category', category);
-  if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
+  const data = await fetchAllPages<NonStarterDbRow & { value_usd: number | null }>(async (offset) => {
+    let q = supabase
+      .from('non_starters')
+      .select('category, product, metric, period, value, value_usd')
+      .order('id')
+      .range(offset, offset + 999);
+    if (category) q = q.eq('category', category);
+    if (filters?.products && filters.products.length > 0) q = q.in('product', filters.products);
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
 
   const map = new Map<string, NonStarterRow>();
-  for (const r of (data ?? []) as NonStarterDbRow[]) {
+  for (const r of data) {
     const key = `${r.category}|${r.product}|${r.metric}`;
     if (!map.has(key)) {
       map.set(key, {
