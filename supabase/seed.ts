@@ -51,6 +51,8 @@ async function batchUpsert(table: string, rows: Row[], batchSize = 500) {
 /** Delete from all tables in correct FK order */
 async function clearAll() {
   const tables = [
+    // Forward Outlook tables (FK -> subsidiaries)
+    'subsidiary_stress_scores', 'management_actions',
     // Risk Outlook tables (FK -> subsidiaries)
     'ecl_forecast', 'ecl_waterfall', 'stress_scenario_losses', 'cet1_trajectory',
     'ecl_sensitivity', 'pd_migration_matrix', 'pd_term_structure', 'rating_distribution',
@@ -2596,6 +2598,297 @@ function buildMacroCreditLinkage(): Row[] {
   return rows;
 }
 
+// ---------------------------------------------------------------------------
+// 33. subsidiary_stress_scores
+// ---------------------------------------------------------------------------
+function buildSubsidiaryStressScores(): Row[] {
+  const rows: Row[] = [];
+
+  interface DimProfile {
+    dimension: string;
+    scores: Record<number, { score: number; rag: string }>;
+    driverSets: Record<number, { label: string; detail: string }[]>;
+  }
+
+  const dims: DimProfile[] = [
+    {
+      dimension: 'macro_outlook',
+      scores: {
+        1: { score: 72, rag: 'Green' },
+        2: { score: 45, rag: 'Amber' },
+        3: { score: 68, rag: 'Green' },
+        4: { score: 55, rag: 'Amber' },
+        5: { score: 38, rag: 'Red' },
+      },
+      driverSets: {
+        1: [
+          { label: 'GDP growth above trend', detail: 'Forecast GDP growth of 6.8% exceeds 5-year average of 6.2%' },
+          { label: 'Stable policy rates', detail: 'RBI maintaining accommodative stance with repo at 6.5%' },
+          { label: 'Resilient consumption', detail: 'Urban and rural consumption indices tracking 4-6% YoY growth' },
+        ],
+        2: [
+          { label: 'Fiscal deficit pressure', detail: 'Government deficit widening to 7.9% of GDP vs 7.0% target' },
+          { label: 'Currency depreciation risk', detail: 'PKR under sustained pressure with 12% YTD depreciation' },
+        ],
+        3: [
+          { label: 'EU accession momentum', detail: 'Opening of new EU accession chapters boosting FDI inflows by 15%' },
+          { label: 'Moderate inflation', detail: 'CPI easing to 4.2% within NBS target band' },
+        ],
+        4: [
+          { label: 'Commodity price volatility', detail: 'Oil price fluctuations impacting fiscal revenues and COP stability' },
+          { label: 'Central bank credibility', detail: 'BanRep maintaining inflation targeting with rates at 9.75%' },
+        ],
+        5: [
+          { label: 'Persistent inflation', detail: 'Core CPI at 32% despite CBE tightening; real rates remain negative' },
+          { label: 'FX scarcity', detail: 'Parallel market premium of 18% signaling persistent dollar shortage' },
+          { label: 'Import compression', detail: 'Non-essential import restrictions dampening economic activity' },
+        ],
+      },
+    },
+    {
+      dimension: 'portfolio_vulnerability',
+      scores: {
+        1: { score: 65, rag: 'Green' },
+        2: { score: 58, rag: 'Amber' },
+        3: { score: 70, rag: 'Green' },
+        4: { score: 48, rag: 'Amber' },
+        5: { score: 42, rag: 'Amber' },
+      },
+      driverSets: {
+        1: [
+          { label: 'Secured book dominance', detail: '78% of AUM in Home Loan & LAP with average LTV of 62%' },
+          { label: 'Granular exposure', detail: 'Top-20 borrower concentration at 8% of total book' },
+        ],
+        2: [
+          { label: 'Unsecured growth acceleration', detail: 'Personal loans and credit cards grew 28% YoY vs 15% plan' },
+          { label: 'Vintage seasoning gap', detail: '45% of book originated in last 12 months, not yet fully seasoned' },
+        ],
+        3: [
+          { label: 'Conservative underwriting', detail: 'Average approval DTI of 38% well below 50% policy limit' },
+          { label: 'Low single-name concentration', detail: 'Top-10 exposures represent only 5% of portfolio' },
+        ],
+        4: [
+          { label: 'Digital channel risk', detail: '65% of originations via app with limited verification depth' },
+          { label: 'Thin credit bureau coverage', detail: '30% of approved customers have bureau scores below 650' },
+        ],
+        5: [
+          { label: 'Sector concentration', detail: '40% of consumer book in government-employee salary deduction segment' },
+          { label: 'Collateral valuation risk', detail: 'Real estate collateral values declined 15% in USD terms over 6 months' },
+          { label: 'Restructured book', detail: '12% of performing portfolio was restructured in the last 18 months' },
+        ],
+      },
+    },
+    {
+      dimension: 'collections_effectiveness',
+      scores: {
+        1: { score: 78, rag: 'Green' },
+        2: { score: 52, rag: 'Amber' },
+        3: { score: 75, rag: 'Green' },
+        4: { score: 60, rag: 'Amber' },
+        5: { score: 35, rag: 'Red' },
+      },
+      driverSets: {
+        1: [
+          { label: 'Strong early bucket resolution', detail: '85% of 1-30 DPD accounts cured within the bucket' },
+          { label: 'Predictive dialer coverage', detail: 'Automated calling covers 98% of early delinquency within 48 hours' },
+        ],
+        2: [
+          { label: 'Agency capacity gap', detail: 'Third-party agency FTE coverage at 60% of required capacity' },
+          { label: 'Legal recovery delays', detail: 'Average time to decree execution is 18 months vs 12-month benchmark' },
+        ],
+        3: [
+          { label: 'Digital collections adoption', detail: '55% of payments collected via self-service digital channels' },
+          { label: 'Low skip rates', detail: 'Borrower contactability rate at 94% across all buckets' },
+        ],
+        4: [
+          { label: 'Cash economy challenges', detail: '35% of borrowers lack automated debit capability' },
+          { label: 'Improving agency performance', detail: 'Agency resolution rates improved from 12% to 18% QoQ' },
+          { label: 'Regional coverage gaps', detail: 'Rural portfolio segments show 40% lower contact rates' },
+        ],
+        5: [
+          { label: 'Deteriorating cure rates', detail: '30+ DPD cure rate fell from 42% to 28% over last two quarters' },
+          { label: 'Legal system bottlenecks', detail: 'Court case backlog extends average recovery timeline to 24+ months' },
+          { label: 'Borrower distress', detail: 'Payment bounce rates increased to 22% from 14% six months ago' },
+        ],
+      },
+    },
+    {
+      dimension: 'provision_adequacy',
+      scores: {
+        1: { score: 80, rag: 'Green' },
+        2: { score: 55, rag: 'Amber' },
+        3: { score: 72, rag: 'Green' },
+        4: { score: 62, rag: 'Amber' },
+        5: { score: 40, rag: 'Amber' },
+      },
+      driverSets: {
+        1: [
+          { label: 'Conservative ECL models', detail: 'Management overlay of 5% applied on top of model-driven ECL' },
+          { label: 'Adequate stage migration', detail: 'SICR triggers calibrated to catch downgrades 30 days ahead of default' },
+        ],
+        2: [
+          { label: 'Model recalibration needed', detail: 'PD models last recalibrated 14 months ago; gap to observed default of 120bps' },
+          { label: 'Stage 2 build-up', detail: 'Stage 2 ratio increased from 6.5% to 9.2% requiring additional overlay' },
+        ],
+        3: [
+          { label: 'Strong coverage ratios', detail: 'Stage 3 coverage at 72% and Stage 2 at 18% exceeding peer benchmarks' },
+          { label: 'Regular model validation', detail: 'Semi-annual back-testing shows model accuracy within 95% CI' },
+        ],
+        4: [
+          { label: 'Thin loss history', detail: 'Digital bank with only 3 years of loss data limits PD model accuracy' },
+          { label: 'Moderate coverage', detail: 'Overall provision coverage at 65% with management overlay of 8%' },
+        ],
+        5: [
+          { label: 'FX impact on provisions', detail: 'EGP depreciation inflated USD-equivalent provisions but local coverage at 55%' },
+          { label: 'Regulatory gap', detail: 'CBE minimum provision requirements exceed IFRS 9 model output by 30%' },
+          { label: 'Stress test shortfall', detail: 'Adverse scenario ECL exceeds current provisions by 18%' },
+        ],
+      },
+    },
+    {
+      dimension: 'capital_absorption',
+      scores: {
+        1: { score: 85, rag: 'Green' },
+        2: { score: 48, rag: 'Amber' },
+        3: { score: 74, rag: 'Green' },
+        4: { score: 58, rag: 'Amber' },
+        5: { score: 44, rag: 'Amber' },
+      },
+      driverSets: {
+        1: [
+          { label: 'Strong capital buffers', detail: 'CET1 ratio at 18.5% with 550bps buffer above regulatory minimum' },
+          { label: 'Profitable operations', detail: 'ROE of 16% generating organic capital accretion of 200bps annually' },
+        ],
+        2: [
+          { label: 'Thin capital cushion', detail: 'CAR at 14.2% with only 120bps buffer above SBP minimum of 13%' },
+          { label: 'RWA growth pressure', detail: 'Risk-weighted assets growing 22% YoY outpacing capital generation' },
+        ],
+        3: [
+          { label: 'Comfortable capital position', detail: 'CAR at 19.8% well above NBS minimum of 12%' },
+          { label: 'Stress test resilience', detail: 'Adverse scenario CET1 depletion of 280bps still leaves 480bps buffer' },
+        ],
+        4: [
+          { label: 'Digital model efficiency', detail: 'Low cost-to-income ratio of 42% supports capital retention' },
+          { label: 'Growth vs capital trade-off', detail: 'Rapid portfolio expansion consuming 150bps of capital buffer annually' },
+          { label: 'Solvency adequate', detail: 'CAR at 15.8% with 280bps buffer above SFC minimum' },
+        ],
+        5: [
+          { label: 'Capital erosion risk', detail: 'CET1 buffer narrowed to 80bps above FRA minimum of 12.5%' },
+          { label: 'Dividend restriction', detail: 'Board approved dividend freeze to preserve capital for next 4 quarters' },
+          { label: 'Subordinated debt maturity', detail: 'EGP 1.2B Tier 2 instrument maturing in Q3 2025 needs refinancing' },
+        ],
+      },
+    },
+  ];
+
+  for (const dim of dims) {
+    for (const sub of SUBSIDIARIES) {
+      const profile = dim.scores[sub.id];
+      const drivers = dim.driverSets[sub.id];
+      rows.push({
+        subsidiary_id: sub.id,
+        dimension: dim.dimension,
+        score: profile.score,
+        rag_status: profile.rag,
+        drivers: JSON.stringify(drivers),
+        updated_at: '2025-08-01T00:00:00Z',
+        created_at: '2025-08-01T00:00:00Z',
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 34. management_actions
+// ---------------------------------------------------------------------------
+function buildManagementActions(): Row[] {
+  const rows: Row[] = [];
+
+  interface ActionTemplate {
+    trigger_source: string;
+    trigger_indicator: string;
+    rag_status: string;
+    action_category: string;
+    action_description: string;
+    priority: string;
+    owner: string;
+    deadline: string;
+    status: string;
+  }
+
+  const actionsBySubsidiary: Record<number, ActionTemplate[]> = {
+    // India (Samman Capital) — fewer, mostly Medium/Low
+    1: [
+      { trigger_source: 'ews', trigger_indicator: 'Behavioral score decline in unsecured segment > 5%', rag_status: 'Amber', action_category: 'underwriting', action_description: 'Tighten DTI threshold from 55% to 50% for unsecured personal loans', priority: 'Medium', owner: 'Head of Underwriting', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'portfolio', trigger_indicator: 'LAP concentration in Tier-3 cities exceeds 25% of book', rag_status: 'Amber', action_category: 'portfolio', action_description: 'Cap Tier-3 city LAP origination at 20% of monthly disbursement volume', priority: 'Medium', owner: 'CRO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'stress_test', trigger_indicator: 'Stress ECL exceeds base ECL by 45% in adverse scenario', rag_status: 'Amber', action_category: 'provisioning', action_description: 'Apply 5% management overlay on Stage 2 personal loan portfolio', priority: 'Low', owner: 'CFO', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Home loan prepayment rate declining to 8% from 12%', rag_status: 'Amber', action_category: 'pricing', action_description: 'Review and adjust home loan pricing grid to maintain spread targets', priority: 'Low', owner: 'Head of Risk', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Early bucket roll rate increased by 80bps in personal loan vintage Q4-2024', rag_status: 'Amber', action_category: 'collections', action_description: 'Deploy early intervention calls at DPD 5 for personal loan accounts showing behavioral score decline', priority: 'Medium', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Unsecured book growth at 22% vs 15% plan', rag_status: 'Amber', action_category: 'capital', action_description: 'Accelerate retained earnings allocation to maintain CET1 buffer above 500bps', priority: 'Low', owner: 'CFO', deadline: 'Q3 2025', status: 'Open' },
+    ],
+    // Pakistan (FWBL) — moderate, mix of High/Medium
+    2: [
+      { trigger_source: 'ews', trigger_indicator: '30+ DPD inflow rate > 3.5% in auto loan segment', rag_status: 'Red', action_category: 'underwriting', action_description: 'Suspend auto loan approvals for applicants with bureau score below 650 and employment tenure < 2 years', priority: 'High', owner: 'Head of Underwriting', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'stress_test', trigger_indicator: 'Adverse scenario NPL ratio projects to 8.5% vs 5.2% current', rag_status: 'Red', action_category: 'provisioning', action_description: 'Apply 15% management overlay on Stage 2 consumer unsecured portfolio', priority: 'High', owner: 'CFO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Credit card utilization rate > 85% for 18% of active accounts', rag_status: 'Amber', action_category: 'collections', action_description: 'Initiate proactive outreach to high-utilization credit card customers with payment plan options', priority: 'Medium', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'ews', trigger_indicator: 'PKR depreciation impact on import-dependent borrowers', rag_status: 'Red', action_category: 'pricing', action_description: 'Increase risk premium by 75bps for high-risk segments exposed to import dependency', priority: 'High', owner: 'Head of Risk', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'CAR buffer narrowing to 120bps above SBP minimum', rag_status: 'Red', action_category: 'capital', action_description: 'Reduce RWA growth by restricting new unsecured lending and prioritize secured originations', priority: 'Critical', owner: 'CRO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'stress_test', trigger_indicator: 'Home loan LTV > 80% cohort showing elevated default probability', rag_status: 'Amber', action_category: 'portfolio', action_description: 'Cap high-LTV home loan originations at 15% of monthly volume and require additional collateral', priority: 'Medium', owner: 'CRO', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Payment bounce rate increased from 8% to 14% in salary segment', rag_status: 'Amber', action_category: 'collections', action_description: 'Deploy SMS and WhatsApp pre-due-date reminders for salary-linked accounts with prior bounces', priority: 'Medium', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'In Progress' },
+    ],
+    // Serbia (Mirabank) — fewer, mostly Low/Medium
+    3: [
+      { trigger_source: 'portfolio', trigger_indicator: 'Housing loan concentration in Belgrade exceeds 60% of housing book', rag_status: 'Amber', action_category: 'portfolio', action_description: 'Diversify housing loan origination to Novi Sad and Nis markets with targeted campaigns', priority: 'Low', owner: 'CRO', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Consumer loan early delinquency uptick of 40bps in Q1-2025 vintage', rag_status: 'Amber', action_category: 'underwriting', action_description: 'Add employment verification step for consumer loans above RSD 500K', priority: 'Medium', owner: 'Head of Underwriting', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'stress_test', trigger_indicator: 'Interest rate shock scenario shows 15% ECL increase', rag_status: 'Amber', action_category: 'provisioning', action_description: 'Build countercyclical buffer of 3% management overlay on variable-rate consumer book', priority: 'Low', owner: 'CFO', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Fixed-rate housing loan book repricing gap in 2026', rag_status: 'Amber', action_category: 'pricing', action_description: 'Review fixed-rate housing loan pricing to incorporate forward rate expectations', priority: 'Low', owner: 'Head of Risk', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Digital channel personal loan default rate 30bps above branch channel', rag_status: 'Amber', action_category: 'collections', action_description: 'Enhance early-stage collections workflow for digitally originated personal loans with automated triggers', priority: 'Medium', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Capital ratio comfortable but monitoring RWA density trend', rag_status: 'Amber', action_category: 'capital', action_description: 'Monitor RWA density quarterly and prepare contingency capital plan if buffer drops below 400bps', priority: 'Low', owner: 'CFO', deadline: 'Q3 2025', status: 'Open' },
+    ],
+    // Colombia (LuloBank) — moderate, mix of High/Medium
+    4: [
+      { trigger_source: 'ews', trigger_indicator: 'App-originated personal loan 60+ DPD rate exceeds 4.2%', rag_status: 'Red', action_category: 'underwriting', action_description: 'Implement income verification via payroll API for all personal loans above COP 15M', priority: 'High', owner: 'Head of Underwriting', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Credit card NPL rate trending to 6.8% vs 5.0% appetite', rag_status: 'Red', action_category: 'collections', action_description: 'Deploy early intervention calls at DPD 5 for credit card accounts with utilization > 80%', priority: 'High', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'stress_test', trigger_indicator: 'Commodity price shock scenario increases portfolio losses by 35%', rag_status: 'Amber', action_category: 'provisioning', action_description: 'Apply sector-specific management overlay of 10% on borrowers in commodity-linked industries', priority: 'Medium', owner: 'CFO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Customer acquisition cost rising 25% while credit quality declining', rag_status: 'Amber', action_category: 'pricing', action_description: 'Increase risk-adjusted pricing by 50bps for new-to-bank personal loan customers', priority: 'Medium', owner: 'Head of Risk', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Rapid portfolio growth consuming 150bps capital annually', rag_status: 'Amber', action_category: 'capital', action_description: 'Limit portfolio growth to 8% QoQ and explore Tier 2 issuance of COP 200B', priority: 'High', owner: 'CFO', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Unsecured lending at 92% of total book', rag_status: 'Red', action_category: 'portfolio', action_description: 'Cap unsecured lending growth at 10% QoQ and pilot secured micro-lending product', priority: 'High', owner: 'CRO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Thin-file customer default rate 2.5x thick-file customers', rag_status: 'Amber', action_category: 'underwriting', action_description: 'Reduce maximum credit limit for thin-file customers from COP 10M to COP 5M until alternative data scoring is validated', priority: 'Medium', owner: 'Head of Underwriting', deadline: 'Q3 2025', status: 'Open' },
+    ],
+    // Egypt (Beltone) — most Critical/Red actions
+    5: [
+      { trigger_source: 'ews', trigger_indicator: '30+ DPD inflow rate > 5.8% across consumer book', rag_status: 'Red', action_category: 'underwriting', action_description: 'Suspend all new unsecured consumer loan origination until 30+ DPD inflow drops below 4%', priority: 'Critical', owner: 'CRO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'stress_test', trigger_indicator: 'FX stress scenario shows provision shortfall of EGP 450M', rag_status: 'Red', action_category: 'provisioning', action_description: 'Apply 15% management overlay on Stage 2 consumer unsecured portfolio and 25% on restructured book', priority: 'Critical', owner: 'CFO', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'portfolio', trigger_indicator: 'CET1 buffer at 80bps above FRA minimum', rag_status: 'Red', action_category: 'capital', action_description: 'Implement dividend freeze and accelerate retained earnings allocation; explore EGP 800M rights issue', priority: 'Critical', owner: 'CFO', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Cure rates in 30-60 DPD bucket fell from 42% to 28%', rag_status: 'Red', action_category: 'collections', action_description: 'Double field collection team capacity in Cairo and Alexandria; deploy daily SMS + call cadence at DPD 3', priority: 'Critical', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Leasing portfolio residual values declining 20% in USD terms', rag_status: 'Red', action_category: 'pricing', action_description: 'Increase leasing risk premium by 150bps and require 30% minimum down payment on all new leases', priority: 'High', owner: 'Head of Risk', deadline: 'Q2 2025', status: 'Open' },
+      { trigger_source: 'stress_test', trigger_indicator: 'Government salary deduction segment shows systemic concentration risk', rag_status: 'Red', action_category: 'portfolio', action_description: 'Reduce government salary deduction segment to 30% of book from current 40% over next 3 quarters', priority: 'High', owner: 'CRO', deadline: 'Q3 2025', status: 'Open' },
+      { trigger_source: 'ews', trigger_indicator: 'Payment bounce rate at 22% and rising', rag_status: 'Red', action_category: 'collections', action_description: 'Migrate all direct debit collections to new clearing system and implement real-time bounce retry within 24 hours', priority: 'High', owner: 'Head of Collections', deadline: 'Q2 2025', status: 'In Progress' },
+      { trigger_source: 'portfolio', trigger_indicator: 'Mortgage collateral values depreciating 15% in USD terms', rag_status: 'Amber', action_category: 'underwriting', action_description: 'Reduce maximum mortgage LTV from 80% to 65% and mandate quarterly property revaluation for Stage 2 accounts', priority: 'High', owner: 'Head of Underwriting', deadline: 'Q2 2025', status: 'Open' },
+    ],
+  };
+
+  for (const sub of SUBSIDIARIES) {
+    const actions = actionsBySubsidiary[sub.id] || [];
+    for (const a of actions) {
+      rows.push({
+        subsidiary_id: sub.id,
+        trigger_source: a.trigger_source,
+        trigger_indicator: a.trigger_indicator,
+        rag_status: a.rag_status,
+        action_category: a.action_category,
+        action_description: a.action_description,
+        priority: a.priority,
+        owner: a.owner,
+        deadline: a.deadline,
+        status: a.status,
+      });
+    }
+  }
+  return rows;
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -2785,6 +3078,17 @@ async function main() {
 
   console.log('Seeding macro_credit_linkage...');
   await batchInsert('macro_credit_linkage', buildMacroCreditLinkage());
+
+  // -----------------------------------------------------------
+  // 4. Forward Outlook tables
+  // -----------------------------------------------------------
+  console.log('\n--- Forward Outlook Tables ---');
+
+  console.log('Seeding subsidiary_stress_scores...');
+  await batchInsert('subsidiary_stress_scores', buildSubsidiaryStressScores());
+
+  console.log('Seeding management_actions...');
+  await batchInsert('management_actions', buildManagementActions());
 
   console.log('\n=== Seeding complete! ===');
 }

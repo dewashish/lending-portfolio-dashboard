@@ -1839,6 +1839,48 @@ export interface Database {
         };
         Relationships: [];
       };
+      subsidiary_stress_scores: {
+        Row: {
+          id: number; subsidiary_id: number; dimension: string;
+          score: number; rag_status: string; drivers: unknown;
+          updated_at: string; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; dimension: string;
+          score?: number; rag_status?: string; drivers?: unknown;
+          updated_at?: string; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; dimension?: string;
+          score?: number; rag_status?: string; drivers?: unknown;
+          updated_at?: string; created_at?: string;
+        };
+        Relationships: [];
+      };
+      management_actions: {
+        Row: {
+          id: number; subsidiary_id: number; trigger_source: string;
+          trigger_indicator: string; rag_status: string;
+          action_category: string; action_description: string;
+          priority: string; owner: string | null; deadline: string | null;
+          status: string; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; trigger_source: string;
+          trigger_indicator: string; rag_status?: string;
+          action_category: string; action_description: string;
+          priority?: string; owner?: string | null; deadline?: string | null;
+          status?: string; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; trigger_source?: string;
+          trigger_indicator?: string; rag_status?: string;
+          action_category?: string; action_description?: string;
+          priority?: string; owner?: string | null; deadline?: string | null;
+          status?: string; created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       v_group_aum_summary: {

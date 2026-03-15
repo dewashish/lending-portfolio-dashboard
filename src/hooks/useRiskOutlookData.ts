@@ -53,6 +53,14 @@ export function useMacroCreditLinkage(scope?: ScopeSelection) {
   return useSWR(scopeKey('macro-credit-linkage', scope), () => queries.fetchMacroCreditLinkage(scope));
 }
 
+export function useSubsidiaryStressScores(scope?: ScopeSelection) {
+  return useSWR(scopeKey('subsidiary-stress-scores', scope), () => queries.fetchSubsidiaryStressScores(scope));
+}
+
+export function useManagementActions(scope?: ScopeSelection) {
+  return useSWR(scopeKey('management-actions', scope), () => queries.fetchManagementActions(scope));
+}
+
 export function useRiskOutlookKPIs(scope?: ScopeSelection) {
   return useSWR(scopeKey('risk-outlook-kpis', scope), () => queries.fetchRiskOutlookKPIs(scope));
 }

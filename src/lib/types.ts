@@ -887,6 +887,29 @@ export interface RiskOutlookKPIs {
   ewsAlerts: number;
 }
 
+export interface SubsidiaryStressScoreRow {
+  id: number;
+  subsidiaryId: number;
+  dimension: string;
+  score: number;
+  ragStatus: string;
+  drivers: { label: string; detail: string }[];
+}
+
+export interface ManagementActionRow {
+  id: number;
+  subsidiaryId: number;
+  triggerSource: string;
+  triggerIndicator: string;
+  ragStatus: string;
+  actionCategory: string;
+  actionDescription: string;
+  priority: string;
+  owner: string | null;
+  deadline: string | null;
+  status: string;
+}
+
 // ── Data Ingestion Types ──────────────────────────────────────────
 
 export interface IngestionAuthContext {

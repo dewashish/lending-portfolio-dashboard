@@ -15,6 +15,8 @@ import type {
   LeadingIndicatorRow,
   MacroCreditLinkageRow,
   RiskOutlookKPIs,
+  SubsidiaryStressScoreRow,
+  ManagementActionRow,
 } from '../types';
 import { applyScopeAsync } from './shared';
 
@@ -31,6 +33,8 @@ type VintageForecastDbRow = Database['public']['Tables']['vintage_forecast']['Ro
 type RollRateForecastDbRow = Database['public']['Tables']['roll_rate_forecast']['Row'];
 type LeadingIndicatorDbRow = Database['public']['Tables']['leading_indicators']['Row'];
 type MacroCreditLinkageDbRow = Database['public']['Tables']['macro_credit_linkage']['Row'];
+type SubsidiaryStressScoreDbRow = Database['public']['Tables']['subsidiary_stress_scores']['Row'];
+type ManagementActionDbRow = Database['public']['Tables']['management_actions']['Row'];
 
 // ── Query Functions ──────────────────────────────────────────────
 
@@ -270,6 +274,49 @@ export async function fetchMacroCreditLinkage(scope?: ScopeSelection): Promise<M
     macroValue: r.macro_value,
     creditValue: r.credit_value,
     leadMonths: r.lead_months,
+  }));
+}
+
+export async function fetchSubsidiaryStressScores(scope?: ScopeSelection): Promise<SubsidiaryStressScoreRow[]> {
+  let query = supabase
+    .from('subsidiary_stress_scores')
+    .select('*')
+    .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  const rows = (data ?? []) as SubsidiaryStressScoreDbRow[];
+  return rows.map((r) => ({
+    id: r.id,
+    subsidiaryId: r.subsidiary_id,
+    dimension: r.dimension,
+    score: Number(r.score),
+    ragStatus: r.rag_status,
+    drivers: (r.drivers ?? []) as { label: string; detail: string }[],
+  }));
+}
+
+export async function fetchManagementActions(scope?: ScopeSelection): Promise<ManagementActionRow[]> {
+  let query = supabase
+    .from('management_actions')
+    .select('*')
+    .order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  const rows = (data ?? []) as ManagementActionDbRow[];
+  return rows.map((r) => ({
+    id: r.id,
+    subsidiaryId: r.subsidiary_id,
+    triggerSource: r.trigger_source,
+    triggerIndicator: r.trigger_indicator,
+    ragStatus: r.rag_status,
+    actionCategory: r.action_category,
+    actionDescription: r.action_description,
+    priority: r.priority,
+    owner: r.owner,
+    deadline: r.deadline,
+    status: r.status,
   }));
 }
 
