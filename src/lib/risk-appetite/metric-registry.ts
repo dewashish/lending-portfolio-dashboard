@@ -1,6 +1,13 @@
 import type { MetricDefinition } from '@/lib/types';
 
 export const METRIC_REGISTRY: MetricDefinition[] = [
+  // ── Group Overview (cross-business-line blended KPIs) ─────────
+  { key: 'group_dpd_30_plus', label: 'Group 30+ DPD', direction: 'lower_is_better', defaultAppetite: 0.05, defaultTolerance: 0.07, businessLine: 'group', category: 'Delinquency' },
+  { key: 'group_npl', label: 'Group NPL Ratio', direction: 'lower_is_better', defaultAppetite: 0.03, defaultTolerance: 0.05, businessLine: 'group', category: 'Asset Quality' },
+  { key: 'group_provision_cov', label: 'Group Provision Coverage', direction: 'higher_is_better', defaultAppetite: 0.80, defaultTolerance: 0.60, businessLine: 'group', category: 'Provisioning' },
+  { key: 'group_credit_cost', label: 'Group Credit Cost', direction: 'lower_is_better', defaultAppetite: 0.02, defaultTolerance: 0.03, businessLine: 'group', category: 'Credit Cost' },
+  { key: 'group_ews_critical', label: 'EWS Critical Count', direction: 'lower_is_better', defaultAppetite: 0, defaultTolerance: 2, businessLine: 'group', category: 'Early Warning' },
+
   // ── Consumer Finance ──────────────────────────────────────────
   { key: 'fpd_pct', label: 'FPD%', direction: 'lower_is_better', defaultAppetite: 0.03, defaultTolerance: 0.035, businessLine: 'consumer_finance', category: 'Delinquency' },
   { key: 'dpd_30_plus', label: '30+ DPD%', direction: 'lower_is_better', defaultAppetite: 0.05, defaultTolerance: 0.06, businessLine: 'consumer_finance', category: 'Delinquency' },

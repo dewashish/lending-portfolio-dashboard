@@ -12,7 +12,7 @@ import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 
 export interface BreachAlert {
   id: string;
-  product: 'Consumer Finance' | 'Trade Finance' | 'Corporate Finance';
+  product: 'Group Overview' | 'Consumer Finance' | 'Trade Finance' | 'Corporate Finance';
   category: string;
   metricKey: string;
   label: string;
@@ -38,6 +38,7 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
   const { data: corpSummary, isLoading: col } = useCorporateExecutiveSummary(scope);
   const { getStatus, getThreshold } = useRiskAppetite();
 
+  const groupCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'group' }), [scope]);
   const consumerCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'consumer_finance' }), [scope]);
   const tradeCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'trade_finance' }), [scope]);
   const corpCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'corporate_finance' }), [scope]);
@@ -96,6 +97,22 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
       check('Corporate Finance', 'corp_pcr', corpSummary.provisionCoverageRatio, corpCtx);
     }
 
+    // Group-level blended KPIs
+    {
+      const dpd30 = getLatest(consumerData ?? [], '30+ Amt%');
+      check('Group Overview', 'group_dpd_30_plus', dpd30, groupCtx);
+
+      // Blended NPL (trade + corporate)
+      const tradeNPL = tradeSummary?.nplRatio ?? null;
+      const corpNPA = corpSummary?.npaRate ?? null;
+      const blendedNPL = tradeNPL ?? corpNPA;
+      check('Group Overview', 'group_npl', blendedNPL, groupCtx);
+
+      // Blended provision coverage
+      const blendedPCR = tradeSummary?.provisionCoverage ?? corpSummary?.provisionCoverageRatio ?? null;
+      check('Group Overview', 'group_provision_cov', blendedPCR, groupCtx);
+    }
+
     // Sort: red first, then amber; within same rag, by product
     results.sort((a, b) => {
       if (a.rag !== b.rag) return a.rag === 'red' ? -1 : 1;
@@ -103,7 +120,7 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
     });
 
     return results;
-  }, [consumerData, tradeSummary, corpSummary, getStatus, getThreshold, consumerCtx, tradeCtx, corpCtx]);
+  }, [consumerData, tradeSummary, corpSummary, getStatus, getThreshold, groupCtx, consumerCtx, tradeCtx, corpCtx]);
 
   return {
     alerts,
