@@ -11,7 +11,8 @@ const TECH_STACK = [
   { category: 'Tables', tech: 'TanStack Table v8', purpose: 'Data tables with sorting, filtering, pagination, row virtualization' },
   { category: 'Data Fetching', tech: 'SWR 2.2', purpose: 'Stale-while-revalidate caching, automatic revalidation, scope-aware cache keys' },
   { category: 'Backend', tech: 'Supabase', purpose: 'PostgreSQL database, Auth, Row-Level Security, real-time subscriptions' },
-  { category: 'AI', tech: 'Google Gemini', purpose: 'Natural language portfolio queries via /api/gemini endpoint' },
+  { category: 'AI', tech: 'GPT-4.1 (KIE.ai)', purpose: 'Natural language portfolio queries via /api/gemini endpoint, executive summary generation' },
+  { category: 'Validation', tech: 'Zod v4', purpose: 'Runtime schema validation for data ingestion API payloads (20+ endpoints)' },
   { category: 'PDF Export', tech: 'jsPDF + jspdf-autotable', purpose: 'Client-side PDF generation with formatted tables and KPIs' },
   { category: 'Excel Export', tech: 'ExcelJS', purpose: 'Client-side Excel generation with styled cells and multiple worksheets' },
   { category: 'Onboarding', tech: 'React Joyride', purpose: '12-step interactive guided tour with theme-aware styling' },
@@ -87,12 +88,18 @@ export function TechnicalStack() {
   │                                                        │
   │  ┌──────────────────┐   ┌────────────────────────────┐ │
   │  │  Server Layer     │   │  Client Components          │ │
+  │  │  Server Layer     │   │  Client Components          │ │
   │  │  - /api/gemini    │   │  - 'use client' directive   │ │
-  │  │  - /auth/*        │   │  - All views & charts       │ │
-  │  │  - SSR metadata   │   │  - SWR data hooks          │ │
-  │  └──────────────────┘   │  - Theme/Currency context   │ │
-  │                          │  - D3.js chart rendering    │ │
-  │                          └────────────────────────────┘ │
+  │  │  - /api/ingest/*  │   │  - All views & charts       │ │
+  │  │  - /api/exec-sum  │   │  - SWR data hooks          │ │
+  │  │  - /auth/*        │   │  - Theme/Currency context   │ │
+  │  │  - SSR metadata   │   │  - D3.js chart rendering    │ │
+  │  └──────────────────┘   └────────────────────────────┘ │
+  │                                                        │
+  │  Ingestion Layer (src/lib/ingestion/):                 │
+  │  ┌──────┐ ┌──────┐ ┌────┐ ┌──────┐ ┌────┐ ┌──────┐   │
+  │  │ Auth │ │ Zod  │ │ FX │ │Upsert│ │ DQ │ │Logger│   │
+  │  └──────┘ └──────┘ └────┘ └──────┘ └────┘ └──────┘   │
   │                                                        │
   │  Context Providers:                                    │
   │  ┌──────┐ ┌────────┐ ┌──────┐ ┌──────┐ ┌──────┐      │

@@ -887,3 +887,64 @@ export interface RiskOutlookKPIs {
   ewsAlerts: number;
 }
 
+// ── Data Ingestion Types ──────────────────────────────────────────
+
+export interface IngestionAuthContext {
+  subsidiaryId: number;
+  currencyCode: string;
+  scopes: string[];
+}
+
+export interface IngestionLogEntry {
+  id: number;
+  subsidiaryId: number;
+  tableName: string;
+  operation: string;
+  rowCount: number | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  status: 'started' | 'completed' | 'failed';
+  errorMessage: string | null;
+  validationErrors: unknown[] | null;
+  startedAt: string;
+  completedAt: string | null;
+  sourceSystem: string | null;
+  batchId: string;
+}
+
+export interface SyncWatermark {
+  subsidiaryId: number;
+  tableName: string;
+  lastSyncedAt: string | null;
+  lastPeriod: string | null;
+  lastBatchId: string | null;
+  rowCount: number;
+}
+
+export interface IngestionResult {
+  status: 'ok' | 'error';
+  batchId?: string;
+  rowsUpserted?: number;
+  usdConversionRate?: number;
+  warnings?: string[];
+  errors?: IngestionValidationError[];
+}
+
+export interface IngestionValidationError {
+  row?: number;
+  field?: string;
+  message: string;
+}
+
+export interface IngestionStatusResponse {
+  subsidiaryId: number;
+  name: string;
+  tables: Record<string, {
+    lastSync: string | null;
+    lastPeriod: string | null;
+    rows: number;
+    status: 'ok' | 'never_synced' | 'stale';
+  }>;
+  warnings: string[];
+}
+
