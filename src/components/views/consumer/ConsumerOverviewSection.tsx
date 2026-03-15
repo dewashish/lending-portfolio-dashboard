@@ -11,7 +11,7 @@ import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
-import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
+import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters, ThresholdContext } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
@@ -48,7 +48,7 @@ interface SummaryMetric {
   rawValue?: number;
 }
 
-function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
+function SummaryStrip({ metrics, thresholdCtx }: { metrics: SummaryMetric[]; thresholdCtx?: ThresholdContext }) {
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       <Stack
@@ -83,7 +83,7 @@ function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
               </Typography>
               <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.75}>
                 {m.metricKey != null && m.rawValue != null ? (
-                  <BreachBadge metricKey={m.metricKey} value={m.rawValue}>
+                  <BreachBadge metricKey={m.metricKey} value={m.rawValue} context={thresholdCtx}>
                     <Typography
                       variant="h6"
                       className="mono"
@@ -189,7 +189,7 @@ export function ConsumerOverviewSection({ scope, filters }: Props) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      {summaryMetrics.length > 0 && <SummaryStrip metrics={summaryMetrics} />}
+      {summaryMetrics.length > 0 && <SummaryStrip metrics={summaryMetrics} thresholdCtx={ctx} />}
       <ConsumerOverallTable data={overall ?? []} />
       <DPDBucketDistribution data={netFlow ?? []} />
     </Box>

@@ -24,7 +24,7 @@ interface RiskKPI {
   rawValue?: number;
 }
 
-function RiskKPIStrip({ kpis }: { kpis: RiskKPI[] }) {
+function RiskKPIStrip({ kpis, ctx }: { kpis: RiskKPI[]; ctx?: ThresholdContext }) {
   return (
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => (
@@ -36,7 +36,7 @@ function RiskKPIStrip({ kpis }: { kpis: RiskKPI[] }) {
             {k.label}
           </Typography>
           {k.metricKey != null && k.rawValue != null ? (
-            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
               <Typography
                 variant="h6"
                 className="mono"
@@ -124,7 +124,7 @@ export function ConsumerRiskAnalyticsSection({ scope, filters }: Props) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      {kpis.length > 0 && <RiskKPIStrip kpis={kpis} />}
+      {kpis.length > 0 && <RiskKPIStrip kpis={kpis} ctx={ctx} />}
       <BusinessSupportTable
         approvedData={approved ?? []}
         rejectedData={rejected ?? []}

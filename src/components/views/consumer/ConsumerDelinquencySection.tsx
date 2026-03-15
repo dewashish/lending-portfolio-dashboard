@@ -45,7 +45,7 @@ interface DKpi {
   rawValue?: number;
 }
 
-function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
+function DelinquencyKPIStrip({ kpis, ctx }: { kpis: DKpi[]; ctx?: import('@/lib/types').ThresholdContext }) {
   return (
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => {
@@ -67,7 +67,7 @@ function DelinquencyKPIStrip({ kpis }: { kpis: DKpi[] }) {
               {k.label}
             </Typography>
             {k.metricKey != null && k.rawValue != null ? (
-              <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+              <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
                 <Typography
                   variant="h6"
                   className="mono"
@@ -282,7 +282,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
         )}
       </Box>
 
-      {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} />}
+      {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} ctx={ctx} />}
 
       {/* Static Pool Analysis — always shows current data, unaffected by period filter */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

@@ -1,10 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Grid, Box, Card, Typography, Chip, Table, TableHead, TableBody, TableRow, TableCell, TableContainer } from '@mui/material';
 import { EntityBreakdownBar } from '@/components/charts/EntityBreakdownBar';
 import { StagingDonut } from '@/components/charts/StagingDonut';
 import { EntityPerformanceTable } from '@/components/tables/EntityPerformanceTable';
 import { BreachBadge } from '@/components/common/BreachBadge';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { useTradeEntityPerformance, useTradeAssetQuality, useTradeCollectionEfficiency } from '@/hooks/useTradeData';
 import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
@@ -18,6 +20,7 @@ interface Props {
 
 export function TradeOverviewSection({ scope }: Props) {
   const { formatCurrency } = useCurrencyFormat();
+  const ctx = useMemo(() => buildThresholdContext(scope), [scope]);
   const { data: entityPerf, isLoading: loadingPerf } = useTradeEntityPerformance(scope);
   const { data: assetQuality, isLoading: loadingAQ } = useTradeAssetQuality(scope);
   const { data: collEff, isLoading: loadingColl } = useTradeCollectionEfficiency(scope);
@@ -63,7 +66,7 @@ export function TradeOverviewSection({ scope }: Props) {
                       {formatPercent(row.collectionEfficiencyRatio)}
                     </TableCell>
                     <TableCell align="right" sx={{ fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace' }}>
-                      <BreachBadge metricKey="trade_overdue_ratio" value={row.overdueRatio}>
+                      <BreachBadge metricKey="trade_overdue_ratio" value={row.overdueRatio} context={ctx}>
                         {formatPercent(row.overdueRatio)}
                       </BreachBadge>
                     </TableCell>

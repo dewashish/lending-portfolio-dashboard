@@ -201,7 +201,7 @@ export function BusinessLineComparisonTable({
   const renderCell = (cell: CellData) => {
     if (cell.metricKey && cell.rawValue != null) {
       return (
-        <BreachBadge metricKey={cell.metricKey} value={cell.rawValue}>
+        <BreachBadge metricKey={cell.metricKey} value={cell.rawValue} context={ctx}>
           <span style={{ color: getColor(cell.metricKey, cell.rawValue, ctx) }}>{cell.value}</span>
         </BreachBadge>
       );

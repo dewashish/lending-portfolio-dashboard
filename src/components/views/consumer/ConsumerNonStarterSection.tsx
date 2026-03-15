@@ -29,7 +29,7 @@ interface NSKpi {
   rawValue?: number;
 }
 
-function NSKPIStrip({ kpis }: { kpis: NSKpi[] }) {
+function NSKPIStrip({ kpis, ctx }: { kpis: NSKpi[]; ctx?: ThresholdContext }) {
   return (
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => (
@@ -41,7 +41,7 @@ function NSKPIStrip({ kpis }: { kpis: NSKpi[] }) {
             {k.label}
           </Typography>
           {k.metricKey != null && k.rawValue != null ? (
-            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
               <Typography
                 variant="h6"
                 className="mono"
@@ -192,7 +192,7 @@ export function ConsumerNonStarterSection({ scope, filters }: Props) {
         </Tooltip>
       </Box>
 
-      {kpis.length > 0 && <NSKPIStrip kpis={kpis} />}
+      {kpis.length > 0 && <NSKPIStrip kpis={kpis} ctx={ctx} />}
 
       <NonStarterTable
         data={augmented}

@@ -413,7 +413,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
                         color: getColor('dpd_30_plus', row.consumerDelinquency30Plus ?? 0, ctx),
                       }}>
                         {row.consumerDelinquency30Plus != null ? (
-                          <BreachBadge metricKey="dpd_30_plus" value={row.consumerDelinquency30Plus}>
+                          <BreachBadge metricKey="dpd_30_plus" value={row.consumerDelinquency30Plus} context={buildThresholdContext({ level: 'subsidiary', subsidiaryId: row.subsidiaryId })}>
                             {formatPercent(row.consumerDelinquency30Plus, 2)}
                           </BreachBadge>
                         ) : '—'}
@@ -423,7 +423,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
                         color: getColor('npl_ratio', row.tradeNplRatio ?? 0, ctx),
                       }}>
                         {row.tradeNplRatio != null ? (
-                          <BreachBadge metricKey="npl_ratio" value={row.tradeNplRatio}>
+                          <BreachBadge metricKey="npl_ratio" value={row.tradeNplRatio} context={buildThresholdContext({ level: 'subsidiary', subsidiaryId: row.subsidiaryId })}>
                             {formatPercent(row.tradeNplRatio)}
                           </BreachBadge>
                         ) : '—'}
@@ -439,7 +439,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
                         color: getColor('avg_ews_score', row.avgEwsScore ?? 0, ctx),
                       }}>
                         {row.avgEwsScore != null ? (
-                          <BreachBadge metricKey="avg_ews_score" value={row.avgEwsScore}>
+                          <BreachBadge metricKey="avg_ews_score" value={row.avgEwsScore} context={buildThresholdContext({ level: 'subsidiary', subsidiaryId: row.subsidiaryId })}>
                             {formatNumber(row.avgEwsScore, 1)}
                           </BreachBadge>
                         ) : '—'}

@@ -28,7 +28,7 @@ interface CollectionKPI {
   rawValue?: number;
 }
 
-function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
+function CollectionKPIStrip({ kpis, ctx }: { kpis: CollectionKPI[]; ctx?: import('@/lib/types').ThresholdContext }) {
   return (
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => (
@@ -40,7 +40,7 @@ function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
             {k.label}
           </Typography>
           {k.metricKey != null && k.rawValue != null ? (
-            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
               <Typography
                 variant="h6"
                 className="mono"
@@ -246,7 +246,7 @@ export function ConsumerCollectionsSection({ scope }: Props) {
         </Select>
       </Box>
 
-      {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} />}
+      {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} ctx={ctx} />}
 
       {/* Table + Sankey side-by-side */}
       <Grid container spacing={2}>

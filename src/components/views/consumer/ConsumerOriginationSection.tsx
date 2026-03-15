@@ -66,7 +66,7 @@ function OriginationKPIBanner({ kpis, thresholdCtx }: { kpis: OriginationKPI[]; 
               </Typography>
               <Stack direction="row" justifyContent="center" spacing={0.5} sx={{ mt: 0.5 }}>
                 {k.achievement != null && (
-                  <BreachBadge metricKey="los_achievement" value={k.achievement}>
+                  <BreachBadge metricKey="los_achievement" value={k.achievement} context={thresholdCtx}>
                     <Chip
                       size="small"
                       label={`${formatPercent(k.achievement)} ach.`}
