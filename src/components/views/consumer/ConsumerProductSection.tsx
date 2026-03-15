@@ -17,7 +17,7 @@ type SecuredFilter = 'all' | 'secured' | 'unsecured';
 export function ConsumerProductSection({ scope, filters }: Props) {
   const { data: productCatalog } = useProductCatalog(scope);
   const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string>('all');
 
   const availableProducts = useMemo(() => {
     if (!productCatalog) return [];
@@ -25,10 +25,17 @@ export function ConsumerProductSection({ scope, filters }: Props) {
     return productCatalog.filter((p) => p.productCategory.toLowerCase() === securedFilter);
   }, [productCatalog, securedFilter]);
 
+  // Resolved product names to pass to hooks
   const effectiveProducts = useMemo(() => {
-    if (selectedProduct) return [selectedProduct];
-    return availableProducts.map((p) => p.productName);
-  }, [selectedProduct, availableProducts]);
+    if (selectedProduct !== 'all') {
+      const exists = availableProducts.some((p) => p.productName === selectedProduct);
+      return exists ? [selectedProduct] : [];
+    }
+    if (securedFilter !== 'all') {
+      return availableProducts.map((p) => p.productName);
+    }
+    return []; // empty = all products (no filter)
+  }, [securedFilter, selectedProduct, availableProducts]);
 
   const mergedFilters = useMemo<ConsumerFilters>(() => ({
     period: filters?.period ?? null,
@@ -40,7 +47,7 @@ export function ConsumerProductSection({ scope, filters }: Props) {
   const handleSecuredChange = (_: unknown, val: SecuredFilter | null) => {
     if (!val) return;
     setSecuredFilter(val);
-    setSelectedProduct(null);
+    setSelectedProduct('all');
   };
 
   if (isLoading) return <LoadingSkeleton />;
@@ -64,15 +71,14 @@ export function ConsumerProductSection({ scope, filters }: Props) {
           <ToggleButton value="unsecured">Unsecured</ToggleButton>
         </ToggleButtonGroup>
 
-        {availableProducts.length > 1 && (
+        {availableProducts.length > 0 && (
           <Select
             size="small"
-            displayEmpty
-            value={selectedProduct ?? ''}
-            onChange={(e) => setSelectedProduct(e.target.value || null)}
+            value={selectedProduct}
+            onChange={(e) => setSelectedProduct(e.target.value)}
             sx={{ minWidth: 160, fontSize: '0.72rem', '& .MuiSelect-select': { py: 0.5 } }}
           >
-            <MenuItem value="" sx={{ fontSize: '0.72rem' }}>All Products</MenuItem>
+            <MenuItem value="all" sx={{ fontSize: '0.72rem' }}>All Products</MenuItem>
             {availableProducts.map((p) => (
               <MenuItem key={p.productName} value={p.productName} sx={{ fontSize: '0.72rem' }}>
                 {p.productName}
@@ -82,7 +88,10 @@ export function ConsumerProductSection({ scope, filters }: Props) {
         )}
       </Box>
 
-      <ConsumerProductTable data={products ?? []} />
+      <ConsumerProductTable
+        data={products ?? []}
+        selectedProduct={selectedProduct !== 'all' ? selectedProduct : undefined}
+      />
     </Box>
   );
 }

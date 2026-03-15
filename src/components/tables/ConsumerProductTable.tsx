@@ -20,8 +20,6 @@ import {
   Typography,
   Box,
   TableSortLabel,
-  ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -128,12 +126,9 @@ interface Props {
 export function ConsumerProductTable({ data, selectedProduct }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [internalProduct, setInternalProduct] = useState<string>(
-    selectedProduct ?? data[0]?.productName ?? '',
-  );
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const activeProduct = selectedProduct ?? internalProduct;
+  const activeProduct = selectedProduct ?? data[0]?.productName ?? '';
 
   const toggleGroup = (group: string) => {
     setCollapsedGroups((prev) => {
@@ -354,31 +349,6 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           Product Metrics — {activeProduct}
         </Typography>
-
-        {!selectedProduct && data.length > 1 && (
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={internalProduct}
-            onChange={(_, val) => {
-              if (val !== null) setInternalProduct(val);
-            }}
-            sx={{
-              '& .MuiToggleButton-root': {
-                textTransform: 'none',
-                fontSize: '0.7rem',
-                px: 1.5,
-                py: 0.25,
-              },
-            }}
-          >
-            {data.map((p) => (
-              <ToggleButton key={p.productName} value={p.productName}>
-                {p.productName}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        )}
       </Box>
 
       <TableContainer sx={{ maxHeight: 700 }}>

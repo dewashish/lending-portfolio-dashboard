@@ -242,11 +242,14 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
   const rows = (data ?? []) as (ProductRow & { value_usd: number | null })[];
   const useUsd = !scope || scope.level !== 'subsidiary';
 
-  if (useUsd && rows.length > 0 && rows[0].value_usd != null) {
-    const rateMetrics = new Set([
-      'Wt Avg ROI', 'Wt Avg Tenor', 'Collection Efficiency',
-      '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o', 'X+ Amt% excl w/o',
-      'FPD%', 'FPD To GCL Trend', 'Current BKT Bounce Rate',
+  if (useUsd && rows.length > 1) {
+    // Metrics that should be AVERAGED across subsidiaries (rates, ratios, absolute values)
+    // Everything else is SUMMED via value_usd (monetary amounts)
+    const averagedMetrics = new Set([
+      'Wt Avg ROI', 'Wt Avg Tenor', 'Average Ticket Size',
+      'Collection Efficiency', 'PDD Pending > 60 days (#)',
+      'Current BKT Bounce Rate', 'FPD%', 'FPD To GCL Trend',
+      'X+ Amt% excl w/o', '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o',
       'Net Credit Loss %', 'Policy Deviation (%account)',
     ]);
 
@@ -255,25 +258,27 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
 
     for (const r of rows) {
       const key = `${r.product_name}|${r.metric_type}|${r.metric}|${r.period}`;
+      const isAvg = averagedMetrics.has(r.metric);
+
       if (!aggregated.has(key)) {
         aggregated.set(key, {
           ...r,
-          value: rateMetrics.has(r.metric) ? (r.value ?? 0) : (r.value_usd ?? 0),
+          value: isAvg ? (r.value ?? 0) : (r.value_usd ?? r.value ?? 0),
         });
         countMap.set(key, 1);
       } else {
         const existing = aggregated.get(key)!;
-        if (rateMetrics.has(r.metric)) {
+        if (isAvg) {
           existing.value = (existing.value ?? 0) + (r.value ?? 0);
-          countMap.set(key, (countMap.get(key) ?? 0) + 1);
         } else {
-          existing.value = (existing.value ?? 0) + (r.value_usd ?? 0);
+          existing.value = (existing.value ?? 0) + (r.value_usd ?? r.value ?? 0);
         }
+        countMap.set(key, (countMap.get(key) ?? 0) + 1);
       }
     }
 
     aggregated.forEach((row, key) => {
-      if (rateMetrics.has(row.metric)) {
+      if (averagedMetrics.has(row.metric)) {
         const count = countMap.get(key) ?? 1;
         row.value = (row.value ?? 0) / count;
       }

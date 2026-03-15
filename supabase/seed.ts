@@ -60,6 +60,7 @@ async function clearAll() {
     'corporate_delinquency',
     'corporate_covenants',
     'corporate_watchlist',
+    'corporate_industry_concentration',
     'corporate_executive_summary',
     'corporate_facilities',
     'trade_watchlist',
@@ -2043,6 +2044,52 @@ function buildCorporateCovenants(): Row[] {
   return rows;
 }
 
+// ---------------------------------------------------------------------------
+// 20b. corporate_industry_concentration (sector breakdown per subsidiary)
+// ---------------------------------------------------------------------------
+const CORP_SECTORS = [
+  'NBFC', 'Infrastructure', 'FMCG', 'Real Estate', 'Pharmaceuticals',
+  'IT/Technology', 'Metals & Mining', 'Textiles', 'Auto & Auto Components',
+];
+
+function buildCorporateIndustryConcentration(): Row[] {
+  const rows: Row[] = [];
+  const BASE_SHARES = [0.18, 0.15, 0.13, 0.12, 0.10, 0.09, 0.08, 0.08, 0.07];
+
+  for (const sub of SUBSIDIARIES) {
+    const totalPOS = sub.aumLocal * 0.6; // corporate ~60% of AUM
+    for (let pi = 0; pi < PERIODS_7.length; pi++) {
+      const period = PERIODS_7[pi];
+      for (let sIdx = 0; sIdx < CORP_SECTORS.length; sIdx++) {
+        const sector = CORP_SECTORS[sIdx];
+        const n = noise(sub.id, pi, sIdx + 500);
+        const share = +(BASE_SHARES[sIdx] * n).toFixed(4);
+        const pos = +(totalPOS * share).toFixed(2);
+        const posUsd = toUSD(pos, sub.currencyCode, FX_MAP);
+        const disbursement = +(pos * noiseRange(0.8, 1.2, sub.id, pi, sIdx)).toFixed(2);
+        const disbursementUsd = toUSD(disbursement, sub.currencyCode, FX_MAP);
+        const facilityCount = Math.round(noiseRange(3, 25, sub.id, sIdx, pi));
+        const irr = +(noiseRange(0.08, 0.18, sub.id, sIdx, pi + 600)).toFixed(4);
+
+        rows.push({
+          subsidiary_id: sub.id,
+          sector,
+          period,
+          disbursement,
+          disbursement_usd: disbursementUsd,
+          pos,
+          pos_usd: posUsd,
+          portfolio_share: share,
+          irr,
+          facility_count: facilityCount,
+          report_date: '2025-08-15',
+        });
+      }
+    }
+  }
+  return rows;
+}
+
 // =============================================================================
 // Risk Outlook Table Builders
 // =============================================================================
@@ -2670,6 +2717,9 @@ async function main() {
 
   console.log('Seeding corporate_covenants...');
   await batchInsert('corporate_covenants', buildCorporateCovenants());
+
+  console.log('Seeding corporate_industry_concentration...');
+  await batchInsert('corporate_industry_concentration', buildCorporateIndustryConcentration());
 
   // -----------------------------------------------------------
   // Risk Appetite Settings (14 global defaults)
