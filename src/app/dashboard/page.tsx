@@ -4,6 +4,8 @@ import { useState, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { DashboardAppBar } from '@/components/shell/DashboardAppBar';
 import { TabBar } from '@/components/shell/TabBar';
+import { VantaGlobeBackground } from '@/components/shell/VantaGlobeBackground';
+import { useThemeMode } from '@/lib/theme-context';
 import type { ScopeSelection } from '@/lib/types';
 import { DEFAULT_SCOPE } from '@/lib/constants';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -22,6 +24,7 @@ import { TourProvider } from '@/lib/tour-context';
 import { CurrencyProvider } from '@/lib/currency-context';
 import { DashboardTour } from '@/components/common/DashboardTour';
 function DashboardContent() {
+  const { mode } = useThemeMode();
   const [activeTab, setActiveTab] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -51,7 +54,8 @@ function DashboardContent() {
   };
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+      <VantaGlobeBackground mode={mode} />
       <DashboardAppBar
         onToggleAI={() => setAiOpen(!aiOpen)}
         onToggleSettings={() => setSettingsOpen(!settingsOpen)}
@@ -71,6 +75,8 @@ function DashboardContent() {
           display: 'flex',
           flexDirection: 'column',
           gap: 2.5,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <ErrorBoundary>

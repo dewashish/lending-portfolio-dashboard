@@ -1,6 +1,6 @@
 'use client';
 
-import { Tabs, Tab, Box } from '@mui/material';
+import { Tabs, Tab, Box, useTheme } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -24,8 +24,15 @@ interface Props {
 }
 
 export function TabBar({ activeTab, onTabChange }: Props) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   return (
-    <Box id="tour-tab-bar" sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'background.default' }}>
+    <Box id="tour-tab-bar" sx={{
+      borderBottom: 1, borderColor: 'divider', px: 2,
+      bgcolor: isDark ? 'rgba(10,15,26,0.75)' : 'rgba(255,255,255,0.8)',
+      backdropFilter: 'blur(16px)',
+      position: 'relative', zIndex: 2,
+    }}>
       <Tabs
         value={activeTab}
         onChange={(_, v) => onTabChange(v)}

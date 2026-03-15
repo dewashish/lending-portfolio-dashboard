@@ -66,7 +66,11 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
   };
 
   return (
-    <AppBar position="static" elevation={0}>
+    <AppBar position="static" elevation={0} sx={{
+      bgcolor: mode === 'dark' ? 'rgba(10,15,26,0.75)' : 'rgba(255,255,255,0.8)',
+      backdropFilter: 'blur(16px)',
+      zIndex: 2,
+    }}>
       <Toolbar sx={{ gap: 1.5 }}>
         {/* Company branding */}
         <Box
