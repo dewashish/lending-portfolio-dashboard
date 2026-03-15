@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { useTheme } from '@mui/material/styles';
+import Script from 'next/script';
 import type { UserRole } from '@/lib/user-context';
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -36,6 +37,47 @@ export default function LoginPage() {
   const [role, setRole] = useState<UserRole | ''>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Vanta.js globe background
+  const vantaRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const vantaEffect = useRef<any>(null);
+  const [scriptsLoaded, setScriptsLoaded] = useState(0);
+
+  const initVanta = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const W = window as any;
+    if (!vantaRef.current || !W.VANTA?.GLOBE || !W.THREE) return;
+    if (vantaEffect.current) vantaEffect.current.destroy();
+    vantaEffect.current = W.VANTA.GLOBE({
+      el: vantaRef.current,
+      THREE: W.THREE,
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200,
+      minWidth: 200,
+      scale: 1.0,
+      scaleMobile: 1.0,
+      color: 0x00897b,
+      color2: 0x004d40,
+      backgroundColor: isDark ? 0x0a0f1a : 0x0d1b2a,
+      size: 1.2,
+      points: 8,
+      maxDistance: 22,
+      spacing: 18,
+    });
+  }, [isDark]);
+
+  useEffect(() => {
+    if (scriptsLoaded >= 2) initVanta();
+  }, [scriptsLoaded, initVanta]);
+
+  useEffect(() => {
+    return () => {
+      if (vantaEffect.current) vantaEffect.current.destroy();
+    };
+  }, []);
 
   const handleSignIn = async () => {
     setError('');
@@ -104,27 +146,46 @@ export default function LoginPage() {
   };
 
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: isDark
-          ? 'radial-gradient(ellipse at 30% 20%, rgba(0,137,123,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(255,111,0,0.08) 0%, transparent 50%), #0a0f1a'
-          : 'radial-gradient(ellipse at 30% 20%, rgba(0,137,123,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(255,111,0,0.04) 0%, transparent 50%), #f5f7fa',
-      }}
-    >
+    <>
+      <Script
+        src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
+        strategy="afterInteractive"
+        onLoad={() => setScriptsLoaded((n) => n + 1)}
+      />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"
+        strategy="afterInteractive"
+        onLoad={() => setScriptsLoaded((n) => n + 1)}
+      />
+      <Box
+        ref={vantaRef}
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          background: isDark ? '#0a0f1a' : '#0d1b2a',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
       <Card
         sx={{
           p: 5,
           maxWidth: 440,
           width: '100%',
           mx: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: isDark ? 'rgba(17,24,39,0.9)' : 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          bgcolor: 'rgba(10,15,26,0.85)',
+          backdropFilter: 'blur(24px)',
+          color: '#fff',
         }}
       >
         <Stack spacing={3} alignItems="center">
@@ -143,10 +204,10 @@ export default function LoginPage() {
           </Box>
 
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" fontWeight={800} gutterBottom>
+            <Typography variant="h5" fontWeight={800} gutterBottom sx={{ color: '#fff' }}>
               Avaloura Portfolio Monitor
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
               Group Risk Management Engine
             </Typography>
           </Box>
@@ -165,6 +226,10 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255,255,255,0.25)' }, '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }, '&.Mui-focused fieldset': { borderColor: '#00897b' } },
+                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.5)' },
+              }}
             />
 
             <TextField
@@ -175,6 +240,10 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255,255,255,0.25)' }, '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }, '&.Mui-focused fieldset': { borderColor: '#00897b' } },
+                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.5)' },
+              }}
             />
 
             {mode === 'signup' && (
@@ -208,7 +277,7 @@ export default function LoginPage() {
                   background: 'linear-gradient(135deg, #00a08a 0%, #00897b 100%)',
                 },
                 '&.Mui-disabled': {
-                  background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                  background: 'rgba(255,255,255,0.12)',
                 },
               }}
             >
@@ -261,6 +330,7 @@ export default function LoginPage() {
           </Typography>
         </Stack>
       </Card>
-    </Box>
+      </Box>
+    </>
   );
 }
