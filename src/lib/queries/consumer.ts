@@ -231,14 +231,58 @@ export async function fetchConsumerOverall(scope?: ScopeSelection, filters?: Con
 export async function fetchProductMetrics(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<ConsumerProductData[]> {
   let query = supabase
     .from('consumer_product_metrics')
-    .select('product_name, metric_type, metric, period, value, benchmark')
+    .select('product_name, metric_type, metric, period, value, value_usd, benchmark')
     .order('id');
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) query = query.in('product_name', filters.products);
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
-  return pivotToProductData((data ?? []) as ProductRow[]);
+
+  const rows = (data ?? []) as (ProductRow & { value_usd: number | null })[];
+  const useUsd = !scope || scope.level !== 'subsidiary';
+
+  if (useUsd && rows.length > 0 && rows[0].value_usd != null) {
+    const rateMetrics = new Set([
+      'Wt Avg ROI', 'Wt Avg Tenor', 'Collection Efficiency',
+      '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o', 'X+ Amt% excl w/o',
+      'FPD%', 'FPD To GCL Trend', 'Current BKT Bounce Rate',
+      'Net Credit Loss %', 'Policy Deviation (%account)',
+    ]);
+
+    const aggregated = new Map<string, ProductRow>();
+    const countMap = new Map<string, number>();
+
+    for (const r of rows) {
+      const key = `${r.product_name}|${r.metric_type}|${r.metric}|${r.period}`;
+      if (!aggregated.has(key)) {
+        aggregated.set(key, {
+          ...r,
+          value: rateMetrics.has(r.metric) ? (r.value ?? 0) : (r.value_usd ?? 0),
+        });
+        countMap.set(key, 1);
+      } else {
+        const existing = aggregated.get(key)!;
+        if (rateMetrics.has(r.metric)) {
+          existing.value = (existing.value ?? 0) + (r.value ?? 0);
+          countMap.set(key, (countMap.get(key) ?? 0) + 1);
+        } else {
+          existing.value = (existing.value ?? 0) + (r.value_usd ?? 0);
+        }
+      }
+    }
+
+    aggregated.forEach((row, key) => {
+      if (rateMetrics.has(row.metric)) {
+        const count = countMap.get(key) ?? 1;
+        row.value = (row.value ?? 0) / count;
+      }
+    });
+
+    return pivotToProductData(Array.from(aggregated.values()));
+  }
+
+  return pivotToProductData(rows);
 }
 
 export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NetFlowRow[]> {

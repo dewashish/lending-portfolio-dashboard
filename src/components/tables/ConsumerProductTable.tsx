@@ -27,6 +27,8 @@ import {
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ConsumerProductData, ConsumerMetricRow } from '@/lib/types';
@@ -34,25 +36,37 @@ import type { ConsumerProductData, ConsumerMetricRow } from '@/lib/types';
 /* ── helpers ─────────────────────────────────────────────────────── */
 
 const GROUP_COLORS: Record<string, string> = {
-  'Asset Quality': '#1565c0',
-  'Collection': '#2e7d32',
-  'Delinquency': '#e65100',
-  'Write-off': '#b71c1c',
-  'Recovery': '#00695c',
-  'Portfolio': '#4527a0',
-  'Bookings': '#0d47a1',
+  'Book Size and Growth': '#0d47a1',
+  'Entry Rates': '#ff6f00',
+  'Portfolio Performance': '#4527a0',
+  'Process Efficiency': '#37474f',
+  'Provision Coverage': '#00695c',
+  'Collection Efficiency': '#2e7d32',
 };
 
+const GROUP_ORDER = [
+  'Book Size and Growth',
+  'Entry Rates',
+  'Portfolio Performance',
+  'Process Efficiency',
+  'Provision Coverage',
+  'Collection Efficiency',
+];
+
 function isInverseMetric(metric: string): boolean {
-  return /(%|FPD|SPD|TPD|NPA|DPD|Delinquency|Write-off|NCL|Net Credit Loss)/i.test(metric);
+  return /(%|FPD|SPD|TPD|NPA|DPD|Delinquency|Write-off|NCL|Net Credit Loss|Policy Deviation|PDD|Bounce)/i.test(metric);
 }
 
 function isPercentMetric(metric: string): boolean {
-  return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio|ROI|Credit Loss|Bounce)/i.test(metric);
+  return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio|ROI|Credit Loss|Bounce|GCL)/i.test(metric);
 }
 
 function isCurrencyMetric(metric: string): boolean {
-  return /\b(AUM|Bookings|Disbursement|Write-offs?|Recoveries|NCL|Outstanding|Amount|Balance|POS)\b/i.test(metric);
+  return /\b(AUM|Bookings|Disbursement|Write-off|Recoveries|NCL|Outstanding|Amount|Balance|POS|Foreclosure|Ticket Size|Provision|M USD)\b/i.test(metric);
+}
+
+function isSubRow(metric: string): boolean {
+  return /\(M USD\)$/.test(metric);
 }
 
 function formatMetricValue(
@@ -117,8 +131,18 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
   const [internalProduct, setInternalProduct] = useState<string>(
     selectedProduct ?? data[0]?.productName ?? '',
   );
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const activeProduct = selectedProduct ?? internalProduct;
+
+  const toggleGroup = (group: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  };
 
   const productData = useMemo<ConsumerMetricRow[]>(() => {
     const match = data.find((p) => p.productName === activeProduct);
@@ -139,10 +163,27 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
       if (existing) existing.push(row);
       else map.set(row.metricType, [row]);
     });
-    return map;
+    // Sort groups by GROUP_ORDER
+    const sorted = new Map<string, ConsumerMetricRow[]>();
+    GROUP_ORDER.forEach((g) => {
+      if (map.has(g)) sorted.set(g, map.get(g)!);
+    });
+    // Add any remaining groups not in ORDER
+    map.forEach((rows, key) => {
+      if (!sorted.has(key)) sorted.set(key, rows);
+    });
+    return sorted;
   }, [productData]);
 
-  const flatRows = useMemo(() => Array.from(groups.values()).flat(), [groups]);
+  const flatRows = useMemo(() => {
+    const result: ConsumerMetricRow[] = [];
+    groups.forEach((rows, groupKey) => {
+      if (!collapsedGroups.has(groupKey)) {
+        result.push(...rows);
+      }
+    });
+    return result;
+  }, [groups, collapsedGroups]);
 
   const columns = useMemo<ColumnDef<ConsumerMetricRow, unknown>[]>(() => {
     const cols: ColumnDef<ConsumerMetricRow, unknown>[] = [
@@ -156,11 +197,20 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
         id: 'metric',
         accessorKey: 'metric',
         header: 'Metric',
-        cell: (info) => (
-          <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-            {info.getValue() as string}
-          </Typography>
-        ),
+        cell: (info) => {
+          const metricName = info.getValue() as string;
+          const isSub = isSubRow(metricName);
+          return (
+            <Typography variant="body2" sx={{
+              fontSize: '0.75rem',
+              fontWeight: isSub ? 400 : 600,
+              pl: isSub ? 2 : 0,
+              color: isSub ? 'text.secondary' : 'text.primary',
+            }}>
+              {metricName}
+            </Typography>
+          );
+        },
       },
       ...periodKeys.map<ColumnDef<ConsumerMetricRow, unknown>>((key) => ({
         id: `period_${key}`,
@@ -275,7 +325,17 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  let lastGroupKey = '';
+  // Build ordered group keys for rendering headers (including collapsed ones)
+  const orderedGroupKeys = useMemo(() => {
+    const keys: string[] = [];
+    GROUP_ORDER.forEach((g) => {
+      if (groups.has(g)) keys.push(g);
+    });
+    groups.forEach((_, key) => {
+      if (!keys.includes(key)) keys.push(key);
+    });
+    return keys;
+  }, [groups]);
 
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
@@ -321,7 +381,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
         )}
       </Box>
 
-      <TableContainer sx={{ maxHeight: 600 }}>
+      <TableContainer sx={{ maxHeight: 700 }}>
         <Table size="small" stickyHeader>
           <TableHead>
             {table.getHeaderGroups().map((hg) => (
@@ -373,79 +433,114 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
             ))}
           </TableHead>
           <TableBody>
-            {table.getRowModel().rows.map((row) => {
-              const groupKey = row.original.metricType;
-              const showGroupHeader = groupKey !== lastGroupKey;
-              lastGroupKey = groupKey;
+            {(() => {
+              const rows: React.ReactNode[] = [];
+              let rowIndex = 0;
 
-              const groupColor =
-                GROUP_COLORS[groupKey] ??
-                GROUP_COLORS[
-                  Object.keys(GROUP_COLORS).find((k) =>
-                    groupKey.toLowerCase().includes(k.toLowerCase()),
-                  ) ?? ''
-                ] ??
-                '#546e7a';
+              for (const groupKey of orderedGroupKeys) {
+                const isCollapsed = collapsedGroups.has(groupKey);
+                const groupColor =
+                  GROUP_COLORS[groupKey] ??
+                  GROUP_COLORS[
+                    Object.keys(GROUP_COLORS).find((k) =>
+                      groupKey.toLowerCase().includes(k.toLowerCase()),
+                    ) ?? ''
+                  ] ??
+                  '#546e7a';
+                const colSpan = columns.length - 1;
+                const groupRows = groups.get(groupKey);
+                const rowCount = groupRows?.length ?? 0;
 
-              const colSpan = columns.length - 1;
-
-              return [
-                showGroupHeader && (
-                  <TableRow key={`group-${groupKey}`}>
+                rows.push(
+                  <TableRow
+                    key={`group-${groupKey}`}
+                    sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                    onClick={() => toggleGroup(groupKey)}
+                  >
                     <TableCell
                       colSpan={colSpan}
                       sx={{
                         bgcolor: `${groupColor}14`,
                         borderLeft: `3px solid ${groupColor}`,
-                        py: 0.75,
-                        px: 2,
+                        py: 0.5,
+                        px: 1.5,
                       }}
                     >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: '0.7rem',
-                          color: groupColor,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.06em',
-                        }}
-                      >
-                        {groupKey}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {isCollapsed ? (
+                          <ChevronRightIcon sx={{ fontSize: 16, color: groupColor }} />
+                        ) : (
+                          <ExpandMoreIcon sx={{ fontSize: 16, color: groupColor }} />
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            color: groupColor,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            flex: 1,
+                          }}
+                        >
+                          {groupKey}
+                        </Typography>
+                        {isCollapsed && (
+                          <Typography
+                            variant="caption"
+                            sx={{ fontSize: '0.6rem', color: 'text.disabled' }}
+                          >
+                            {rowCount} metrics
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
-                  </TableRow>
-                ),
-                <TableRow
-                  key={row.id}
-                  sx={{
-                    '&:hover': { bgcolor: 'action.hover' },
-                    '& td': {
-                      borderBottom: 1,
-                      borderColor: 'divider',
-                      fontSize: '0.75rem',
-                      color: 'text.primary',
-                      whiteSpace: 'nowrap',
-                    },
-                  }}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    if (cell.column.id === 'metricType') return null;
-                    const isLatestPeriod = cell.column.id === `period_${latestPeriodKey}`;
-                    return (
-                      <TableCell
-                        key={cell.id}
+                  </TableRow>,
+                );
+
+                if (!isCollapsed && groupRows) {
+                  for (let mi = 0; mi < groupRows.length; mi++) {
+                    const tableRow = table.getRowModel().rows[rowIndex];
+                    if (!tableRow) { rowIndex++; continue; }
+                    rows.push(
+                      <TableRow
+                        key={tableRow.id}
                         sx={{
-                          ...(isLatestPeriod && { bgcolor: 'action.selected' }),
+                          '&:hover': { bgcolor: 'action.hover' },
+                          '& td': {
+                            borderBottom: 1,
+                            borderColor: 'divider',
+                            fontSize: '0.75rem',
+                            color: 'text.primary',
+                            whiteSpace: 'nowrap',
+                          },
                         }}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
+                        {tableRow.getVisibleCells().map((cell) => {
+                          if (cell.column.id === 'metricType') return null;
+                          const isLatestPeriod = cell.column.id === `period_${latestPeriodKey}`;
+                          return (
+                            <TableCell
+                              key={cell.id}
+                              sx={{
+                                ...(isLatestPeriod && { bgcolor: 'action.selected' }),
+                              }}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>,
                     );
-                  })}
-                </TableRow>,
-              ];
-            })}
+                    rowIndex++;
+                  }
+                } else if (isCollapsed && groupRows) {
+                  // Skip rows but don't increment — they're not in flatRows
+                }
+              }
+
+              return rows;
+            })()}
           </TableBody>
         </Table>
       </TableContainer>

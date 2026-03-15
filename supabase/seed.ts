@@ -437,13 +437,46 @@ function buildConsumerProductMetrics(): Row[] {
   }
 
   const defs: MetricDef[] = [
+    // ── Book Size and Growth ──
     { metric_type: 'Book Size and Growth', metric: 'Total AUM', baseValues: [0.88, 0.90, 0.92, 0.94, 0.95, 0.97, 1.0], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Book Size and Growth', metric: 'On-Book AUM', baseValues: [0.70, 0.72, 0.74, 0.75, 0.76, 0.78, 0.80], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Book Size and Growth', metric: 'Off-Book AUM', baseValues: [0.18, 0.18, 0.18, 0.19, 0.19, 0.19, 0.20], benchmark: null, isRate: false, isAbsolute: false },
     { metric_type: 'Book Size and Growth', metric: 'New Bookings', baseValues: [0.058, 0.062, 0.060, 0.065, 0.063, 0.068, 0.073], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Book Size and Growth', metric: 'Life-to-Date Disbursement', baseValues: [2.8, 2.9, 3.0, 3.1, 3.2, 3.3, 3.5], benchmark: null, isRate: false, isAbsolute: false },
     { metric_type: 'Book Size and Growth', metric: 'Wt Avg ROI', baseValues: [0.158, 0.156, 0.162, 0.159, 0.161, 0.160, 0.162], benchmark: 0.15, isRate: false, isAbsolute: true },
-    { metric_type: 'Delinquency', metric: '30+ Amt%', baseValues: [0.062, 0.058, 0.055, 0.053, 0.050, 0.048, 0.045], benchmark: 0.06, isRate: true, isAbsolute: false },
-    { metric_type: 'Delinquency', metric: '60+ Amt%', baseValues: [0.040, 0.038, 0.035, 0.033, 0.031, 0.029, 0.027], benchmark: 0.04, isRate: true, isAbsolute: false },
-    { metric_type: 'Delinquency', metric: '90+ Amt%', baseValues: [0.022, 0.021, 0.019, 0.018, 0.017, 0.016, 0.015], benchmark: 0.02, isRate: true, isAbsolute: false },
-    { metric_type: 'Origination Quality', metric: 'FPD%', baseValues: [0.038, 0.036, 0.035, 0.033, 0.032, 0.031, 0.029], benchmark: 0.035, isRate: true, isAbsolute: false },
+    { metric_type: 'Book Size and Growth', metric: 'Wt Avg Tenor', baseValues: [36, 36, 37, 37, 38, 38, 39], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Book Size and Growth', metric: 'Average Ticket Size', baseValues: [12500, 12800, 13100, 13200, 13500, 13800, 14000], benchmark: null, isRate: false, isAbsolute: true },
+    // ── Entry Rates ──
+    { metric_type: 'Entry Rates', metric: 'Current BKT Bounce Rate', baseValues: [0.12, 0.115, 0.11, 0.108, 0.105, 0.10, 0.098], benchmark: 0.10, isRate: true, isAbsolute: false },
+    { metric_type: 'Entry Rates', metric: 'FPD%', baseValues: [0.038, 0.036, 0.035, 0.033, 0.032, 0.031, 0.029], benchmark: 0.035, isRate: true, isAbsolute: false },
+    { metric_type: 'Entry Rates', metric: 'FPD To GCL Trend', baseValues: [0.35, 0.34, 0.33, 0.32, 0.31, 0.30, 0.29], benchmark: null, isRate: true, isAbsolute: false },
+    // ── Portfolio Performance ──
+    { metric_type: 'Portfolio Performance', metric: 'Foreclosure (M USD)', baseValues: [0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.022], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'X+ Amt% excl w/o', baseValues: [0.082, 0.078, 0.075, 0.072, 0.069, 0.066, 0.063], benchmark: 0.08, isRate: true, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'X+ Amt excl w/o (M USD)', baseValues: [0.072, 0.070, 0.068, 0.066, 0.064, 0.062, 0.060], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: '30+ Amt% excl w/o', baseValues: [0.062, 0.058, 0.055, 0.053, 0.050, 0.048, 0.045], benchmark: 0.06, isRate: true, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: '30+ Amt excl w/o (M USD)', baseValues: [0.054, 0.052, 0.050, 0.048, 0.046, 0.044, 0.042], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: '60+ Amt% excl w/o', baseValues: [0.040, 0.038, 0.035, 0.033, 0.031, 0.029, 0.027], benchmark: 0.04, isRate: true, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: '60+ Amt excl w/o (M USD)', baseValues: [0.035, 0.034, 0.032, 0.030, 0.029, 0.027, 0.025], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: '90+ Amt% excl w/o', baseValues: [0.022, 0.021, 0.019, 0.018, 0.017, 0.016, 0.015], benchmark: 0.02, isRate: true, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: '90+ Amt excl w/o (M USD)', baseValues: [0.019, 0.018, 0.017, 0.016, 0.015, 0.014, 0.013], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'Gross Cumulative Write-off (M USD)', baseValues: [0.045, 0.048, 0.051, 0.054, 0.057, 0.060, 0.063], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'Incremental Write-off (M USD)', baseValues: [0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'Cumulative Recoveries (M USD)', baseValues: [0.012, 0.013, 0.014, 0.015, 0.016, 0.018, 0.020], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'Incremental Recoveries (M USD)', baseValues: [0.001, 0.001, 0.001, 0.001, 0.001, 0.002, 0.002], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'Cumulative NCL (M USD)', baseValues: [0.033, 0.035, 0.037, 0.039, 0.041, 0.042, 0.043], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Portfolio Performance', metric: 'Net Credit Loss %', baseValues: [0.038, 0.036, 0.034, 0.032, 0.030, 0.028, 0.026], benchmark: 0.03, isRate: true, isAbsolute: false },
+    // ── Process Efficiency ──
+    { metric_type: 'Process Efficiency', metric: 'Policy Deviation (%account)', baseValues: [0.028, 0.026, 0.025, 0.024, 0.023, 0.022, 0.020], benchmark: 0.03, isRate: true, isAbsolute: false },
+    { metric_type: 'Process Efficiency', metric: 'PDD Pending > 60 days (#)', baseValues: [45, 42, 38, 35, 32, 28, 25], benchmark: null, isRate: false, isAbsolute: true },
+    // ── Provision Coverage ──
+    { metric_type: 'Provision Coverage', metric: 'Stage 1 POS (M USD)', baseValues: [0.748, 0.765, 0.782, 0.799, 0.808, 0.825, 0.850], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Provision Coverage', metric: 'Stage 1 Provision Hold (M USD)', baseValues: [0.0075, 0.0077, 0.0078, 0.0080, 0.0081, 0.0083, 0.0085], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Provision Coverage', metric: 'Stage 2 POS (M USD)', baseValues: [0.088, 0.090, 0.092, 0.094, 0.095, 0.097, 0.100], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Provision Coverage', metric: 'Stage 2 Provision Hold (M USD)', baseValues: [0.0044, 0.0045, 0.0046, 0.0047, 0.0048, 0.0049, 0.0050], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Provision Coverage', metric: 'Stage 3 POS (M USD)', baseValues: [0.044, 0.045, 0.046, 0.047, 0.048, 0.049, 0.050], benchmark: null, isRate: false, isAbsolute: false },
+    { metric_type: 'Provision Coverage', metric: 'Stage 3 Provision Hold (M USD)', baseValues: [0.0176, 0.0180, 0.0184, 0.0188, 0.0192, 0.0196, 0.0200], benchmark: null, isRate: false, isAbsolute: false },
+    // ── Collection Efficiency ──
     { metric_type: 'Collection Efficiency', metric: 'Collection Efficiency', baseValues: [0.92, 0.925, 0.93, 0.935, 0.94, 0.945, 0.95], benchmark: 0.95, isRate: false, isAbsolute: true },
   ];
 
