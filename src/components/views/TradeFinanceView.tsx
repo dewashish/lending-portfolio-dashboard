@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
 import { KPIRow } from '@/components/cards/KPIRow';
 import type { KPIItem } from '@/components/cards/KPIRow';
@@ -13,6 +13,7 @@ import { TradeMacroRiskSection } from '@/components/views/trade/TradeMacroRiskSe
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton';
 import { useTradeExecutiveSummary } from '@/hooks/useTradeData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
@@ -28,14 +29,15 @@ export function TradeFinanceView({ scope, initialSubTab }: Props) {
   const { formatCurrency, formatCurrencyMM } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
   const [subTab, setSubTab] = useState(initialSubTab ?? 0);
+  const ctx = useMemo(() => buildThresholdContext(scope, { businessLine: 'trade_finance' }), [scope]);
 
   const { data: summary, isLoading } = useTradeExecutiveSummary(scope);
 
   const kpis: KPIItem[] = [
     { label: 'Trade Outstanding', value: formatCurrencyMM(summary?.totalAUM) },
     { label: 'Active Facilities', value: formatNumber(summary?.totalFacilities) },
-    { label: 'NPL Ratio', value: formatPercent(summary?.nplRatio), color: getColor('npl_ratio', summary?.nplRatio ?? 0), metricKey: 'npl_ratio', rawValue: summary?.nplRatio ?? 0 },
-    { label: 'Stage 2+3%', value: formatPercent(summary?.stage2Plus3Pct), color: getColor('stage_2_3_pct', summary?.stage2Plus3Pct ?? 0), metricKey: 'stage_2_3_pct', rawValue: summary?.stage2Plus3Pct ?? 0 },
+    { label: 'NPL Ratio', value: formatPercent(summary?.nplRatio), color: getColor('npl_ratio', summary?.nplRatio ?? 0, ctx), metricKey: 'npl_ratio', rawValue: summary?.nplRatio ?? 0, thresholdContext: ctx },
+    { label: 'Stage 2+3%', value: formatPercent(summary?.stage2Plus3Pct), color: getColor('stage_2_3_pct', summary?.stage2Plus3Pct ?? 0, ctx), metricKey: 'stage_2_3_pct', rawValue: summary?.stage2Plus3Pct ?? 0, thresholdContext: ctx },
     { label: 'Provision Coverage', value: formatPercent(summary?.provisionCoverage) },
     { label: 'Watchlist Exposure', value: formatCurrency(summary?.watchlistExposure), color: (summary?.watchlistExposure ?? 0) > 0 ? '#ff9800' : undefined },
   ];

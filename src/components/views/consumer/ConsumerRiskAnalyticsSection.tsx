@@ -6,9 +6,10 @@ import { BusinessSupportTable } from '@/components/tables/BusinessSupportTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useApprovedBase, useRejectedBase } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatNumber, formatPercent } from '@/lib/format';
-import type { ScopeSelection, ApprovedBaseRow, RejectedBaseRow, ConsumerFilters } from '@/lib/types';
+import type { ScopeSelection, ApprovedBaseRow, RejectedBaseRow, ConsumerFilters, ThresholdContext } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
@@ -62,7 +63,8 @@ function RiskKPIStrip({ kpis }: { kpis: RiskKPI[] }) {
 function computeRiskKPIs(
   approved: ApprovedBaseRow[],
   rejected: RejectedBaseRow[],
-  getColor: (metricKey: string, value: number) => string,
+  getColor: (metricKey: string, value: number, ctx?: ThresholdContext) => string,
+  ctx?: ThresholdContext,
 ): RiskKPI[] {
   const kpis: RiskKPI[] = [];
 
@@ -75,7 +77,7 @@ function computeRiskKPIs(
     kpis.push({
       label: 'Approval Rate',
       value: formatPercent(approvalRate),
-      color: getColor('approval_rate', approvalRate),
+      color: getColor('approval_rate', approvalRate, ctx),
       metricKey: 'approval_rate',
       rawValue: approvalRate,
     });
@@ -111,8 +113,12 @@ export function ConsumerRiskAnalyticsSection({ scope, filters }: Props) {
   const { data: approved, isLoading: l1 } = useApprovedBase(scope);
   const { data: rejected, isLoading: l2 } = useRejectedBase(scope);
   const { getColor } = useRiskAppetite();
+  const ctx = useMemo(() => buildThresholdContext(scope, {
+    businessLine: 'consumer_finance',
+    product: filters?.products?.length === 1 ? filters.products[0] : undefined,
+  }), [scope, filters?.products]);
 
-  const kpis = useMemo(() => computeRiskKPIs(approved ?? [], rejected ?? [], getColor), [approved, rejected, getColor]);
+  const kpis = useMemo(() => computeRiskKPIs(approved ?? [], rejected ?? [], getColor, ctx), [approved, rejected, getColor, ctx]);
 
   if (l1 || l2) return <LoadingSkeleton />;
 

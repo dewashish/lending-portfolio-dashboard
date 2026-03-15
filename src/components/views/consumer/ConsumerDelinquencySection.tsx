@@ -8,6 +8,7 @@ import { VintageHeatmap } from '@/components/charts/VintageHeatmap';
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useNetFlowRates, useConsumerOverall, useProductCatalog, useProductMetrics, useConsumerPeriods, useVintagePoints } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
 import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters, VintagePoint } from '@/lib/types';
@@ -109,6 +110,10 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const { data: productCatalog } = useProductCatalog(scope);
   const { data: rawPeriods } = useConsumerPeriods(scope);
   const { getColor } = useRiskAppetite();
+  const ctx = useMemo(() => buildThresholdContext(scope, {
+    businessLine: 'consumer_finance',
+    product: filters?.products?.length === 1 ? filters.products[0] : undefined,
+  }), [scope, filters?.products]);
 
   // Products available based on the secured/unsecured toggle
   const availableProducts = useMemo(() => {
@@ -228,7 +233,7 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
         const curr = getLatest(aggRows, name);
         const prev = getPrevious(aggRows, name);
         const delta = curr != null && prev != null && prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : null;
-        const color = curr == null ? '#78909c' : getColor(metricKey, curr);
+        const color = curr == null ? '#78909c' : getColor(metricKey, curr, ctx);
         return { label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey, rawValue: curr ?? undefined };
       });
     }
@@ -238,10 +243,10 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
       const curr = getLatest(overall, name);
       const prev = getPrevious(overall, name);
       const delta = curr != null && prev != null && prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : null;
-      const color = curr == null ? '#78909c' : getColor(metricKey, curr);
+      const color = curr == null ? '#78909c' : getColor(metricKey, curr, ctx);
       return { label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey, rawValue: curr ?? undefined };
     });
-  }, [overall, productData, hasProductFilter, getColor]);
+  }, [overall, productData, hasProductFilter, getColor, ctx]);
 
   if (l1) return <ChartGridSkeleton />;
 

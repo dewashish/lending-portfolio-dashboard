@@ -7,11 +7,12 @@ import { NonStarterTable } from '@/components/tables/NonStarterTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useNonStarters } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatNumber, sortPeriodsChronologically } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import { augmentNonStarterRows } from '@/lib/non-starter-utils';
-import type { ScopeSelection, NonStarterRow, ConsumerFilters } from '@/lib/types';
+import type { ScopeSelection, NonStarterRow, ConsumerFilters, ThresholdContext } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
@@ -66,8 +67,9 @@ function NSKPIStrip({ kpis }: { kpis: NSKpi[] }) {
 
 function computeNSKPIs(
   data: NonStarterRow[],
-  getColor: (metricKey: string, value: number) => string,
+  getColor: (metricKey: string, value: number, ctx?: ThresholdContext) => string,
   formatCurrencyMM: (v: number) => string,
+  ctx?: ThresholdContext,
 ): NSKpi[] {
   if (data.length === 0) return [];
 
@@ -82,7 +84,7 @@ function computeNSKPIs(
       kpis.push({
         label: 'Non-Starter Count',
         value: formatNumber(latest, 0),
-        color: getColor('non_starter_rate', latest / 10000),
+        color: getColor('non_starter_rate', latest / 10000, ctx),
         metricKey: 'non_starter_rate',
         rawValue: latest / 10000,
       });
@@ -119,6 +121,10 @@ export function ConsumerNonStarterSection({ scope, filters }: Props) {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('Total');
   const { getColor } = useRiskAppetite();
   const { formatCurrencyMM } = useCurrencyFormat();
+  const ctx = useMemo(() => buildThresholdContext(scope, {
+    businessLine: 'consumer_finance',
+    product: filters?.products?.length === 1 ? filters.products[0] : undefined,
+  }), [scope, filters?.products]);
 
   const { data: nonStarters, isLoading, error } = useNonStarters(scope, filters, categoryFilter);
 
@@ -128,8 +134,8 @@ export function ConsumerNonStarterSection({ scope, filters }: Props) {
   );
 
   const kpis = useMemo(
-    () => computeNSKPIs(nonStarters ?? [], getColor, formatCurrencyMM),
-    [nonStarters, getColor, formatCurrencyMM],
+    () => computeNSKPIs(nonStarters ?? [], getColor, formatCurrencyMM, ctx),
+    [nonStarters, getColor, formatCurrencyMM, ctx],
   );
 
   if (isLoading) return <LoadingSkeleton />;

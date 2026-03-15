@@ -8,8 +8,9 @@ import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { sortPeriods } from '@/lib/period-utils';
-import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary } from '@/lib/types';
+import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary, ScopeSelection } from '@/lib/types';
 
 interface Props {
   consumerOverall: ConsumerMetricRow[];
@@ -20,6 +21,7 @@ interface Props {
   unsecuredFPD?: ConsumerMetricRow[];
   groupExposure?: number;
   consumerNCL?: number | null;
+  scope?: ScopeSelection;
 }
 
 function getLatest(data: ConsumerMetricRow[], name: string): number | null {
@@ -54,9 +56,11 @@ export function BusinessLineComparisonTable({
   unsecuredFPD = [],
   groupExposure,
   consumerNCL,
+  scope,
 }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
+  const ctx = buildThresholdContext(scope);
 
   const dpd30 = getLatest(consumerOverall, '30+ Amt%');
   const dpd90 = getLatest(consumerOverall, '90+ Amt%');
@@ -198,7 +202,7 @@ export function BusinessLineComparisonTable({
     if (cell.metricKey && cell.rawValue != null) {
       return (
         <BreachBadge metricKey={cell.metricKey} value={cell.rawValue}>
-          <span style={{ color: getColor(cell.metricKey, cell.rawValue) }}>{cell.value}</span>
+          <span style={{ color: getColor(cell.metricKey, cell.rawValue, ctx) }}>{cell.value}</span>
         </BreachBadge>
       );
     }
