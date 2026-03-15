@@ -19,7 +19,6 @@ import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 
 // Section components
-import { GroupBreachPanel } from '@/components/views/overview/GroupBreachPanel';
 import { GroupPortfolioComposition } from '@/components/views/overview/GroupPortfolioComposition';
 import { GroupTrendGrid } from '@/components/views/overview/GroupTrendGrid';
 import { BusinessLineComparisonTable } from '@/components/views/overview/BusinessLineComparisonTable';
@@ -317,10 +316,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       {/* Section 1: Hero KPIs */}
       <KPIRow items={kpis} />
 
-      {/* Section 2: Breach Panel */}
-      <GroupBreachPanel scope={scope} onTabChange={onTabChange} />
-
-      {/* Section 3: Portfolio Composition */}
+      {/* Section 2: Portfolio Composition */}
       <GroupPortfolioComposition
         scorecard={scorecard}
         consumerAum={totalConsumerAum}

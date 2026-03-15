@@ -1,20 +1,29 @@
 'use client';
 
 import { Popover, Box, Typography, Chip, Divider, Stack } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import type { BreachAlert } from '@/hooks/useBreachAlerts';
 
 const RAG = { red: '#f44336', amber: '#ff9800' } as const;
 
-const PRODUCT_ORDER = ['Consumer Finance', 'Trade Finance', 'Corporate Finance'] as const;
+const PRODUCT_ORDER = ['Group Overview', 'Consumer Finance', 'Trade Finance', 'Corporate Finance'] as const;
+
+const PRODUCT_TAB_MAP: Record<string, number> = {
+  'Group Overview': 0,
+  'Consumer Finance': 1,
+  'Corporate Finance': 2,
+  'Trade Finance': 3,
+};
 
 interface Props {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   alerts: BreachAlert[];
+  onTabChange?: (tabIndex: number) => void;
 }
 
-export function BreachAlertsPopover({ anchorEl, open, onClose, alerts }: Props) {
+export function BreachAlertsPopover({ anchorEl, open, onClose, alerts, onTabChange }: Props) {
   const redCount = alerts.filter((a) => a.rag === 'red').length;
   const amberCount = alerts.filter((a) => a.rag === 'amber').length;
 
@@ -30,6 +39,14 @@ export function BreachAlertsPopover({ anchorEl, open, onClose, alerts }: Props) 
         }),
     }))
     .filter((g) => g.items.length > 0);
+
+  const handleDrillDown = (product: string) => {
+    const tabIndex = PRODUCT_TAB_MAP[product];
+    if (tabIndex != null && onTabChange) {
+      onClose();
+      onTabChange(tabIndex);
+    }
+  };
 
   return (
     <Popover
@@ -92,10 +109,21 @@ export function BreachAlertsPopover({ anchorEl, open, onClose, alerts }: Props) 
       {grouped.map((group, gi) => (
         <Box key={group.product}>
           {gi > 0 && <Divider />}
-          <Box sx={{ px: 2, pt: 1.25, pb: 0.5 }}>
+          <Box
+            sx={{
+              px: 2, pt: 1.25, pb: 0.5,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              cursor: onTabChange ? 'pointer' : 'default',
+              '&:hover': onTabChange ? { bgcolor: 'action.hover' } : {},
+            }}
+            onClick={() => handleDrillDown(group.product)}
+          >
             <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary', letterSpacing: '0.05em' }}>
               {group.product}
             </Typography>
+            {onTabChange && (
+              <OpenInNewIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
+            )}
           </Box>
           {group.items.map((alert) => (
             <Box
@@ -106,8 +134,11 @@ export function BreachAlertsPopover({ anchorEl, open, onClose, alerts }: Props) 
                 gap: 1,
                 px: 2,
                 py: 0.75,
+                cursor: onTabChange ? 'pointer' : 'default',
                 '&:hover': { bgcolor: 'action.hover' },
+                transition: 'background-color 0.15s',
               }}
+              onClick={() => handleDrillDown(alert.product)}
             >
               {/* RAG dot */}
               <Box
