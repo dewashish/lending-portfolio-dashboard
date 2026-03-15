@@ -33,9 +33,10 @@ interface Props {
   activeTab?: number;
   scope: ScopeSelection;
   onScopeChange: (scope: ScopeSelection) => void;
+  onTabChange?: (tabIndex: number) => void;
 }
 
-export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTab, scope, onScopeChange }: Props) {
+export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTab, scope, onScopeChange, onTabChange }: Props) {
   const { mode, toggleMode } = useThemeMode();
   const { currency, toggleCurrency } = useCurrency();
   const { data: subsidiaries } = useSubsidiaries();
@@ -147,6 +148,7 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           open={Boolean(alertsAnchorEl)}
           onClose={() => setAlertsAnchorEl(null)}
           alerts={alerts}
+          onTabChange={onTabChange}
         />
 
         <Box id="tour-export-area" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

@@ -59,6 +59,7 @@ function DashboardContent() {
         activeTab={activeTab}
         scope={scope}
         onScopeChange={setScope}
+        onTabChange={handleTabChange}
       />
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
       <Box
