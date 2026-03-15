@@ -552,6 +552,80 @@ export interface Database {
         Relationships: [];
       };
 
+      // ── Reference / Lookup Tables (V7) ─────────────────────────────────
+      ref_program_types: {
+        Row: { id: number; subsidiary_id: number; code: string; label: string; description: string | null; product_name: string | null; is_active: boolean; created_at: string };
+        Insert: { id?: number; subsidiary_id: number; code: string; label: string; description?: string | null; product_name?: string | null; is_active?: boolean; created_at?: string };
+        Update: { id?: number; subsidiary_id?: number; code?: string; label?: string; description?: string | null; product_name?: string | null; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      ref_customer_segments: {
+        Row: { id: number; code: string; label: string; description: string | null; created_at: string };
+        Insert: { id?: number; code: string; label: string; description?: string | null; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; description?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      ref_product_variants: {
+        Row: { id: number; code: string; label: string; description: string | null; created_at: string };
+        Insert: { id?: number; code: string; label: string; description?: string | null; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; description?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      ref_bureau_buckets: {
+        Row: { id: number; code: string; label: string; score_min: number | null; score_max: number | null; display_order: number; created_at: string };
+        Insert: { id?: number; code: string; label: string; score_min?: number | null; score_max?: number | null; display_order?: number; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; score_min?: number | null; score_max?: number | null; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      ref_risk_bands: {
+        Row: { id: number; code: string; label: string; display_order: number; created_at: string };
+        Insert: { id?: number; code: string; label: string; display_order?: number; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      ref_income_bands: {
+        Row: { id: number; subsidiary_id: number; code: string; label: string; min_amount: number | null; max_amount: number | null; currency_code: string | null; display_order: number; created_at: string };
+        Insert: { id?: number; subsidiary_id: number; code: string; label: string; min_amount?: number | null; max_amount?: number | null; currency_code?: string | null; display_order?: number; created_at?: string };
+        Update: { id?: number; subsidiary_id?: number; code?: string; label?: string; min_amount?: number | null; max_amount?: number | null; currency_code?: string | null; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      ref_dbr_bands: {
+        Row: { id: number; code: string; label: string; min_ratio: number | null; max_ratio: number | null; display_order: number; created_at: string };
+        Insert: { id?: number; code: string; label: string; min_ratio?: number | null; max_ratio?: number | null; display_order?: number; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; min_ratio?: number | null; max_ratio?: number | null; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      ref_limit_bands: {
+        Row: { id: number; subsidiary_id: number; code: string; label: string; min_amount: number | null; max_amount: number | null; currency_code: string | null; display_order: number; created_at: string };
+        Insert: { id?: number; subsidiary_id: number; code: string; label: string; min_amount?: number | null; max_amount?: number | null; currency_code?: string | null; display_order?: number; created_at?: string };
+        Update: { id?: number; subsidiary_id?: number; code?: string; label?: string; min_amount?: number | null; max_amount?: number | null; currency_code?: string | null; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      ref_locations: {
+        Row: { id: number; subsidiary_id: number; code: string; label: string; city: string | null; state_province: string | null; branch_code: string | null; is_active: boolean; created_at: string };
+        Insert: { id?: number; subsidiary_id: number; code: string; label: string; city?: string | null; state_province?: string | null; branch_code?: string | null; is_active?: boolean; created_at?: string };
+        Update: { id?: number; subsidiary_id?: number; code?: string; label?: string; city?: string | null; state_province?: string | null; branch_code?: string | null; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      ref_age_brackets: {
+        Row: { id: number; code: string; label: string; min_age: number | null; max_age: number | null; display_order: number; created_at: string };
+        Insert: { id?: number; code: string; label: string; min_age?: number | null; max_age?: number | null; display_order?: number; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; min_age?: number | null; max_age?: number | null; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      ref_channels: {
+        Row: { id: number; code: string; label: string; created_at: string };
+        Insert: { id?: number; code: string; label: string; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; created_at?: string };
+        Relationships: [];
+      };
+      ref_tenure_bands: {
+        Row: { id: number; code: string; label: string; min_months: number | null; max_months: number | null; display_order: number; created_at: string };
+        Insert: { id?: number; code: string; label: string; min_months?: number | null; max_months?: number | null; display_order?: number; created_at?: string };
+        Update: { id?: number; code?: string; label?: string; min_months?: number | null; max_months?: number | null; display_order?: number; created_at?: string };
+        Relationships: [];
+      };
+
       // ── PQR Summary Tables ────────────────────────────────────────
       consumer_overall_metrics: {
         Row: {
@@ -581,6 +655,8 @@ export interface Database {
           value: number | null; value_usd: number | null;
           benchmark: number | null; data_source_id: number | null;
           created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; product_name: string;
@@ -588,6 +664,8 @@ export interface Database {
           value?: number | null; value_usd?: number | null;
           benchmark?: number | null; data_source_id?: number | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; product_name?: string;
@@ -595,6 +673,8 @@ export interface Database {
           value?: number | null; value_usd?: number | null;
           benchmark?: number | null; data_source_id?: number | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null;
         };
         Relationships: [];
       };
@@ -604,18 +684,24 @@ export interface Database {
           bucket: string; period: string; value: number;
           value_usd: number | null; data_source_id: number | null;
           product_name: string | null; created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; risk_band: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; portfolio: string;
           bucket: string; period: string; value: number;
           value_usd?: number | null; data_source_id?: number | null;
           product_name?: string | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; portfolio?: string;
           bucket?: string; period?: string; value?: number;
           value_usd?: number | null; data_source_id?: number | null;
           product_name?: string | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
         };
         Relationships: [];
       };
@@ -625,18 +711,24 @@ export interface Database {
           metric: string; period: string; value: number;
           data_source_id: number | null; product_name: string | null;
           created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; risk_band: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; bucket: string;
           metric: string; period: string; value: number;
           data_source_id?: number | null; product_name?: string | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; bucket?: string;
           metric?: string; period?: string; value?: number;
           data_source_id?: number | null; product_name?: string | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
         };
         Relationships: [];
       };
@@ -649,6 +741,8 @@ export interface Database {
           roll_forward: number | null; period: string;
           product_name: string | null;
           data_source_id: number | null; created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; risk_band: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; portfolio: string;
@@ -658,6 +752,8 @@ export interface Database {
           roll_forward?: number | null; period: string;
           product_name?: string | null;
           data_source_id?: number | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; portfolio?: string;
@@ -667,6 +763,8 @@ export interface Database {
           roll_forward?: number | null; period?: string;
           product_name?: string | null;
           data_source_id?: number | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
         };
         Relationships: [];
       };
@@ -677,6 +775,11 @@ export interface Database {
           loan_amount_usd: number | null; mob: number;
           delinquency_rate: number; metric_type: string;
           data_source_id: number | null; created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; bureau_bucket: string | null;
+          risk_band: string | null; income_band: string | null;
+          dbr_band: string | null; age_bracket: string | null;
+          tenure_band: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; vintage: string;
@@ -684,6 +787,11 @@ export interface Database {
           loan_amount_usd?: number | null; mob: number;
           delinquency_rate: number; metric_type?: string;
           data_source_id?: number | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; bureau_bucket?: string | null;
+          risk_band?: string | null; income_band?: string | null;
+          dbr_band?: string | null; age_bracket?: string | null;
+          tenure_band?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; vintage?: string;
@@ -691,6 +799,11 @@ export interface Database {
           loan_amount_usd?: number | null; mob?: number;
           delinquency_rate?: number; metric_type?: string;
           data_source_id?: number | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; bureau_bucket?: string | null;
+          risk_band?: string | null; income_band?: string | null;
+          dbr_band?: string | null; age_bracket?: string | null;
+          tenure_band?: string | null;
         };
         Relationships: [];
       };
@@ -700,18 +813,21 @@ export interface Database {
           product: string; metric: string; period: string;
           value: number | null; value_usd: number | null;
           data_source_id: number | null; created_at: string;
+          customer_segment: string | null; product_variant: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; category: string;
           product: string; metric: string; period: string;
           value?: number | null; value_usd?: number | null;
           data_source_id?: number | null; created_at?: string;
+          customer_segment?: string | null; product_variant?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; category?: string;
           product?: string; metric?: string; period?: string;
           value?: number | null; value_usd?: number | null;
           data_source_id?: number | null; created_at?: string;
+          customer_segment?: string | null; product_variant?: string | null;
         };
         Relationships: [];
       };
@@ -738,16 +854,28 @@ export interface Database {
           id: number; subsidiary_id: number; variant: string;
           bureau_bucket: string; period: string; value: number | null;
           data_source_id: number | null; created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; risk_band: string | null;
+          income_band: string | null; dbr_band: string | null;
+          age_bracket: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; variant: string;
           bureau_bucket: string; period: string; value?: number | null;
           data_source_id?: number | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
+          income_band?: string | null; dbr_band?: string | null;
+          age_bracket?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; variant?: string;
           bureau_bucket?: string; period?: string; value?: number | null;
           data_source_id?: number | null; created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; risk_band?: string | null;
+          income_band?: string | null; dbr_band?: string | null;
+          age_bracket?: string | null;
         };
         Relationships: [];
       };
@@ -757,18 +885,36 @@ export interface Database {
           loan_band: string; count: number | null; amount: number | null;
           amount_usd: number | null; data_source_id: number | null;
           created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; bureau_bucket: string | null;
+          risk_band: string | null; income_band: string | null;
+          dbr_band: string | null; limit_band: string | null;
+          location: string | null; age_bracket: string | null;
+          channel: string | null; tenure_band: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; la_band: string;
           loan_band: string; count?: number | null; amount?: number | null;
           amount_usd?: number | null; data_source_id?: number | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; bureau_bucket?: string | null;
+          risk_band?: string | null; income_band?: string | null;
+          dbr_band?: string | null; limit_band?: string | null;
+          location?: string | null; age_bracket?: string | null;
+          channel?: string | null; tenure_band?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; la_band?: string;
           loan_band?: string; count?: number | null; amount?: number | null;
           amount_usd?: number | null; data_source_id?: number | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; bureau_bucket?: string | null;
+          risk_band?: string | null; income_band?: string | null;
+          dbr_band?: string | null; limit_band?: string | null;
+          location?: string | null; age_bracket?: string | null;
+          channel?: string | null; tenure_band?: string | null;
         };
         Relationships: [];
       };
@@ -778,18 +924,36 @@ export interface Database {
           amount_band: string; count: number | null; amount: number | null;
           amount_usd: number | null; data_source_id: number | null;
           created_at: string;
+          program_type: string | null; customer_segment: string | null;
+          product_variant: string | null; bureau_bucket: string | null;
+          risk_band: string | null; income_band: string | null;
+          dbr_band: string | null; limit_band: string | null;
+          location: string | null; age_bracket: string | null;
+          channel: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; loan_type: string;
           amount_band: string; count?: number | null; amount?: number | null;
           amount_usd?: number | null; data_source_id?: number | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; bureau_bucket?: string | null;
+          risk_band?: string | null; income_band?: string | null;
+          dbr_band?: string | null; limit_band?: string | null;
+          location?: string | null; age_bracket?: string | null;
+          channel?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; loan_type?: string;
           amount_band?: string; count?: number | null; amount?: number | null;
           amount_usd?: number | null; data_source_id?: number | null;
           created_at?: string;
+          program_type?: string | null; customer_segment?: string | null;
+          product_variant?: string | null; bureau_bucket?: string | null;
+          risk_band?: string | null; income_band?: string | null;
+          dbr_band?: string | null; limit_band?: string | null;
+          location?: string | null; age_bracket?: string | null;
+          channel?: string | null;
         };
         Relationships: [];
       };
@@ -804,6 +968,7 @@ export interface Database {
           target_usd: number | null; achievement: number | null;
           report_date: string; data_source_id: number | null;
           created_at: string;
+          location: string | null; channel: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; metric: string;
@@ -815,6 +980,7 @@ export interface Database {
           target_usd?: number | null; achievement?: number | null;
           report_date?: string; data_source_id?: number | null;
           created_at?: string;
+          location?: string | null; channel?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; metric?: string;
@@ -826,6 +992,7 @@ export interface Database {
           target_usd?: number | null; achievement?: number | null;
           report_date?: string; data_source_id?: number | null;
           created_at?: string;
+          location?: string | null; channel?: string | null;
         };
         Relationships: [];
       };
@@ -837,6 +1004,7 @@ export interface Database {
           mtd_usd: number | null; lmtd_usd: number | null;
           conversion_rate: number | null; report_date: string;
           data_source_id: number | null; created_at: string;
+          location: string | null; channel: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; stage: string;
@@ -845,6 +1013,7 @@ export interface Database {
           mtd_usd?: number | null; lmtd_usd?: number | null;
           conversion_rate?: number | null; report_date?: string;
           data_source_id?: number | null; created_at?: string;
+          location?: string | null; channel?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; stage?: string;
@@ -853,6 +1022,7 @@ export interface Database {
           mtd_usd?: number | null; lmtd_usd?: number | null;
           conversion_rate?: number | null; report_date?: string;
           data_source_id?: number | null; created_at?: string;
+          location?: string | null; channel?: string | null;
         };
         Relationships: [];
       };
@@ -863,6 +1033,7 @@ export interface Database {
           amount_usd: number | null; avg_ticket_size: number | null;
           avg_ticket_size_usd: number | null; data_source_id: number | null;
           created_at: string;
+          location: string | null; channel: string | null;
         };
         Insert: {
           id?: number; subsidiary_id: number; date: string;
@@ -870,6 +1041,7 @@ export interface Database {
           amount_usd?: number | null; avg_ticket_size?: number | null;
           avg_ticket_size_usd?: number | null; data_source_id?: number | null;
           created_at?: string;
+          location?: string | null; channel?: string | null;
         };
         Update: {
           id?: number; subsidiary_id?: number; date?: string;
@@ -877,6 +1049,7 @@ export interface Database {
           amount_usd?: number | null; avg_ticket_size?: number | null;
           avg_ticket_size_usd?: number | null; data_source_id?: number | null;
           created_at?: string;
+          location?: string | null; channel?: string | null;
         };
         Relationships: [];
       };

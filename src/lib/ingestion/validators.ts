@@ -20,6 +20,23 @@ const ifrsStageSchema = z.enum(IFRS_STAGE_VALUES, {
 
 const nonNegativeNumber = z.number().min(0, 'Value must be non-negative');
 
+// ── Shared optional dimension fields (V7) ───────────────────────
+
+const dimensionFields = {
+  program_type: z.string().nullable().optional(),
+  customer_segment: z.string().nullable().optional(),
+  product_variant: z.string().nullable().optional(),
+  bureau_bucket: z.string().nullable().optional(),
+  risk_band: z.string().nullable().optional(),
+  income_band: z.string().nullable().optional(),
+  dbr_band: z.string().nullable().optional(),
+  limit_band: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  age_bracket: z.string().nullable().optional(),
+  channel: z.string().nullable().optional(),
+  tenure_band: z.string().nullable().optional(),
+} as const;
+
 // ── Consumer Overall Metrics ────────────────────────────────────
 
 const consumerOverallRowSchema = z.object({
@@ -40,6 +57,9 @@ export const consumerOverallPayloadSchema = z.object({
 
 const consumerProductRowSchema = consumerOverallRowSchema.extend({
   product_name: z.string().min(1, 'product_name is required'),
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
 });
 
 export const consumerProductPayloadSchema = z.object({
@@ -54,6 +74,11 @@ const netFlowRowSchema = z.object({
   bucket: dpdBucketSchema,
   period: periodSchema,
   value: z.number().nullable(),
+  product_name: z.string().nullable().optional(),
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  risk_band: dimensionFields.risk_band,
 });
 
 export const netFlowPayloadSchema = z.object({
@@ -68,6 +93,11 @@ const rollRateRowSchema = z.object({
   metric: z.string().min(1),
   period: periodSchema,
   value: z.number().nullable(),
+  product_name: z.string().nullable().optional(),
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  risk_band: dimensionFields.risk_band,
 });
 
 export const rollRatePayloadSchema = z.object({
@@ -87,6 +117,11 @@ const collectionRowSchema = z.object({
   stabilized: z.number().optional(),
   roll_forward: z.number().optional(),
   period: periodSchema,
+  product_name: z.string().nullable().optional(),
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  risk_band: dimensionFields.risk_band,
 });
 
 export const collectionPayloadSchema = z.object({
@@ -104,6 +139,15 @@ const vintageRowSchema = z.object({
   mob: z.number().int().min(0),
   delinquency_rate: z.number(),
   metric_type: z.string().min(1),
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  bureau_bucket: dimensionFields.bureau_bucket,
+  risk_band: dimensionFields.risk_band,
+  income_band: dimensionFields.income_band,
+  dbr_band: dimensionFields.dbr_band,
+  age_bracket: dimensionFields.age_bracket,
+  tenure_band: dimensionFields.tenure_band,
 });
 
 export const vintagePayloadSchema = z.object({
@@ -119,6 +163,8 @@ const nonStarterRowSchema = z.object({
   metric: z.string().min(1),
   period: periodSchema,
   value: z.number().nullable(),
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
 });
 
 export const nonStarterPayloadSchema = z.object({
@@ -144,6 +190,13 @@ const tddPostRowSchema = z.object({
   bureau_bucket: z.string().min(1),
   period: periodSchema,
   value: z.number().nullable(),
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  risk_band: dimensionFields.risk_band,
+  income_band: dimensionFields.income_band,
+  dbr_band: dimensionFields.dbr_band,
+  age_bracket: dimensionFields.age_bracket,
 });
 
 export const tddPostPayloadSchema = z.object({
@@ -158,6 +211,18 @@ const approvedRowSchema = z.object({
   loan_band: z.string().min(1),
   count: z.number().int().min(0),
   amount: nonNegativeNumber,
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  bureau_bucket: dimensionFields.bureau_bucket,
+  risk_band: dimensionFields.risk_band,
+  income_band: dimensionFields.income_band,
+  dbr_band: dimensionFields.dbr_band,
+  limit_band: dimensionFields.limit_band,
+  location: dimensionFields.location,
+  age_bracket: dimensionFields.age_bracket,
+  channel: dimensionFields.channel,
+  tenure_band: dimensionFields.tenure_band,
 });
 
 export const approvedBasePayloadSchema = z.object({
@@ -170,6 +235,17 @@ const rejectedRowSchema = z.object({
   amount_band: z.string().min(1),
   count: z.number().int().min(0),
   amount: nonNegativeNumber,
+  program_type: dimensionFields.program_type,
+  customer_segment: dimensionFields.customer_segment,
+  product_variant: dimensionFields.product_variant,
+  bureau_bucket: dimensionFields.bureau_bucket,
+  risk_band: dimensionFields.risk_band,
+  income_band: dimensionFields.income_band,
+  dbr_band: dimensionFields.dbr_band,
+  limit_band: dimensionFields.limit_band,
+  location: dimensionFields.location,
+  age_bracket: dimensionFields.age_bracket,
+  channel: dimensionFields.channel,
 });
 
 export const rejectedBasePayloadSchema = z.object({
@@ -190,6 +266,8 @@ const losMetricRowSchema = z.object({
   target: z.number().nullable().optional(),
   achievement: z.number().nullable().optional(),
   report_date: z.string().min(1),
+  location: dimensionFields.location,
+  channel: dimensionFields.channel,
 });
 
 export const losMetricsPayloadSchema = z.object({
@@ -205,6 +283,8 @@ const losFunnelRowSchema = z.object({
   lmtd: z.number().nullable().optional(),
   conversion_rate: z.number().nullable().optional(),
   report_date: z.string().min(1),
+  location: dimensionFields.location,
+  channel: dimensionFields.channel,
 });
 
 export const losFunnelPayloadSchema = z.object({
@@ -218,6 +298,8 @@ const losDailyRowSchema = z.object({
   count: z.number().int().min(0),
   amount: nonNegativeNumber,
   avg_ticket_size: z.number().nullable().optional(),
+  location: dimensionFields.location,
+  channel: dimensionFields.channel,
 });
 
 export const losDailyPayloadSchema = z.object({
