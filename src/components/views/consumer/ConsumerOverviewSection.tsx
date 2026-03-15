@@ -7,10 +7,11 @@ import { DPDBucketDistribution } from '@/components/charts/DPDBucketDistribution
 import { OverviewSkeleton } from '@/components/common/LoadingSkeleton';
 import { useConsumerOverall, useNetFlowRates } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
-import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters } from '@/lib/types';
+import type { ScopeSelection, ConsumerMetricRow, ConsumerFilters, ThresholdContext } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
@@ -47,7 +48,7 @@ interface SummaryMetric {
   rawValue?: number;
 }
 
-function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
+function SummaryStrip({ metrics, thresholdCtx }: { metrics: SummaryMetric[]; thresholdCtx?: ThresholdContext }) {
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       <Stack
@@ -82,7 +83,7 @@ function SummaryStrip({ metrics }: { metrics: SummaryMetric[] }) {
               </Typography>
               <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.75}>
                 {m.metricKey != null && m.rawValue != null ? (
-                  <BreachBadge metricKey={m.metricKey} value={m.rawValue}>
+                  <BreachBadge metricKey={m.metricKey} value={m.rawValue} context={thresholdCtx}>
                     <Typography
                       variant="h6"
                       className="mono"
@@ -139,6 +140,10 @@ export function ConsumerOverviewSection({ scope, filters }: Props) {
   const { data: overall, isLoading: loadingOverall } = useConsumerOverall(scope, filters);
   const { data: netFlow, isLoading: loadingNetFlow } = useNetFlowRates(scope, filters);
   const { getStatus } = useRiskAppetite();
+  const ctx = useMemo(() => buildThresholdContext(scope, {
+    businessLine: 'consumer_finance',
+    product: filters?.products?.length === 1 ? filters.products[0] : undefined,
+  }), [scope, filters?.products]);
 
   const summaryMetrics = useMemo<SummaryMetric[]>(() => {
     if (!overall || overall.length === 0) return [];
@@ -156,7 +161,7 @@ export function ConsumerOverviewSection({ scope, filters }: Props) {
 
       let rag: 'green' | 'amber' | 'red' = 'green';
       if (curr != null && metricKey) {
-        const status = getStatus(metricKey, curr);
+        const status = getStatus(metricKey, curr, ctx);
         rag = status === 'Green' ? 'green' : status === 'Amber' ? 'amber' : 'red';
       }
 
@@ -178,13 +183,13 @@ export function ConsumerOverviewSection({ scope, filters }: Props) {
       computeMetric('90+ Amt%', '90+ DPD', (v) => formatPercent(v), true, 'dpd_90_plus'),
       computeMetric('Net Credit Loss', 'NCL Rate', (v) => formatPercent(v), true, 'net_credit_loss'),
     ];
-  }, [overall, getStatus, formatCurrency]);
+  }, [overall, getStatus, formatCurrency, ctx]);
 
   if (loadingOverall || loadingNetFlow) return <OverviewSkeleton />;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      {summaryMetrics.length > 0 && <SummaryStrip metrics={summaryMetrics} />}
+      {summaryMetrics.length > 0 && <SummaryStrip metrics={summaryMetrics} thresholdCtx={ctx} />}
       <ConsumerOverallTable data={overall ?? []} />
       <DPDBucketDistribution data={netFlow ?? []} />
     </Box>

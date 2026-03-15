@@ -36,6 +36,7 @@ const SCOPE_TABS: { value: RiskAppetiteScopeLevel; label: string }[] = [
 ];
 
 const BL_OPTIONS = [
+  { value: 'group', label: 'Group Overview' },
   { value: 'consumer_finance', label: 'Consumer Finance' },
   { value: 'trade_finance', label: 'Trade Finance' },
   { value: 'corporate_finance', label: 'Corporate Finance' },

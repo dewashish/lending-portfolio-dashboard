@@ -27,6 +27,7 @@ import { CovenantComplianceDonut } from '@/components/charts/corporate/CovenantC
 import { useCorporateCovenants } from '@/hooks/useCorporateData';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import type { ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -41,6 +42,7 @@ const HDR_BG = 'rgba(0,0,0,0.03)';
 export function CorporateCovenantSection({ scope }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { data: covenants, isLoading } = useCorporateCovenants(scope);
+  const ctx = useMemo(() => buildThresholdContext(scope, { businessLine: 'corporate_finance' }), [scope]);
 
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [frequencyFilter, setFrequencyFilter] = useState<string | null>(null);
@@ -133,7 +135,7 @@ export function CorporateCovenantSection({ scope }: Props) {
   // ── KPI Strip ──────────────────────────────────────────────────────
   const kpis: KPIItem[] = [
     { label: 'Total Covenants', value: String(rows.length), color: '#1565c0' },
-    { label: 'Breach Rate', value: formatPercent(breachRate), color: breachRate > 0.15 ? '#f44336' : '#ff9800', metricKey: 'corp_covenant_breach_rate', rawValue: breachRate },
+    { label: 'Breach Rate', value: formatPercent(breachRate), color: breachRate > 0.15 ? '#f44336' : '#ff9800', metricKey: 'corp_covenant_breach_rate', rawValue: breachRate, thresholdContext: ctx },
     { label: 'Financial Covenants', value: String(financialCount), color: '#1976d2' },
     { label: 'Extensions Approved', value: String(extensionsApproved), color: '#4caf50' },
   ];

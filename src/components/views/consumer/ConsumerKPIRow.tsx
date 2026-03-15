@@ -5,6 +5,7 @@ import { KPIRow, type KPIItem } from '@/components/cards/KPIRow';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import type { ConsumerMetricRow, ScopeSelection } from '@/lib/types';
 
 interface Props {
@@ -43,9 +44,10 @@ function getBenchmark(data: ConsumerMetricRow[], metricName: string): number | u
   return typeof row.benchmark === 'number' ? row.benchmark : undefined;
 }
 
-export function ConsumerKPIRow({ data }: Props) {
+export function ConsumerKPIRow({ data, scope }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { getColor } = useRiskAppetite();
+  const ctx = useMemo(() => buildThresholdContext(scope, { businessLine: 'consumer_finance' }), [scope]);
 
   const items = useMemo<KPIItem[]>(() => {
     const aumValues = getAllValues(data, 'Total AUM');
@@ -88,35 +90,38 @@ export function ConsumerKPIRow({ data }: Props) {
       {
         label: 'FPD%',
         value: formatPercent(fpd),
-        color: getColor('fpd_pct', fpd),
+        color: getColor('fpd_pct', fpd, ctx),
         trend: { value: momChange(fpd, fpdPrev) },
         invertTrend: true,
         sparkline: fpdValues,
         benchmark: getBenchmark(data, 'FPD%'),
         metricKey: 'fpd_pct',
         rawValue: fpd,
+        thresholdContext: ctx,
       },
       {
         label: '30+ DPD',
         value: formatPercent(dpd30),
-        color: getColor('dpd_30_plus', dpd30),
+        color: getColor('dpd_30_plus', dpd30, ctx),
         trend: { value: momChange(dpd30, dpd30Prev) },
         invertTrend: true,
         sparkline: dpd30Values,
         benchmark: getBenchmark(data, '30+ Amt%'),
         metricKey: 'dpd_30_plus',
         rawValue: dpd30,
+        thresholdContext: ctx,
       },
       {
         label: '90+ DPD',
         value: formatPercent(dpd90),
-        color: getColor('dpd_90_plus', dpd90),
+        color: getColor('dpd_90_plus', dpd90, ctx),
         trend: { value: momChange(dpd90, dpd90Prev) },
         invertTrend: true,
         sparkline: dpd90Values,
         benchmark: getBenchmark(data, '90+ Amt%'),
         metricKey: 'dpd_90_plus',
         rawValue: dpd90,
+        thresholdContext: ctx,
       },
       {
         label: 'Net Credit Loss',
@@ -128,7 +133,7 @@ export function ConsumerKPIRow({ data }: Props) {
         benchmark: getBenchmark(data, 'Net Credit Loss'),
       },
     ];
-  }, [data, getColor, formatCurrency]);
+  }, [data, getColor, formatCurrency, ctx]);
 
   return <KPIRow items={items} />;
 }

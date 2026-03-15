@@ -16,6 +16,7 @@ import { CorporateDelinquencySection } from '@/components/views/corporate/Corpor
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton';
 import { useCorporateExecutiveSummary } from '@/hooks/useCorporateData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
@@ -42,6 +43,7 @@ export function CorporateFinanceView({ scope, initialSubTab }: Props) {
   const [subTab, setSubTab] = useState(initialSubTab ?? 0);
   const { data: summary, isLoading } = useCorporateExecutiveSummary(scope);
   const { getColor } = useRiskAppetite();
+  const ctx = useMemo(() => buildThresholdContext(scope, { businessLine: 'corporate_finance' }), [scope]);
 
   // KPI items
   const kpis = useMemo<KPIItem[]>(() => {
@@ -58,35 +60,39 @@ export function CorporateFinanceView({ scope, initialSubTab }: Props) {
       {
         label: 'Delinquency Rate',
         value: formatPercent(summary.delinquencyRate),
-        color: getColor('corp_delinquency_rate', summary.delinquencyRate),
+        color: getColor('corp_delinquency_rate', summary.delinquencyRate, ctx),
         metricKey: 'corp_delinquency_rate',
         rawValue: summary.delinquencyRate,
+        thresholdContext: ctx,
         info: 'Count-based: # of accounts with DPD > 0 / total accounts. See Delinquency tab for exposure-weighted PAR X+.',
       },
       {
         label: 'NPA Rate',
         value: formatPercent(summary.npaRate),
-        color: getColor('corp_npa_rate', summary.npaRate),
+        color: getColor('corp_npa_rate', summary.npaRate, ctx),
         metricKey: 'corp_npa_rate',
         rawValue: summary.npaRate,
+        thresholdContext: ctx,
         info: 'Count-based: # of accounts with DPD > 90 / total accounts. See Delinquency tab for exposure-weighted PAR 90+.',
       },
       {
         label: 'Security Cover',
         value: formatPercent(summary.avgSecurityCover),
-        color: getColor('corp_security_cover', summary.avgSecurityCover),
+        color: getColor('corp_security_cover', summary.avgSecurityCover, ctx),
         metricKey: 'corp_security_cover',
         rawValue: summary.avgSecurityCover,
+        thresholdContext: ctx,
       },
       {
         label: 'PCR',
         value: formatPercent(summary.provisionCoverageRatio),
-        color: getColor('corp_pcr', summary.provisionCoverageRatio),
+        color: getColor('corp_pcr', summary.provisionCoverageRatio, ctx),
         metricKey: 'corp_pcr',
         rawValue: summary.provisionCoverageRatio,
+        thresholdContext: ctx,
       },
     ];
-  }, [summary, getColor, formatCurrencyMM]);
+  }, [summary, getColor, formatCurrencyMM, ctx]);
 
   const renderSection = () => {
     switch (subTab) {

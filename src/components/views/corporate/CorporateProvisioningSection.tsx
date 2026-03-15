@@ -20,6 +20,7 @@ import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { ProvisioningTrendChart } from '@/components/charts/ProvisioningTrendChart';
 import { useCorporateProvisioningECL } from '@/hooks/useCorporateData';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ScopeSelection } from '@/lib/types';
@@ -62,6 +63,7 @@ interface Props {
 export function CorporateProvisioningSection({ scope }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const { data: provisionData, isLoading } = useCorporateProvisioningECL(scope);
+  const ctx = useMemo(() => buildThresholdContext(scope), [scope]);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const rows = useMemo(() => provisionData ?? [], [provisionData]);
@@ -354,7 +356,7 @@ export function CorporateProvisioningSection({ scope }: Props) {
                                 fontFamily: 'IBM Plex Mono, monospace',
                               }}
                             >
-                              <BreachBadge metricKey="corp_pcr" value={row.pcrPct}>
+                              <BreachBadge metricKey="corp_pcr" value={row.pcrPct} context={ctx}>
                                 {formatPercent(row.pcrPct)}
                               </BreachBadge>
                             </TableCell>

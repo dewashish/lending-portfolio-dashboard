@@ -694,7 +694,7 @@ export interface MetricDefinition {
   direction: MetricDirection;
   defaultAppetite: number;
   defaultTolerance: number;
-  businessLine: 'consumer_finance' | 'trade_finance' | 'corporate_finance';
+  businessLine: 'group' | 'consumer_finance' | 'trade_finance' | 'corporate_finance';
   category: string;
 }
 

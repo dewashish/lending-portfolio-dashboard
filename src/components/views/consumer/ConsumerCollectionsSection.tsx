@@ -8,9 +8,10 @@ import { CollectionMetricsTable } from '@/components/tables/CollectionMetricsTab
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useCollectionMetrics, useRollRates, useProductCatalog } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, sortPeriodsChronologically } from '@/lib/format';
-import type { ScopeSelection, CollectionMetricRow, ConsumerFilters } from '@/lib/types';
+import type { ScopeSelection, CollectionMetricRow, ConsumerFilters, ThresholdContext } from '@/lib/types';
 
 interface Props {
   scope?: ScopeSelection;
@@ -27,7 +28,7 @@ interface CollectionKPI {
   rawValue?: number;
 }
 
-function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
+function CollectionKPIStrip({ kpis, ctx }: { kpis: CollectionKPI[]; ctx?: import('@/lib/types').ThresholdContext }) {
   return (
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => (
@@ -39,7 +40,7 @@ function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
             {k.label}
           </Typography>
           {k.metricKey != null && k.rawValue != null ? (
-            <BreachBadge metricKey={k.metricKey} value={k.rawValue}>
+            <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
               <Typography
                 variant="h6"
                 className="mono"
@@ -65,7 +66,8 @@ function CollectionKPIStrip({ kpis }: { kpis: CollectionKPI[] }) {
 
 function computeCollectionKPIs(
   data: CollectionMetricRow[],
-  getColor: (metricKey: string, value: number) => string,
+  getColor: (metricKey: string, value: number, ctx?: ThresholdContext) => string,
+  ctx?: ThresholdContext,
 ): CollectionKPI[] {
   if (data.length === 0) return [];
 
@@ -84,7 +86,7 @@ function computeCollectionKPIs(
     kpis.push({
       label: 'Avg Resolution Rate',
       value: formatPercent(avgRollBack),
-      color: getColor('resolution_rate', avgRollBack),
+      color: getColor('resolution_rate', avgRollBack, ctx),
       metricKey: 'resolution_rate',
       rawValue: avgRollBack,
     });
@@ -93,7 +95,7 @@ function computeCollectionKPIs(
     kpis.push({
       label: 'Avg Roll Forward',
       value: formatPercent(avgRollFwd),
-      color: getColor('roll_forward_rate', avgRollFwd),
+      color: getColor('roll_forward_rate', avgRollFwd, ctx),
       metricKey: 'roll_forward_rate',
       rawValue: avgRollFwd,
     });
@@ -122,6 +124,7 @@ export function ConsumerCollectionsSection({ scope }: Props) {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const { data: productCatalog } = useProductCatalog(scope);
   const { getColor } = useRiskAppetite();
+  const ctx = useMemo(() => buildThresholdContext(scope, { businessLine: 'consumer_finance' }), [scope]);
 
   // Products available based on the secured/unsecured toggle
   const availableProducts = useMemo(() => {
@@ -194,7 +197,7 @@ export function ConsumerCollectionsSection({ scope }: Props) {
     }
   };
 
-  const kpis = useMemo(() => computeCollectionKPIs(filteredCollectionMetrics, getColor), [filteredCollectionMetrics, getColor]);
+  const kpis = useMemo(() => computeCollectionKPIs(filteredCollectionMetrics, getColor, ctx), [filteredCollectionMetrics, getColor, ctx]);
 
   if (l1 || l2) return <ChartGridSkeleton />;
 
@@ -243,7 +246,7 @@ export function ConsumerCollectionsSection({ scope }: Props) {
         </Select>
       </Box>
 
-      {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} />}
+      {kpis.length > 0 && <CollectionKPIStrip kpis={kpis} ctx={ctx} />}
 
       {/* Table + Sankey side-by-side */}
       <Grid container spacing={2}>

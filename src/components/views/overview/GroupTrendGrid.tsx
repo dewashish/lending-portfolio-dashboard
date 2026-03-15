@@ -4,13 +4,15 @@ import { Box, Paper, Typography } from '@mui/material';
 import { KPICard } from '@/components/cards/KPICard';
 import { formatPercent } from '@/lib/format';
 import { sortPeriods } from '@/lib/period-utils';
-import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary } from '@/lib/types';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
+import type { ConsumerMetricRow, PortfolioSummary, CorporatePortfolioSummary, ScopeSelection } from '@/lib/types';
 
 interface Props {
   consumerOverall: ConsumerMetricRow[];
   tradeSummary: PortfolioSummary | null;
   corporateSummary: CorporatePortfolioSummary | null;
   unsecuredFPD?: ConsumerMetricRow[];
+  scope?: ScopeSelection;
 }
 
 function extractSparkline(data: ConsumerMetricRow[], metricName: string): number[] {
@@ -61,7 +63,8 @@ function buildSubtitle(data: ConsumerMetricRow[], metricName: string): string | 
   }).join('  ');
 }
 
-export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary, unsecuredFPD = [] }: Props) {
+export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary, unsecuredFPD = [], scope }: Props) {
+  const ctx = buildThresholdContext(scope);
   const dpd30 = extractLatest(consumerOverall, '30+ Amt%');
   const dpd60 = extractLatest(consumerOverall, '60+ Amt%');
   const dpd90 = extractLatest(consumerOverall, '90+ Amt%');
@@ -173,6 +176,7 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
             invertTrend={c.invertTrend}
             metricKey={c.metricKey}
             rawValue={c.rawValue ?? undefined}
+            thresholdContext={ctx}
           />
         ))}
       </Box>

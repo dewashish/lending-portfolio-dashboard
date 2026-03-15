@@ -35,3 +35,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 ._*
+.env.local.production
+.env.local.production.bak
+.env.local.staging
+.claude/worktrees/

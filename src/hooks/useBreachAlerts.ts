@@ -7,11 +7,12 @@ import { useCorporateExecutiveSummary } from '@/hooks/useCorporateData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { getMetricDef } from '@/lib/risk-appetite/metric-registry';
 import { formatPercent } from '@/lib/format';
-import type { ScopeSelection, ConsumerMetricRow } from '@/lib/types';
+import type { ScopeSelection, ConsumerMetricRow, ThresholdContext } from '@/lib/types';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 
 export interface BreachAlert {
   id: string;
-  product: 'Consumer Finance' | 'Trade Finance' | 'Corporate Finance';
+  product: 'Group Overview' | 'Consumer Finance' | 'Trade Finance' | 'Corporate Finance';
   category: string;
   metricKey: string;
   label: string;
@@ -37,6 +38,11 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
   const { data: corpSummary, isLoading: col } = useCorporateExecutiveSummary(scope);
   const { getStatus, getThreshold } = useRiskAppetite();
 
+  const groupCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'group' }), [scope]);
+  const consumerCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'consumer_finance' }), [scope]);
+  const tradeCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'trade_finance' }), [scope]);
+  const corpCtx = useMemo(() => buildThresholdContext(scope, { businessLine: 'corporate_finance' }), [scope]);
+
   const alerts = useMemo(() => {
     const results: BreachAlert[] = [];
 
@@ -44,12 +50,13 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
       product: BreachAlert['product'],
       metricKey: string,
       value: number | null | undefined,
+      ctx: ThresholdContext,
     ) => {
       if (value == null) return;
-      const status = getStatus(metricKey, value);
+      const status = getStatus(metricKey, value, ctx);
       if (status === 'Green') return;
       const def = getMetricDef(metricKey);
-      const threshold = getThreshold(metricKey);
+      const threshold = getThreshold(metricKey, ctx);
       results.push({
         id: `${product}:${metricKey}`,
         product,
@@ -67,27 +74,43 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
 
     // Consumer Finance
     if (consumerData) {
-      check('Consumer Finance', 'fpd_pct', getLatest(consumerData, 'FPD%'));
-      check('Consumer Finance', 'dpd_30_plus', getLatest(consumerData, '30+ Amt%'));
-      check('Consumer Finance', 'dpd_90_plus', getLatest(consumerData, '90+ Amt%'));
-      check('Consumer Finance', 'net_credit_loss', getLatest(consumerData, 'Net Credit Loss'));
+      check('Consumer Finance', 'fpd_pct', getLatest(consumerData, 'FPD%'), consumerCtx);
+      check('Consumer Finance', 'dpd_30_plus', getLatest(consumerData, '30+ Amt%'), consumerCtx);
+      check('Consumer Finance', 'dpd_90_plus', getLatest(consumerData, '90+ Amt%'), consumerCtx);
+      check('Consumer Finance', 'net_credit_loss', getLatest(consumerData, 'Net Credit Loss'), consumerCtx);
     }
 
     // Trade Finance
     if (tradeSummary) {
-      check('Trade Finance', 'npl_ratio', tradeSummary.nplRatio);
-      check('Trade Finance', 'stage_2_3_pct', tradeSummary.stage2Plus3Pct);
-      check('Trade Finance', 'trade_utilization', tradeSummary.collectionEfficiency);
-      check('Trade Finance', 'trade_overdue_ratio', tradeSummary.delinquency30Plus);
+      check('Trade Finance', 'npl_ratio', tradeSummary.nplRatio, tradeCtx);
+      check('Trade Finance', 'stage_2_3_pct', tradeSummary.stage2Plus3Pct, tradeCtx);
+      check('Trade Finance', 'trade_utilization', tradeSummary.collectionEfficiency, tradeCtx);
+      check('Trade Finance', 'trade_overdue_ratio', tradeSummary.delinquency30Plus, tradeCtx);
     }
 
     // Corporate Finance
     if (corpSummary) {
-      check('Corporate Finance', 'corp_delinquency_rate', corpSummary.delinquencyRate);
-      check('Corporate Finance', 'corp_npa_rate', corpSummary.npaRate);
-      check('Corporate Finance', 'corp_security_cover', corpSummary.avgSecurityCover);
-      check('Corporate Finance', 'corp_covenant_breach_rate', corpSummary.covenantBreachRate);
-      check('Corporate Finance', 'corp_pcr', corpSummary.provisionCoverageRatio);
+      check('Corporate Finance', 'corp_delinquency_rate', corpSummary.delinquencyRate, corpCtx);
+      check('Corporate Finance', 'corp_npa_rate', corpSummary.npaRate, corpCtx);
+      check('Corporate Finance', 'corp_security_cover', corpSummary.avgSecurityCover, corpCtx);
+      check('Corporate Finance', 'corp_covenant_breach_rate', corpSummary.covenantBreachRate, corpCtx);
+      check('Corporate Finance', 'corp_pcr', corpSummary.provisionCoverageRatio, corpCtx);
+    }
+
+    // Group-level blended KPIs
+    {
+      const dpd30 = getLatest(consumerData ?? [], '30+ Amt%');
+      check('Group Overview', 'group_dpd_30_plus', dpd30, groupCtx);
+
+      // Blended NPL (trade + corporate)
+      const tradeNPL = tradeSummary?.nplRatio ?? null;
+      const corpNPA = corpSummary?.npaRate ?? null;
+      const blendedNPL = tradeNPL ?? corpNPA;
+      check('Group Overview', 'group_npl', blendedNPL, groupCtx);
+
+      // Blended provision coverage
+      const blendedPCR = tradeSummary?.provisionCoverage ?? corpSummary?.provisionCoverageRatio ?? null;
+      check('Group Overview', 'group_provision_cov', blendedPCR, groupCtx);
     }
 
     // Sort: red first, then amber; within same rag, by product
@@ -97,7 +120,7 @@ export function useAllBreachAlerts(scope?: ScopeSelection) {
     });
 
     return results;
-  }, [consumerData, tradeSummary, corpSummary, getStatus, getThreshold]);
+  }, [consumerData, tradeSummary, corpSummary, getStatus, getThreshold, groupCtx, consumerCtx, tradeCtx, corpCtx]);
 
   return {
     alerts,

@@ -16,6 +16,7 @@ import { sortPeriods } from '@/lib/period-utils';
 import type { RiskHeatmapCell } from '@/components/charts/SubsidiaryRiskHeatmap';
 import { useGroupOverviewSummary } from '@/hooks/useOverviewData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 
 // Section components
 import { GroupBreachPanel } from '@/components/views/overview/GroupBreachPanel';
@@ -70,6 +71,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
   const { formatCurrency, formatCurrencyMM } = useCurrencyFormat();
   const { getColor, getStatus } = useRiskAppetite();
   const { data, isLoading } = useGroupOverviewSummary(scope);
+  const ctx = useMemo(() => buildThresholdContext(scope), [scope]);
 
   const scorecard = useMemo(() => data?.scorecard ?? [], [data?.scorecard]);
   const tradeSummary = data?.tradeSummary ?? null;
@@ -136,31 +138,43 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       value: dpd30 != null ? formatPercent(dpd30) : '—',
       sparkline: dpd30Sparkline.length >= 2 ? dpd30Sparkline : undefined,
       invertTrend: true,
-      metricKey: 'dpd_30_plus',
+      metricKey: 'group_dpd_30_plus',
       rawValue: dpd30 ?? undefined,
-      color: dpd30 != null ? getColor('dpd_30_plus', dpd30) : undefined,
+      color: dpd30 != null ? getColor('group_dpd_30_plus', dpd30, ctx) : undefined,
+      thresholdContext: ctx,
     },
     {
       label: 'Group NPL',
       value: blendedNPL != null ? formatPercent(blendedNPL) : '—',
-      metricKey: 'npl_ratio',
+      metricKey: 'group_npl',
       rawValue: blendedNPL ?? undefined,
-      color: blendedNPL != null ? getColor('npl_ratio', blendedNPL) : undefined,
+      color: blendedNPL != null ? getColor('group_npl', blendedNPL, ctx) : undefined,
+      thresholdContext: ctx,
     },
     {
       label: 'EWS Critical',
       value: formatNumber(ewsCriticalCount),
-      color: ewsCriticalCount > 0 ? '#f44336' : '#4caf50',
+      metricKey: 'group_ews_critical',
+      rawValue: ewsCriticalCount,
+      color: getColor('group_ews_critical', ewsCriticalCount, ctx),
+      thresholdContext: ctx,
     },
     {
       label: 'Provision Coverage',
       value: blendedPCR != null ? formatPercent(blendedPCR) : '—',
-      color: blendedPCR != null ? getColor('corp_pcr', blendedPCR) : undefined,
+      metricKey: 'group_provision_cov',
+      rawValue: blendedPCR ?? undefined,
+      color: blendedPCR != null ? getColor('group_provision_cov', blendedPCR, ctx) : undefined,
+      thresholdContext: ctx,
       info: 'Exposure-weighted Trade + Corporate (Consumer: N/A)',
     },
     {
       label: 'Credit Cost',
       value: blendedCreditCost != null ? formatPercent(blendedCreditCost) : '—',
+      metricKey: 'group_credit_cost',
+      rawValue: blendedCreditCost ?? undefined,
+      color: blendedCreditCost != null ? getColor('group_credit_cost', blendedCreditCost, ctx) : undefined,
+      thresholdContext: ctx,
       info: 'Exposure-weighted: Consumer NCL + Trade + Corporate',
     },
   ];
@@ -189,7 +203,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         subsidiary: s.subsidiary, subsidiaryId: subId,
         dimension: 'Consumer 30+',
         formattedValue: cd != null ? formatPercent(cd, 1) : '—',
-        rag: cd != null ? (getStatus('dpd_30_plus', cd) as RAGStatus) : 'Green',
+        rag: cd != null ? (getStatus('dpd_30_plus', cd, ctx) as RAGStatus) : 'Green',
         tabIndex: 1, subTabIndex: 3, // Consumer → Delinquency
       });
 
@@ -199,7 +213,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         subsidiary: s.subsidiary, subsidiaryId: subId,
         dimension: 'Trade NPL',
         formattedValue: tnpl != null ? formatPercent(tnpl, 1) : '—',
-        rag: tnpl != null ? (getStatus('npl_ratio', tnpl) as RAGStatus) : 'Green',
+        rag: tnpl != null ? (getStatus('npl_ratio', tnpl, ctx) as RAGStatus) : 'Green',
         tabIndex: 3, // Trade Finance
       });
 
@@ -219,7 +233,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         subsidiary: s.subsidiary, subsidiaryId: subId,
         dimension: 'EWS',
         formattedValue: ews != null ? formatNumber(ews, 1) : '—',
-        rag: ews != null ? (getStatus('avg_ews_score', ews) as RAGStatus) : 'Green',
+        rag: ews != null ? (getStatus('avg_ews_score', ews, ctx) as RAGStatus) : 'Green',
         tabIndex: 4, subTabIndex: 0, // Risk & Conc → EWS Radar
       });
 
@@ -255,7 +269,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
     });
 
     return { heatmapCells: cells, heatmapSubs: subs };
-  }, [scorecard, fxRisk, countryRisk, tradeEntityPerf, getStatus]);
+  }, [scorecard, fxRisk, countryRisk, tradeEntityPerf, getStatus, ctx]);
 
   const handleHeatmapClick = (subsidiaryId: number, tabIndex: number, subTabIndex?: number) => {
     onScopeChange?.({ level: 'subsidiary', subsidiaryId });
@@ -335,6 +349,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         tradeSummary={tradeSummary}
         corporateSummary={corporateSummary}
         unsecuredFPD={unsecuredFPD}
+        scope={scope}
       />
 
       {/* Section 6: Business Line Comparison */}
@@ -347,6 +362,7 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
         unsecuredFPD={unsecuredFPD}
         groupExposure={groupAum}
         consumerNCL={consumerNCL}
+        scope={scope}
       />
 
       {/* Section 7: Enhanced Consolidated Scorecard */}
@@ -374,9 +390,9 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
               <TableBody>
                 {scorecard.map((row) => {
                   const hasRedMetric =
-                    getStatus('dpd_30_plus', row.consumerDelinquency30Plus ?? 0) === 'Red' ||
-                    getStatus('npl_ratio', row.tradeNplRatio ?? 0) === 'Red' ||
-                    getStatus('avg_ews_score', row.avgEwsScore ?? 0) === 'Red';
+                    getStatus('dpd_30_plus', row.consumerDelinquency30Plus ?? 0, ctx) === 'Red' ||
+                    getStatus('npl_ratio', row.tradeNplRatio ?? 0, ctx) === 'Red' ||
+                    getStatus('avg_ews_score', row.avgEwsScore ?? 0, ctx) === 'Red';
 
                   return (
                     <TableRow
@@ -404,20 +420,20 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
                       </TableCell>
                       <TableCell align="right" sx={{
                         fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
-                        color: getColor('dpd_30_plus', row.consumerDelinquency30Plus ?? 0),
+                        color: getColor('dpd_30_plus', row.consumerDelinquency30Plus ?? 0, ctx),
                       }}>
                         {row.consumerDelinquency30Plus != null ? (
-                          <BreachBadge metricKey="dpd_30_plus" value={row.consumerDelinquency30Plus}>
+                          <BreachBadge metricKey="dpd_30_plus" value={row.consumerDelinquency30Plus} context={buildThresholdContext({ level: 'subsidiary', subsidiaryId: row.subsidiaryId })}>
                             {formatPercent(row.consumerDelinquency30Plus, 2)}
                           </BreachBadge>
                         ) : '—'}
                       </TableCell>
                       <TableCell align="right" sx={{
                         fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
-                        color: getColor('npl_ratio', row.tradeNplRatio ?? 0),
+                        color: getColor('npl_ratio', row.tradeNplRatio ?? 0, ctx),
                       }}>
                         {row.tradeNplRatio != null ? (
-                          <BreachBadge metricKey="npl_ratio" value={row.tradeNplRatio}>
+                          <BreachBadge metricKey="npl_ratio" value={row.tradeNplRatio} context={buildThresholdContext({ level: 'subsidiary', subsidiaryId: row.subsidiaryId })}>
                             {formatPercent(row.tradeNplRatio)}
                           </BreachBadge>
                         ) : '—'}
@@ -430,10 +446,10 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
                       </TableCell>
                       <TableCell align="right" sx={{
                         fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace',
-                        color: getColor('avg_ews_score', row.avgEwsScore ?? 0),
+                        color: getColor('avg_ews_score', row.avgEwsScore ?? 0, ctx),
                       }}>
                         {row.avgEwsScore != null ? (
-                          <BreachBadge metricKey="avg_ews_score" value={row.avgEwsScore}>
+                          <BreachBadge metricKey="avg_ews_score" value={row.avgEwsScore} context={buildThresholdContext({ level: 'subsidiary', subsidiaryId: row.subsidiaryId })}>
                             {formatNumber(row.avgEwsScore, 1)}
                           </BreachBadge>
                         ) : '—'}

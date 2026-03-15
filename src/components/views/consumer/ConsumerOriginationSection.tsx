@@ -8,6 +8,7 @@ import { DailyDisbursementTrend } from '@/components/charts/DailyDisbursementTre
 import { ChartGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { useLOSMetrics, useLOSDaily, useLOSFunnel } from '@/hooks/useConsumerData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
+import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
@@ -25,7 +26,7 @@ interface OriginationKPI {
   momPct?: number;
 }
 
-function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
+function OriginationKPIBanner({ kpis, thresholdCtx }: { kpis: OriginationKPI[]; thresholdCtx?: import('@/lib/types').ThresholdContext }) {
   const { getColor } = useRiskAppetite();
 
   return (
@@ -39,7 +40,7 @@ function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
           const achColor =
             k.achievement == null
               ? undefined
-              : getColor('los_achievement', k.achievement);
+              : getColor('los_achievement', k.achievement, thresholdCtx);
 
           return (
             <Box key={k.label} sx={{ flex: 1, py: 1.5, px: 1.5, textAlign: 'center' }}>
@@ -65,7 +66,7 @@ function OriginationKPIBanner({ kpis }: { kpis: OriginationKPI[] }) {
               </Typography>
               <Stack direction="row" justifyContent="center" spacing={0.5} sx={{ mt: 0.5 }}>
                 {k.achievement != null && (
-                  <BreachBadge metricKey="los_achievement" value={k.achievement}>
+                  <BreachBadge metricKey="los_achievement" value={k.achievement} context={thresholdCtx}>
                     <Chip
                       size="small"
                       label={`${formatPercent(k.achievement)} ach.`}
@@ -150,6 +151,10 @@ function extractKPIs(metrics: LOSComparisonMetric[], formatCurrency: (v: number 
 
 export function ConsumerOriginationSection({ scope, filters }: Props) {
   const { formatCurrency } = useCurrencyFormat();
+  const ctx = useMemo(() => buildThresholdContext(scope, {
+    businessLine: 'consumer_finance',
+    product: filters?.products?.length === 1 ? filters.products[0] : undefined,
+  }), [scope, filters?.products]);
   const { data: metrics, isLoading: l1 } = useLOSMetrics(scope, filters);
   const { data: daily, isLoading: l2 } = useLOSDaily(scope, filters);
   const { data: funnel, isLoading: l3 } = useLOSFunnel(undefined, scope, filters);
@@ -160,7 +165,7 @@ export function ConsumerOriginationSection({ scope, filters }: Props) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      {kpis.length > 0 && <OriginationKPIBanner kpis={kpis} />}
+      {kpis.length > 0 && <OriginationKPIBanner kpis={kpis} thresholdCtx={ctx} />}
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
