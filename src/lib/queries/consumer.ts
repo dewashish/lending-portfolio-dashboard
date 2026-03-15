@@ -324,7 +324,8 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
   let query = supabase
     .from('consumer_product_metrics')
     .select('product_name, metric_type, metric, period, value, value_usd, benchmark')
-    .order('id');
+    .order('id')
+    .limit(15000);
   if (filters?.period) query = query.eq('period', filters.period);
   if (filters?.products && filters.products.length > 0) query = query.in('product_name', filters.products);
   query = await applyScopeAsync(query, scope);
