@@ -2055,11 +2055,13 @@ const CORP_SECTORS = [
 function buildCorporateIndustryConcentration(): Row[] {
   const rows: Row[] = [];
   const BASE_SHARES = [0.18, 0.15, 0.13, 0.12, 0.10, 0.09, 0.08, 0.08, 0.07];
+  // Must match corporate_portfolio_metrics periods
+  const CORP_PERIODS = ['Q1 2025', 'Q2 2025', 'Jul 2025', 'Aug 2025'];
 
   for (const sub of SUBSIDIARIES) {
     const totalPOS = sub.aumLocal * 0.6; // corporate ~60% of AUM
-    for (let pi = 0; pi < PERIODS_7.length; pi++) {
-      const period = PERIODS_7[pi];
+    for (let pi = 0; pi < CORP_PERIODS.length; pi++) {
+      const period = CORP_PERIODS[pi];
       for (let sIdx = 0; sIdx < CORP_SECTORS.length; sIdx++) {
         const sector = CORP_SECTORS[sIdx];
         const n = noise(sub.id, pi, sIdx + 500);

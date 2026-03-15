@@ -55,8 +55,22 @@ export function VantaGlobeBackground({ mode }: Props) {
     if (scriptsLoaded >= 2) initVanta();
   }, [scriptsLoaded, initVanta]);
 
+  // Slow auto-rotation: simulate gentle mouse drift when user isn't hovering
   useEffect(() => {
+    let frame: number;
+    const startTime = Date.now();
+    const animate = () => {
+      if (vantaEffect.current) {
+        const t = (Date.now() - startTime) / 1000;
+        // Slow circular drift — completes one revolution every ~60 seconds
+        vantaEffect.current.mouseX = Math.sin(t * 0.1) * 0.3;
+        vantaEffect.current.mouseY = Math.cos(t * 0.07) * 0.15;
+      }
+      frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
     return () => {
+      cancelAnimationFrame(frame);
       if (vantaEffect.current) vantaEffect.current.destroy();
     };
   }, []);
