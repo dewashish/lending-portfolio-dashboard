@@ -193,10 +193,10 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
 
   const kpis = useMemo<DKpi[]>(() => {
     const defs = [
-      { name: 'FPD%', label: 'FPD Rate', metricKey: 'fpd_pct' },
-      { name: '30+ Amt%', label: '30+ DPD', metricKey: 'dpd_30_plus' },
-      { name: '90+ Amt%', label: '90+ DPD', metricKey: 'dpd_90_plus' },
-      { name: 'Net Credit Loss', label: 'NCL Rate', metricKey: 'net_credit_loss' },
+      { name: 'FPD%', label: 'FPD Rate', metricKey: 'fpd_pct', fallback: '' },
+      { name: '30+ Amt% excl w/o', label: '30+ DPD', metricKey: 'dpd_30_plus', fallback: '30+ Amt%' },
+      { name: '90+ Amt% excl w/o', label: '90+ DPD', metricKey: 'dpd_90_plus', fallback: '90+ Amt%' },
+      { name: 'Net Credit Loss %', label: 'NCL Rate', metricKey: 'net_credit_loss', fallback: 'Net Credit Loss' },
     ];
 
     if (hasProductFilter && productData && productData.length > 0) {
@@ -229,22 +229,22 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
         aggRows.push({ ...row, values: averaged });
       });
 
-      return defs.map(({ name, label, metricKey }) => {
-        const curr = getLatest(aggRows, name);
-        const prev = getPrevious(aggRows, name);
+      return defs.map((d) => {
+        const curr = getLatest(aggRows, d.name) ?? (d.fallback ? getLatest(aggRows, d.fallback) : null);
+        const prev = getPrevious(aggRows, d.name) ?? (d.fallback ? getPrevious(aggRows, d.fallback) : null);
         const delta = curr != null && prev != null && prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : null;
-        const color = curr == null ? '#78909c' : getColor(metricKey, curr, ctx);
-        return { label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey, rawValue: curr ?? undefined };
+        const color = curr == null ? '#78909c' : getColor(d.metricKey, curr, ctx);
+        return { label: d.label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey: d.metricKey, rawValue: curr ?? undefined };
       });
     }
 
     if (!overall || overall.length === 0) return [];
-    return defs.map(({ name, label, metricKey }) => {
-      const curr = getLatest(overall, name);
-      const prev = getPrevious(overall, name);
+    return defs.map((d) => {
+      const curr = getLatest(overall, d.name) ?? (d.fallback ? getLatest(overall, d.fallback) : null);
+      const prev = getPrevious(overall, d.name) ?? (d.fallback ? getPrevious(overall, d.fallback) : null);
       const delta = curr != null && prev != null && prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : null;
-      const color = curr == null ? '#78909c' : getColor(metricKey, curr, ctx);
-      return { label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey, rawValue: curr ?? undefined };
+      const color = curr == null ? '#78909c' : getColor(d.metricKey, curr, ctx);
+      return { label: d.label, value: curr != null ? formatPercent(curr) : '—', delta, color, metricKey: d.metricKey, rawValue: curr ?? undefined };
     });
   }, [overall, productData, hasProductFilter, getColor, ctx]);
 

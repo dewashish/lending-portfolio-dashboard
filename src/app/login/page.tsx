@@ -16,7 +16,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
-import { useTheme } from '@mui/material/styles';
+import { VantaGlobeBackground } from '@/components/shell/VantaGlobeBackground';
 import type { UserRole } from '@/lib/user-context';
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -27,9 +27,6 @@ const ROLES: { value: UserRole; label: string }[] = [
 ];
 
 export default function LoginPage() {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -103,164 +100,179 @@ export default function LoginPage() {
     setPassword('');
   };
 
+  const inputSx = {
+    '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255,255,255,0.25)' }, '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' }, '&.Mui-focused fieldset': { borderColor: '#00897b' } },
+    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.5)' },
+  };
+
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: isDark
-          ? 'radial-gradient(ellipse at 30% 20%, rgba(0,137,123,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(255,111,0,0.08) 0%, transparent 50%), #0a0f1a'
-          : 'radial-gradient(ellipse at 30% 20%, rgba(0,137,123,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(255,111,0,0.04) 0%, transparent 50%), #f5f7fa',
-      }}
-    >
-      <Card
+    <Box sx={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
+      <VantaGlobeBackground mode="dark" />
+      <Box
         sx={{
-          p: 5,
-          maxWidth: 440,
-          width: '100%',
-          mx: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: isDark ? 'rgba(17,24,39,0.9)' : 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(20px)',
+          position: 'relative',
+          zIndex: 1,
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Stack spacing={3} alignItems="center">
-          <Box
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #00897b 0%, #004d40 100%)',
-            }}
-          >
-            <ShowChartIcon sx={{ fontSize: 32, color: '#fff' }} />
-          </Box>
-
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" fontWeight={800} gutterBottom>
-              Avaloura Portfolio Monitor
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Group Risk Management Engine
-            </Typography>
-          </Box>
-
-          {error && (
-            <Alert severity="error" sx={{ width: '100%' }} onClose={() => setError('')}>
-              {error}
-            </Alert>
-          )}
-
-          <Stack spacing={2} sx={{ width: '100%' }}>
-            <TextField
-              label="Username"
-              size="small"
-              fullWidth
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={loading}
-            />
-
-            <TextField
-              label="Password"
-              type="password"
-              size="small"
-              fullWidth
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-
-            {mode === 'signup' && (
-              <FormControl size="small" fullWidth>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  value={role}
-                  label="Role"
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  disabled={loading}
-                >
-                  {ROLES.map((r) => (
-                    <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={loading}
-              onClick={mode === 'signin' ? handleSignIn : handleSignUp}
+        <Card
+          sx={{
+            p: 5,
+            maxWidth: 440,
+            width: '100%',
+            mx: 2,
+            border: '1px solid rgba(255,255,255,0.1)',
+            bgcolor: 'rgba(10,15,26,0.85)',
+            backdropFilter: 'blur(24px)',
+            color: '#fff',
+          }}
+        >
+          <Stack spacing={3} alignItems="center">
+            <Box
               sx={{
-                py: 1.5,
-                fontSize: '1rem',
-                background: 'linear-gradient(135deg, #00897b 0%, #00695c 100%)',
-                color: '#fff',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00a08a 0%, #00897b 100%)',
-                },
-                '&.Mui-disabled': {
-                  background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-                },
+                width: 64,
+                height: 64,
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #00897b 0%, #004d40 100%)',
               }}
             >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: '#fff' }} />
-              ) : mode === 'signin' ? (
-                'Sign In'
-              ) : (
-                'Create Account'
-              )}
-            </Button>
-          </Stack>
+              <ShowChartIcon sx={{ fontSize: 32, color: '#fff' }} />
+            </Box>
 
-          <Typography variant="body2" color="text.secondary">
-            {mode === 'signin' ? (
-              <>
-                Don&apos;t have an account?{' '}
-                <Typography
-                  component="span"
-                  variant="body2"
-                  onClick={toggleMode}
-                  sx={{
-                    color: '#00897b',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
-                >
-                  Sign Up
-                </Typography>
-              </>
-            ) : (
-              <>
-                Already have an account?{' '}
-                <Typography
-                  component="span"
-                  variant="body2"
-                  onClick={toggleMode}
-                  sx={{
-                    color: '#00897b',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
-                >
-                  Sign In
-                </Typography>
-              </>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h5" fontWeight={800} gutterBottom sx={{ color: '#fff' }}>
+                Avaloura Portfolio Monitor
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                Group Risk Management Engine
+              </Typography>
+            </Box>
+
+            {error && (
+              <Alert severity="error" sx={{ width: '100%' }} onClose={() => setError('')}>
+                {error}
+              </Alert>
             )}
-          </Typography>
-        </Stack>
-      </Card>
+
+            <Stack spacing={2} sx={{ width: '100%' }}>
+              <TextField
+                label="Username"
+                size="small"
+                fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+                sx={inputSx}
+              />
+
+              <TextField
+                label="Password"
+                type="password"
+                size="small"
+                fullWidth
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                sx={inputSx}
+              />
+
+              {mode === 'signup' && (
+                <FormControl size="small" fullWidth>
+                  <InputLabel sx={{ color: 'rgba(255,255,255,0.5)' }}>Role</InputLabel>
+                  <Select
+                    value={role}
+                    label="Role"
+                    onChange={(e) => setRole(e.target.value as UserRole)}
+                    disabled={loading}
+                    sx={{
+                      color: '#fff',
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.25)' },
+                      '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
+                      '&.Mui-focused fieldset': { borderColor: '#00897b' },
+                    }}
+                  >
+                    {ROLES.map((r) => (
+                      <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                disabled={loading}
+                onClick={mode === 'signin' ? handleSignIn : handleSignUp}
+                sx={{
+                  py: 1.5,
+                  fontSize: '1rem',
+                  background: 'linear-gradient(135deg, #00897b 0%, #00695c 100%)',
+                  color: '#fff',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00a08a 0%, #00897b 100%)',
+                  },
+                  '&.Mui-disabled': {
+                    background: 'rgba(255,255,255,0.12)',
+                  },
+                }}
+              >
+                {loading ? (
+                  <CircularProgress size={24} sx={{ color: '#fff' }} />
+                ) : mode === 'signin' ? (
+                  'Sign In'
+                ) : (
+                  'Create Account'
+                )}
+              </Button>
+            </Stack>
+
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+              {mode === 'signin' ? (
+                <>
+                  Don&apos;t have an account?{' '}
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    onClick={toggleMode}
+                    sx={{
+                      color: '#00897b',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Sign Up
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  Already have an account?{' '}
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    onClick={toggleMode}
+                    sx={{
+                      color: '#00897b',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Sign In
+                  </Typography>
+                </>
+              )}
+            </Typography>
+          </Stack>
+        </Card>
+      </Box>
     </Box>
   );
 }

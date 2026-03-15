@@ -45,6 +45,27 @@ type LOSMetricDbRow = Database['public']['Tables']['los_metrics']['Row'];
 type LOSFunnelDbRow = Database['public']['Tables']['los_funnel']['Row'];
 type LOSDailyDbRow = Database['public']['Tables']['los_daily']['Row'];
 
+// ── Pagination Helper ──────────────────────────────────────────────
+// Supabase caps responses at 1000 rows per request. Many consumer tables
+// exceed this at group scope. This helper fetches all pages.
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAllPages<T>(buildPage: (offset: number) => Promise<{ data: any; error: any }>): Promise<T[]> {
+  const PAGE = 1000;
+  const all: T[] = [];
+  let offset = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const { data, error } = await buildPage(offset);
+    if (error) throw error;
+    const page = (data ?? []) as T[];
+    all.push(...page);
+    hasMore = page.length === PAGE;
+    offset += PAGE;
+  }
+  return all;
+}
+
 // ── Pivot Helpers ────────────────────────────────────────────────
 
 function pivotToMetricRows(rows: OverallRow[]): ConsumerMetricRow[] {
@@ -75,6 +96,99 @@ function pivotToProductData(rows: ProductRow[]): ConsumerProductData[] {
   }
 
   return Array.from(prodMap.entries()).map(([productName, metrics]) => ({ productName, metrics }));
+}
+
+// Rate/ratio metrics — must be AUM-weighted averaged (not summed or simple-averaged)
+const RATE_METRICS = new Set([
+  'Wt Avg ROI', 'Wt Avg Tenor', 'Average Ticket Size',
+  'Collection Efficiency',
+  'Current BKT Bounce Rate', 'FPD%', 'FPD To GCL Trend',
+  'X+ Amt% excl w/o', '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o',
+  'Net Credit Loss %', 'Policy Deviation (%account)',
+]);
+// Note: 'PDD Pending > 60 days (#)' is a COUNT — it gets SUMMED, not averaged
+
+/**
+ * Aggregates multiple products into a single "All Products" entry.
+ * Monetary metrics are summed; rate metrics are AUM-weighted averaged.
+ * Returns [aggregate, ...individual products] when multiple products exist.
+ */
+function aggregateAcrossProducts(products: ConsumerProductData[]): ConsumerProductData[] {
+  if (products.length <= 1) return products;
+
+  // Collect all periods and all metric keys across all products
+  const allPeriods = new Set<string>();
+  const metricDefs = new Map<string, { metricType: string; metric: string; benchmark: number | string | null }>();
+
+  for (const prod of products) {
+    for (const m of prod.metrics) {
+      const key = `${m.metricType}|${m.metric}`;
+      if (!metricDefs.has(key)) {
+        metricDefs.set(key, { metricType: m.metricType, metric: m.metric, benchmark: m.benchmark });
+      }
+      Object.keys(m.values).forEach((p) => allPeriods.add(p));
+    }
+  }
+
+  // Build AUM weights per product per period (for weighted averaging)
+  const aumByProductPeriod = new Map<string, Map<string, number>>(); // productName → period → aum
+  for (const prod of products) {
+    const aumMetric = prod.metrics.find((m) => m.metric === 'Total AUM');
+    if (aumMetric) {
+      const periodMap = new Map<string, number>();
+      Object.entries(aumMetric.values).forEach(([p, v]) => {
+        if (typeof v === 'number') periodMap.set(p, v);
+      });
+      aumByProductPeriod.set(prod.productName, periodMap);
+    }
+  }
+
+  // Aggregate each metric across products
+  const aggregatedMetrics: ConsumerMetricRow[] = [];
+
+  metricDefs.forEach(({ metricType, metric, benchmark }, key) => {
+    const isRate = RATE_METRICS.has(metric);
+    const aggValues: Record<string, number | null> = {};
+
+    allPeriods.forEach((period) => {
+      if (isRate) {
+        // AUM-weighted average
+        let weightedSum = 0;
+        let totalWeight = 0;
+        for (const prod of products) {
+          const m = prod.metrics.find((r) => `${r.metricType}|${r.metric}` === key);
+          const v = m?.values[period];
+          if (typeof v !== 'number') continue;
+          const aum = aumByProductPeriod.get(prod.productName)?.get(period) ?? 1;
+          weightedSum += v * aum;
+          totalWeight += aum;
+        }
+        aggValues[period] = totalWeight > 0 ? weightedSum / totalWeight : null;
+      } else {
+        // Sum for monetary metrics
+        let sum = 0;
+        let hasValue = false;
+        for (const prod of products) {
+          const m = prod.metrics.find((r) => `${r.metricType}|${r.metric}` === key);
+          const v = m?.values[period];
+          if (typeof v === 'number') {
+            sum += v;
+            hasValue = true;
+          }
+        }
+        aggValues[period] = hasValue ? sum : null;
+      }
+    });
+
+    aggregatedMetrics.push({ metricType, metric, values: aggValues, benchmark });
+  });
+
+  const aggregate: ConsumerProductData = {
+    productName: 'All Products',
+    metrics: aggregatedMetrics,
+  };
+
+  return [aggregate, ...products];
 }
 
 function pivotToNetFlowRows(rows: NetFlowDbRow[]): NetFlowRow[] {
@@ -187,114 +301,195 @@ export async function fetchConsumerOverall(scope?: ScopeSelection, filters?: Con
   const useUsd = !scope || scope.level !== 'subsidiary';
   const rows = (data ?? []) as (OverallRow & { value_usd: number | null })[];
 
-  if (useUsd && rows.length > 0 && rows[0].value_usd != null) {
-    const amountMetrics = new Set([
-      'Total AUM', 'On-Book AUM', 'Off-Book AUM', 'New Bookings',
-      'Life-to-Date Disbursement', 'Write-offs', 'Recoveries', 'NCL',
-      'Average Ticket Size',
-    ]);
-    const aggregated = new Map<string, OverallRow>();
-    const countMap = new Map<string, number>();
-
+  if (useUsd && rows.length > 1) {
+    // Build AUM lookup per subsidiary × period for weighted averaging
+    const aumLookup = new Map<string, number>();
     for (const r of rows) {
-      const key = `${r.metric_type}|${r.metric}|${r.period}`;
-      if (!aggregated.has(key)) {
-        aggregated.set(key, {
-          ...r,
-          value: amountMetrics.has(r.metric) ? (r.value_usd ?? 0) : (r.value ?? 0),
-        });
-        countMap.set(key, 1);
-      } else {
-        const existing = aggregated.get(key)!;
-        if (amountMetrics.has(r.metric)) {
-          existing.value = (existing.value ?? 0) + (r.value_usd ?? 0);
-        } else {
-          existing.value = (existing.value ?? 0) + (r.value ?? 0);
-          countMap.set(key, (countMap.get(key) ?? 0) + 1);
-        }
+      if (r.metric === 'Total AUM') {
+        const ak = `${r.subsidiary_id}|${r.period}`;
+        aumLookup.set(ak, r.value_usd ?? r.value ?? 0);
       }
     }
 
-    aggregated.forEach((row, key) => {
-      if (!amountMetrics.has(row.metric)) {
-        const count = countMap.get(key) ?? 1;
-        row.value = (row.value ?? 0) / count;
+    // Rate metrics need AUM-weighted average; everything else is summed
+    const overallRateMetrics = new Set([
+      '30+ Rate', '90+ Rate', '30+ Amt%', '60+ Amt%', '90+ Amt%',
+      'FPD%', 'Current BKT Bounce Rate', 'Collection Efficiency', 'Net Credit Loss',
+      'Wt Avg ROI', 'Wt Avg Tenor',
+    ]);
+
+    const sumMap = new Map<string, number>();
+    const weightMap = new Map<string, number>();
+    const templateMap = new Map<string, OverallRow>();
+
+    for (const r of rows) {
+      const key = `${r.metric_type}|${r.metric}|${r.period}`;
+      const isRate = overallRateMetrics.has(r.metric);
+
+      if (!templateMap.has(key)) {
+        templateMap.set(key, { ...r });
+        sumMap.set(key, 0);
+        if (isRate) weightMap.set(key, 0);
       }
+
+      if (isRate) {
+        const ak = `${r.subsidiary_id}|${r.period}`;
+        const aum = aumLookup.get(ak) ?? 1;
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value ?? 0) * aum);
+        weightMap.set(key, (weightMap.get(key) ?? 0) + aum);
+      } else {
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value_usd ?? r.value ?? 0));
+      }
+    }
+
+    const finalRows: OverallRow[] = [];
+    templateMap.forEach((template, key) => {
+      const isRate = overallRateMetrics.has(template.metric);
+      let value: number;
+      if (isRate) {
+        const w = weightMap.get(key) ?? 1;
+        value = w > 0 ? (sumMap.get(key) ?? 0) / w : 0;
+      } else {
+        value = sumMap.get(key) ?? 0;
+      }
+      finalRows.push({ ...template, value });
     });
 
-    return pivotToMetricRows(Array.from(aggregated.values()));
+    return pivotToMetricRows(finalRows);
   }
 
   return pivotToMetricRows(rows);
 }
 
 export async function fetchProductMetrics(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<ConsumerProductData[]> {
-  let query = supabase
-    .from('consumer_product_metrics')
-    .select('product_name, metric_type, metric, period, value, benchmark')
-    .order('id');
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) query = query.in('product_name', filters.products);
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return pivotToProductData((data ?? []) as ProductRow[]);
+  const rows = await fetchAllPages<ProductRow & { value_usd: number | null }>(async (offset) => {
+    let q = supabase
+      .from('consumer_product_metrics')
+      .select('product_name, metric_type, metric, period, value, value_usd, benchmark')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) q = q.in('product_name', filters.products);
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  const useUsd = !scope || scope.level !== 'subsidiary';
+
+  if (useUsd && rows.length > 1) {
+    // Step 1: Build AUM lookup per subsidiary × product × period for weighted averaging
+    const aumLookup = new Map<string, number>(); // "subId|product|period" → AUM in USD
+    for (const r of rows) {
+      if (r.metric === 'Total AUM') {
+        const aumKey = `${r.subsidiary_id}|${r.product_name}|${r.period}`;
+        aumLookup.set(aumKey, r.value_usd ?? r.value ?? 0);
+      }
+    }
+
+    // Step 2: Aggregate across subsidiaries per product
+    // Key: "product|metricType|metric|period"
+    // For monetary/count metrics: sum value_usd
+    // For rate metrics: accumulate (value × AUM) and total AUM, then divide
+    const sumMap = new Map<string, number>();      // summed value or weighted numerator
+    const weightMap = new Map<string, number>();    // total AUM weight (for rates only)
+    const templateMap = new Map<string, ProductRow>(); // template row for metadata
+
+    for (const r of rows) {
+      const key = `${r.product_name}|${r.metric_type}|${r.metric}|${r.period}`;
+      const isRate = RATE_METRICS.has(r.metric);
+
+      if (!templateMap.has(key)) {
+        templateMap.set(key, { ...r });
+        sumMap.set(key, 0);
+        if (isRate) weightMap.set(key, 0);
+      }
+
+      if (isRate) {
+        // AUM-weighted: accumulate value × AUM
+        const aumKey = `${r.subsidiary_id}|${r.product_name}|${r.period}`;
+        const aum = aumLookup.get(aumKey) ?? 1;
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value ?? 0) * aum);
+        weightMap.set(key, (weightMap.get(key) ?? 0) + aum);
+      } else {
+        // Monetary or count: sum value_usd (fallback to value for absolute counts)
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value_usd ?? r.value ?? 0));
+      }
+    }
+
+    // Step 3: Finalize — divide weighted sums by total weight for rate metrics
+    const finalRows: ProductRow[] = [];
+    templateMap.forEach((template, key) => {
+      const isRate = RATE_METRICS.has(template.metric);
+      let value: number;
+      if (isRate) {
+        const totalWeight = weightMap.get(key) ?? 1;
+        value = totalWeight > 0 ? (sumMap.get(key) ?? 0) / totalWeight : 0;
+      } else {
+        value = sumMap.get(key) ?? 0;
+      }
+      finalRows.push({ ...template, value });
+    });
+
+    return aggregateAcrossProducts(pivotToProductData(finalRows));
+  }
+
+  return aggregateAcrossProducts(pivotToProductData(rows));
 }
 
 export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NetFlowRow[]> {
-  let query = supabase
-    .from('net_flow_rates')
-    .select('portfolio, bucket, period, value, product_name')
-    .order('id')
-    .limit(10000);
-  // Apply all filters BEFORE applyScopeAsync (which implicitly executes the query
-  // because PostgrestBuilder is thenable and async return wraps in Promise.resolve)
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) {
-    query = query.in('product_name', filters.products);
-  } else {
-    query = query.is('product_name', null);
-  }
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return pivotToNetFlowRows((data ?? []) as NetFlowDbRow[]);
+  const rows = await fetchAllPages<NetFlowDbRow>(async (offset) => {
+    let q = supabase
+      .from('net_flow_rates')
+      .select('portfolio, bucket, period, value, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) {
+      q = q.in('product_name', filters.products);
+    } else {
+      q = q.is('product_name', null);
+    }
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return pivotToNetFlowRows(rows);
 }
 
 export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<RollRateTimeSeries[]> {
-  let query = supabase
-    .from('roll_rate_series')
-    .select('bucket, metric, period, value, product_name')
-    .order('id')
-    .limit(10000);
-  // Apply all filters BEFORE applyScopeAsync (see comment above)
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) {
-    query = query.in('product_name', filters.products);
-  } else {
-    query = query.is('product_name', null);
-  }
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return pivotToRollRateSeries((data ?? []) as RollRateDbRow[]);
+  const rows = await fetchAllPages<RollRateDbRow>(async (offset) => {
+    let q = supabase
+      .from('roll_rate_series')
+      .select('bucket, metric, period, value, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) {
+      q = q.in('product_name', filters.products);
+    } else {
+      q = q.is('product_name', null);
+    }
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return pivotToRollRateSeries(rows);
 }
 
 export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<CollectionMetricRow[]> {
-  let query = supabase
-    .from('collection_metrics')
-    .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period, product_name')
-    .order('id');
-  if (filters?.period) query = query.eq('period', filters.period);
-  if (filters?.products && filters.products.length > 0) {
-    query = query.in('product_name', filters.products);
-  } else {
-    query = query.is('product_name', null);
-  }
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return ((data ?? []) as CollectionDbRow[]).map((r) => ({
+  const rows = await fetchAllPages<CollectionDbRow>(async (offset) => {
+    let q = supabase
+      .from('collection_metrics')
+      .select('portfolio, bucket, amount, transitions, normalized, roll_backward, stabilized, roll_forward, period, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (filters?.period) q = q.eq('period', filters.period);
+    if (filters?.products && filters.products.length > 0) {
+      q = q.in('product_name', filters.products);
+    } else {
+      q = q.is('product_name', null);
+    }
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return rows.map((r) => ({
     portfolio: r.portfolio,
     bucket: r.bucket,
     amount: r.amount ?? 0,
@@ -308,13 +503,18 @@ export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: C
 }
 
 export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelection, products?: string[]): Promise<VintagePoint[]> {
-  let query = supabase.from('vintage_points').select('vintage, loan_amount, mob, delinquency_rate, metric_type, product_name').order('id');
-  if (metricType) query = query.eq('metric_type', metricType);
-  if (products && products.length > 0) query = query.in('product_name', products);
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
-  return ((data ?? []) as (VintageDbRow & { product_name?: string })[]).map((r) => ({
+  const rows = await fetchAllPages<VintageDbRow & { product_name?: string }>(async (offset) => {
+    let q = supabase
+      .from('vintage_points')
+      .select('vintage, loan_amount, mob, delinquency_rate, metric_type, product_name')
+      .order('id')
+      .range(offset, offset + 999);
+    if (metricType) q = q.eq('metric_type', metricType);
+    if (products && products.length > 0) q = q.in('product_name', products);
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
+  return rows.map((r) => ({
     vintage: r.vintage,
     loanAmount: r.loan_amount ?? 0,
     mob: r.mob,
@@ -324,19 +524,20 @@ export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelec
 }
 
 export async function fetchNonStarters(scope?: ScopeSelection, filters?: ConsumerFilters, category?: string): Promise<NonStarterRow[]> {
-  let query = supabase
-    .from('non_starters')
-    .select('category, product, metric, period, value, value_usd')
-    .order('id');
-  // Apply custom filters BEFORE applyScopeAsync (async + thenable = premature execution)
-  if (category) query = query.eq('category', category);
-  if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
-  query = await applyScopeAsync(query, scope);
-  const { data, error } = await query;
-  if (error) throw error;
+  const data = await fetchAllPages<NonStarterDbRow & { value_usd: number | null }>(async (offset) => {
+    let q = supabase
+      .from('non_starters')
+      .select('category, product, metric, period, value, value_usd')
+      .order('id')
+      .range(offset, offset + 999);
+    if (category) q = q.eq('category', category);
+    if (filters?.products && filters.products.length > 0) q = q.in('product', filters.products);
+    q = await applyScopeAsync(q, scope);
+    return q;
+  });
 
   const map = new Map<string, NonStarterRow>();
-  for (const r of (data ?? []) as NonStarterDbRow[]) {
+  for (const r of data) {
     const key = `${r.category}|${r.product}|${r.metric}`;
     if (!map.has(key)) {
       map.set(key, {
