@@ -98,14 +98,15 @@ function pivotToProductData(rows: ProductRow[]): ConsumerProductData[] {
   return Array.from(prodMap.entries()).map(([productName, metrics]) => ({ productName, metrics }));
 }
 
-// Metrics that are rates/ratios — should be AUM-weighted averaged across products
-const AVERAGED_PRODUCT_METRICS = new Set([
+// Rate/ratio metrics — must be AUM-weighted averaged (not summed or simple-averaged)
+const RATE_METRICS = new Set([
   'Wt Avg ROI', 'Wt Avg Tenor', 'Average Ticket Size',
-  'Collection Efficiency', 'PDD Pending > 60 days (#)',
+  'Collection Efficiency',
   'Current BKT Bounce Rate', 'FPD%', 'FPD To GCL Trend',
   'X+ Amt% excl w/o', '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o',
   'Net Credit Loss %', 'Policy Deviation (%account)',
 ]);
+// Note: 'PDD Pending > 60 days (#)' is a COUNT — it gets SUMMED, not averaged
 
 /**
  * Aggregates multiple products into a single "All Products" entry.
@@ -146,11 +147,11 @@ function aggregateAcrossProducts(products: ConsumerProductData[]): ConsumerProdu
   const aggregatedMetrics: ConsumerMetricRow[] = [];
 
   metricDefs.forEach(({ metricType, metric, benchmark }, key) => {
-    const isAvg = AVERAGED_PRODUCT_METRICS.has(metric);
+    const isRate = RATE_METRICS.has(metric);
     const aggValues: Record<string, number | null> = {};
 
     allPeriods.forEach((period) => {
-      if (isAvg) {
+      if (isRate) {
         // AUM-weighted average
         let weightedSum = 0;
         let totalWeight = 0;
@@ -300,42 +301,61 @@ export async function fetchConsumerOverall(scope?: ScopeSelection, filters?: Con
   const useUsd = !scope || scope.level !== 'subsidiary';
   const rows = (data ?? []) as (OverallRow & { value_usd: number | null })[];
 
-  if (useUsd && rows.length > 0 && rows[0].value_usd != null) {
-    const amountMetrics = new Set([
-      'Total AUM', 'On-Book AUM', 'Off-Book AUM', 'New Bookings',
-      'Life-to-Date Disbursement', 'Write-offs', 'Recoveries', 'NCL',
-      'Average Ticket Size',
-    ]);
-    const aggregated = new Map<string, OverallRow>();
-    const countMap = new Map<string, number>();
-
+  if (useUsd && rows.length > 1) {
+    // Build AUM lookup per subsidiary × period for weighted averaging
+    const aumLookup = new Map<string, number>();
     for (const r of rows) {
-      const key = `${r.metric_type}|${r.metric}|${r.period}`;
-      if (!aggregated.has(key)) {
-        aggregated.set(key, {
-          ...r,
-          value: amountMetrics.has(r.metric) ? (r.value_usd ?? 0) : (r.value ?? 0),
-        });
-        countMap.set(key, 1);
-      } else {
-        const existing = aggregated.get(key)!;
-        if (amountMetrics.has(r.metric)) {
-          existing.value = (existing.value ?? 0) + (r.value_usd ?? 0);
-        } else {
-          existing.value = (existing.value ?? 0) + (r.value ?? 0);
-          countMap.set(key, (countMap.get(key) ?? 0) + 1);
-        }
+      if (r.metric === 'Total AUM') {
+        const ak = `${r.subsidiary_id}|${r.period}`;
+        aumLookup.set(ak, r.value_usd ?? r.value ?? 0);
       }
     }
 
-    aggregated.forEach((row, key) => {
-      if (!amountMetrics.has(row.metric)) {
-        const count = countMap.get(key) ?? 1;
-        row.value = (row.value ?? 0) / count;
+    // Rate metrics need AUM-weighted average; everything else is summed
+    const overallRateMetrics = new Set([
+      '30+ Rate', '90+ Rate', '30+ Amt%', '60+ Amt%', '90+ Amt%',
+      'FPD%', 'Current BKT Bounce Rate', 'Collection Efficiency', 'Net Credit Loss',
+      'Wt Avg ROI', 'Wt Avg Tenor',
+    ]);
+
+    const sumMap = new Map<string, number>();
+    const weightMap = new Map<string, number>();
+    const templateMap = new Map<string, OverallRow>();
+
+    for (const r of rows) {
+      const key = `${r.metric_type}|${r.metric}|${r.period}`;
+      const isRate = overallRateMetrics.has(r.metric);
+
+      if (!templateMap.has(key)) {
+        templateMap.set(key, { ...r });
+        sumMap.set(key, 0);
+        if (isRate) weightMap.set(key, 0);
       }
+
+      if (isRate) {
+        const ak = `${r.subsidiary_id}|${r.period}`;
+        const aum = aumLookup.get(ak) ?? 1;
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value ?? 0) * aum);
+        weightMap.set(key, (weightMap.get(key) ?? 0) + aum);
+      } else {
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value_usd ?? r.value ?? 0));
+      }
+    }
+
+    const finalRows: OverallRow[] = [];
+    templateMap.forEach((template, key) => {
+      const isRate = overallRateMetrics.has(template.metric);
+      let value: number;
+      if (isRate) {
+        const w = weightMap.get(key) ?? 1;
+        value = w > 0 ? (sumMap.get(key) ?? 0) / w : 0;
+      } else {
+        value = sumMap.get(key) ?? 0;
+      }
+      finalRows.push({ ...template, value });
     });
 
-    return pivotToMetricRows(Array.from(aggregated.values()));
+    return pivotToMetricRows(finalRows);
   }
 
   return pivotToMetricRows(rows);
@@ -356,48 +376,60 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
   const useUsd = !scope || scope.level !== 'subsidiary';
 
   if (useUsd && rows.length > 1) {
-    // Metrics that should be AVERAGED across subsidiaries (rates, ratios, absolute values)
-    // Everything else is SUMMED via value_usd (monetary amounts)
-    const averagedMetrics = new Set([
-      'Wt Avg ROI', 'Wt Avg Tenor', 'Average Ticket Size',
-      'Collection Efficiency', 'PDD Pending > 60 days (#)',
-      'Current BKT Bounce Rate', 'FPD%', 'FPD To GCL Trend',
-      'X+ Amt% excl w/o', '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o',
-      'Net Credit Loss %', 'Policy Deviation (%account)',
-    ]);
-
-    const aggregated = new Map<string, ProductRow>();
-    const countMap = new Map<string, number>();
-
+    // Step 1: Build AUM lookup per subsidiary × product × period for weighted averaging
+    const aumLookup = new Map<string, number>(); // "subId|product|period" → AUM in USD
     for (const r of rows) {
-      const key = `${r.product_name}|${r.metric_type}|${r.metric}|${r.period}`;
-      const isAvg = averagedMetrics.has(r.metric);
-
-      if (!aggregated.has(key)) {
-        aggregated.set(key, {
-          ...r,
-          value: isAvg ? (r.value ?? 0) : (r.value_usd ?? r.value ?? 0),
-        });
-        countMap.set(key, 1);
-      } else {
-        const existing = aggregated.get(key)!;
-        if (isAvg) {
-          existing.value = (existing.value ?? 0) + (r.value ?? 0);
-        } else {
-          existing.value = (existing.value ?? 0) + (r.value_usd ?? r.value ?? 0);
-        }
-        countMap.set(key, (countMap.get(key) ?? 0) + 1);
+      if (r.metric === 'Total AUM') {
+        const aumKey = `${r.subsidiary_id}|${r.product_name}|${r.period}`;
+        aumLookup.set(aumKey, r.value_usd ?? r.value ?? 0);
       }
     }
 
-    aggregated.forEach((row, key) => {
-      if (averagedMetrics.has(row.metric)) {
-        const count = countMap.get(key) ?? 1;
-        row.value = (row.value ?? 0) / count;
+    // Step 2: Aggregate across subsidiaries per product
+    // Key: "product|metricType|metric|period"
+    // For monetary/count metrics: sum value_usd
+    // For rate metrics: accumulate (value × AUM) and total AUM, then divide
+    const sumMap = new Map<string, number>();      // summed value or weighted numerator
+    const weightMap = new Map<string, number>();    // total AUM weight (for rates only)
+    const templateMap = new Map<string, ProductRow>(); // template row for metadata
+
+    for (const r of rows) {
+      const key = `${r.product_name}|${r.metric_type}|${r.metric}|${r.period}`;
+      const isRate = RATE_METRICS.has(r.metric);
+
+      if (!templateMap.has(key)) {
+        templateMap.set(key, { ...r });
+        sumMap.set(key, 0);
+        if (isRate) weightMap.set(key, 0);
       }
+
+      if (isRate) {
+        // AUM-weighted: accumulate value × AUM
+        const aumKey = `${r.subsidiary_id}|${r.product_name}|${r.period}`;
+        const aum = aumLookup.get(aumKey) ?? 1;
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value ?? 0) * aum);
+        weightMap.set(key, (weightMap.get(key) ?? 0) + aum);
+      } else {
+        // Monetary or count: sum value_usd (fallback to value for absolute counts)
+        sumMap.set(key, (sumMap.get(key) ?? 0) + (r.value_usd ?? r.value ?? 0));
+      }
+    }
+
+    // Step 3: Finalize — divide weighted sums by total weight for rate metrics
+    const finalRows: ProductRow[] = [];
+    templateMap.forEach((template, key) => {
+      const isRate = RATE_METRICS.has(template.metric);
+      let value: number;
+      if (isRate) {
+        const totalWeight = weightMap.get(key) ?? 1;
+        value = totalWeight > 0 ? (sumMap.get(key) ?? 0) / totalWeight : 0;
+      } else {
+        value = sumMap.get(key) ?? 0;
+      }
+      finalRows.push({ ...template, value });
     });
 
-    return aggregateAcrossProducts(pivotToProductData(Array.from(aggregated.values())));
+    return aggregateAcrossProducts(pivotToProductData(finalRows));
   }
 
   return aggregateAcrossProducts(pivotToProductData(rows));
