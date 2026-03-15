@@ -77,6 +77,98 @@ function pivotToProductData(rows: ProductRow[]): ConsumerProductData[] {
   return Array.from(prodMap.entries()).map(([productName, metrics]) => ({ productName, metrics }));
 }
 
+// Metrics that are rates/ratios — should be AUM-weighted averaged across products
+const AVERAGED_PRODUCT_METRICS = new Set([
+  'Wt Avg ROI', 'Wt Avg Tenor', 'Average Ticket Size',
+  'Collection Efficiency', 'PDD Pending > 60 days (#)',
+  'Current BKT Bounce Rate', 'FPD%', 'FPD To GCL Trend',
+  'X+ Amt% excl w/o', '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o',
+  'Net Credit Loss %', 'Policy Deviation (%account)',
+]);
+
+/**
+ * Aggregates multiple products into a single "All Products" entry.
+ * Monetary metrics are summed; rate metrics are AUM-weighted averaged.
+ * Returns [aggregate, ...individual products] when multiple products exist.
+ */
+function aggregateAcrossProducts(products: ConsumerProductData[]): ConsumerProductData[] {
+  if (products.length <= 1) return products;
+
+  // Collect all periods and all metric keys across all products
+  const allPeriods = new Set<string>();
+  const metricDefs = new Map<string, { metricType: string; metric: string; benchmark: number | string | null }>();
+
+  for (const prod of products) {
+    for (const m of prod.metrics) {
+      const key = `${m.metricType}|${m.metric}`;
+      if (!metricDefs.has(key)) {
+        metricDefs.set(key, { metricType: m.metricType, metric: m.metric, benchmark: m.benchmark });
+      }
+      Object.keys(m.values).forEach((p) => allPeriods.add(p));
+    }
+  }
+
+  // Build AUM weights per product per period (for weighted averaging)
+  const aumByProductPeriod = new Map<string, Map<string, number>>(); // productName → period → aum
+  for (const prod of products) {
+    const aumMetric = prod.metrics.find((m) => m.metric === 'Total AUM');
+    if (aumMetric) {
+      const periodMap = new Map<string, number>();
+      Object.entries(aumMetric.values).forEach(([p, v]) => {
+        if (typeof v === 'number') periodMap.set(p, v);
+      });
+      aumByProductPeriod.set(prod.productName, periodMap);
+    }
+  }
+
+  // Aggregate each metric across products
+  const aggregatedMetrics: ConsumerMetricRow[] = [];
+
+  metricDefs.forEach(({ metricType, metric, benchmark }, key) => {
+    const isAvg = AVERAGED_PRODUCT_METRICS.has(metric);
+    const aggValues: Record<string, number | null> = {};
+
+    allPeriods.forEach((period) => {
+      if (isAvg) {
+        // AUM-weighted average
+        let weightedSum = 0;
+        let totalWeight = 0;
+        for (const prod of products) {
+          const m = prod.metrics.find((r) => `${r.metricType}|${r.metric}` === key);
+          const v = m?.values[period];
+          if (typeof v !== 'number') continue;
+          const aum = aumByProductPeriod.get(prod.productName)?.get(period) ?? 1;
+          weightedSum += v * aum;
+          totalWeight += aum;
+        }
+        aggValues[period] = totalWeight > 0 ? weightedSum / totalWeight : null;
+      } else {
+        // Sum for monetary metrics
+        let sum = 0;
+        let hasValue = false;
+        for (const prod of products) {
+          const m = prod.metrics.find((r) => `${r.metricType}|${r.metric}` === key);
+          const v = m?.values[period];
+          if (typeof v === 'number') {
+            sum += v;
+            hasValue = true;
+          }
+        }
+        aggValues[period] = hasValue ? sum : null;
+      }
+    });
+
+    aggregatedMetrics.push({ metricType, metric, values: aggValues, benchmark });
+  });
+
+  const aggregate: ConsumerProductData = {
+    productName: 'All Products',
+    metrics: aggregatedMetrics,
+  };
+
+  return [aggregate, ...products];
+}
+
 function pivotToNetFlowRows(rows: NetFlowDbRow[]): NetFlowRow[] {
   const flowBuckets = new Set(['B1 Flow', 'B2 Flow', 'B3 Flow', 'B4 Flow', 'B5 Flow', 'B6 Flow', 'POF%']);
   const map = new Map<string, { bucket: string; sums: Record<string, number>; counts: Record<string, number> }>();
@@ -284,10 +376,10 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
       }
     });
 
-    return pivotToProductData(Array.from(aggregated.values()));
+    return aggregateAcrossProducts(pivotToProductData(Array.from(aggregated.values())));
   }
 
-  return pivotToProductData(rows);
+  return aggregateAcrossProducts(pivotToProductData(rows));
 }
 
 export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NetFlowRow[]> {
