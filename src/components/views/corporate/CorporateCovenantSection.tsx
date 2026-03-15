@@ -147,7 +147,7 @@ export function CorporateCovenantSection({ scope }: Props) {
       <Grid container spacing={2.5}>
         <Grid item xs={12} md={6}>
           <Card sx={{ p: 2 }}>
-            <Box sx={{ height: 300 }}>
+            <Box sx={{ height: 370 }}>
               <CovenantCategoryDonut
                 data={categoryData}
                 onSliceClick={(cat) => setCategoryFilter(categoryFilter === cat ? null : cat)}
@@ -157,7 +157,7 @@ export function CorporateCovenantSection({ scope }: Props) {
         </Grid>
         <Grid item xs={12} md={6}>
           <Card sx={{ p: 2 }}>
-            <Box sx={{ height: 300 }}>
+            <Box sx={{ height: 370 }}>
               <CovenantComplianceDonut data={complianceData} />
             </Box>
           </Card>
