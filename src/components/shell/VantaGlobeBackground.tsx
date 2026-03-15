@@ -6,6 +6,8 @@ import Script from 'next/script';
 
 interface Props {
   mode: 'dark' | 'light';
+  /** When true, globe ignores mouse hover and only auto-rotates */
+  disableMouseInteraction?: boolean;
 }
 
 const DARK_CONFIG = {
@@ -20,7 +22,7 @@ const LIGHT_CONFIG = {
   backgroundColor: 0xe8ecf1,
 };
 
-export function VantaGlobeBackground({ mode }: Props) {
+export function VantaGlobeBackground({ mode, disableMouseInteraction = false }: Props) {
   const vantaRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const vantaEffect = useRef<any>(null);
@@ -36,8 +38,8 @@ export function VantaGlobeBackground({ mode }: Props) {
     vantaEffect.current = W.VANTA.GLOBE({
       el: vantaRef.current,
       THREE: W.THREE,
-      mouseControls: true,
-      touchControls: true,
+      mouseControls: !disableMouseInteraction,
+      touchControls: !disableMouseInteraction,
       gyroControls: false,
       minHeight: 200,
       minWidth: 200,
@@ -49,7 +51,7 @@ export function VantaGlobeBackground({ mode }: Props) {
       spacing: 18,
       ...cfg,
     });
-  }, [mode]);
+  }, [mode, disableMouseInteraction]);
 
   useEffect(() => {
     if (scriptsLoaded >= 2) initVanta();

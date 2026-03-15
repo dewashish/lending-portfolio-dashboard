@@ -55,7 +55,7 @@ function DashboardContent() {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-      <VantaGlobeBackground mode={mode} />
+      <VantaGlobeBackground mode={mode} disableMouseInteraction />
       <DashboardAppBar
         onToggleAI={() => setAiOpen(!aiOpen)}
         onToggleSettings={() => setSettingsOpen(!settingsOpen)}
