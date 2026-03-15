@@ -57,7 +57,7 @@ const FLOWS: UserFlow[] = [
     steps: [
       { label: 'Open AI panel', desc: 'Click the AI (AutoAwesome) icon in the AppBar to open the query drawer on the right side (420px).' },
       { label: 'Ask a question', desc: 'Select from 6 suggested questions or type a custom question in the input field. Questions are scope-aware.' },
-      { label: 'View response', desc: 'The AI assistant (powered by Gemini) processes the query with the current portfolio data context and returns an analysis.' },
+      { label: 'View response', desc: 'The AI assistant (powered by GPT-4.1) processes the query with the current portfolio data context and returns a data-driven analysis.' },
       { label: 'Follow up', desc: 'Continue the conversation with follow-up questions. The chat history is maintained within the session.' },
     ],
   },
