@@ -84,7 +84,7 @@ const ALL_STEPS: Step[] = [
   },
   {
     target: '#tour-risk-outlook',
-    content: 'The Forward Outlook tab provides core forward-looking risk metrics: ECL projections, provision coverage trends, delinquency forecasts, and scenario impact analysis.',
+    content: 'The Forward Outlook tab uses a four-layer framework: Portfolio Health (CRO snapshot), Stress Heatmap (subsidiary RAG scoring), Scenario Engine (ECL, stress testing, PD migration, vintage analysis), Early Warning & Actions (EWS signals + management playbook), and Methodology & Assumptions (detailed documentation of all models, inputs, and limitations).',
     disableBeacon: true,
     title: 'Forward Outlook',
   },

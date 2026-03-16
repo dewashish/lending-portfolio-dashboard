@@ -6,6 +6,7 @@ import { PortfolioHealthSection } from '@/components/views/risk-outlook/Portfoli
 import { StressHeatmapSection } from '@/components/views/risk-outlook/StressHeatmapSection';
 import { ScenarioEngineSection } from '@/components/views/risk-outlook/ScenarioEngineSection';
 import { EarlyWarningActionsSection } from '@/components/views/risk-outlook/EarlyWarningActionsSection';
+import { MethodologySection } from '@/components/views/risk-outlook/MethodologySection';
 import type { ScopeSelection } from '@/lib/types';
 
 const SUB_TABS = [
@@ -13,6 +14,7 @@ const SUB_TABS = [
   'Stress Heatmap',
   'Scenario Engine',
   'Early Warning & Actions',
+  'Methodology & Assumptions',
 ] as const;
 
 interface Props {
@@ -29,6 +31,7 @@ export function ForwardOutlookView({ scope, initialSubTab }: Props) {
       case 1: return <StressHeatmapSection key="sub-1" scope={scope} />;
       case 2: return <ScenarioEngineSection key="sub-2" scope={scope} />;
       case 3: return <EarlyWarningActionsSection key="sub-3" scope={scope} />;
+      case 4: return <MethodologySection key="sub-4" />;
       default: return <PortfolioHealthSection key="sub-0" scope={scope} />;
     }
   };

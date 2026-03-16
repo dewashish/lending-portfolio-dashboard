@@ -18,6 +18,8 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { METHODOLOGY_SECTIONS, METHODOLOGY_REFERENCES } from '@/lib/risk-outlook-methodology';
 
 const SUB_TAB_ORDER = [
+  'Portfolio Health',
+  'Stress Heatmap',
   'ECL & Provisions',
   'Stress Testing',
   'PD & Migration',
@@ -26,6 +28,8 @@ const SUB_TAB_ORDER = [
 ];
 
 const SUB_TAB_COLORS: Record<string, string> = {
+  'Portfolio Health': '#1976d2',
+  'Stress Heatmap': '#e91e63',
   'ECL & Provisions': '#2196f3',
   'Stress Testing': '#f44336',
   'PD & Migration': '#ff9800',

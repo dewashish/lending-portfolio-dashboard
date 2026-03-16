@@ -14,6 +14,182 @@ export interface MethodologyEntry {
 }
 
 export const METHODOLOGY_SECTIONS: MethodologyEntry[] = [
+  // ── Portfolio Health ────────────────────────────────────────────
+  {
+    id: 'portfolio-health-kpis',
+    title: 'Portfolio Health KPIs',
+    subTab: 'Portfolio Health',
+    description:
+      'Eight headline metrics providing an executive-level CRO snapshot of the group\'s forward-looking credit risk posture, combining ECL, provisioning, default probability, capital adequacy, and early-warning signal counts.',
+    assumptions: [
+      'Total ECL and Provision Coverage are IFRS 9 probability-weighted estimates (Base 50%, Adverse 30%, Severe 20%).',
+      'Average 1Y PD is the exposure-weighted mean of facility-level 12-month point-in-time PDs across the performing book.',
+      'CET1 (Base) is the projected Common Equity Tier 1 ratio under the Base macroeconomic scenario at the latest forecast quarter.',
+      'Forecasted Loss Rate is the annualised credit loss rate under the Base scenario, expressed as a percentage of gross loans.',
+      '90+ DPD Forecast is the maximum projected 90+ days-past-due rate across all active vintages within the forecast horizon.',
+      'EWS Red Alerts is the count of leading indicators currently breaching the Red z-score threshold (|z| >= 2.0).',
+      'Stage 2+3 Share is computed as (Stage 2 ECL + Stage 3 ECL) / Total ECL from the latest forecast quarter.',
+    ],
+    calculationMethod:
+      'Each KPI is sourced from its respective analytical model (ECL forecast, PD models, stress test CET1 projection, vintage curves, EWS scorecard). Values are aggregated at the scope level (Group/Region/Subsidiary) and refreshed on each data load. Stage mix percentages are derived from the most recent forecast quarter\'s ECL breakdown by stage.',
+    dataInputs: [
+      'ECL forecast outputs by stage, scenario, and quarter',
+      'Facility-level PD models (PIT calibration)',
+      'CET1 trajectory projections under Base scenario',
+      'Vintage delinquency forecast curves',
+      'Leading indicator z-scores from the EWS scorecard',
+      'Provision and gross loan balances from financial reporting',
+    ],
+    limitations: [
+      'KPIs are point-in-time snapshots; intra-quarter movements are not captured until the next data refresh.',
+      'Scenario weights (50/30/20) are management judgement and affect ECL-based metrics.',
+      'CET1 projection assumes a static balance sheet with no management actions.',
+      'EWS alert count uses fixed z-score thresholds that may not be optimal for all market regimes.',
+    ],
+    references: [
+      'IFRS 9 Financial Instruments (IASB, 2014)',
+      'Basel III Capital Framework (BCBS, 2023)',
+    ],
+  },
+  {
+    id: 'ecl-stage-area',
+    title: 'ECL by Stage — Stacked Area',
+    subTab: 'Portfolio Health',
+    description:
+      'Visualises the quarterly evolution of Expected Credit Loss broken down by IFRS 9 impairment stage (Stage 1, Stage 2, Stage 3) under the Base scenario, providing a time-series view of credit risk migration.',
+    assumptions: [
+      'Base scenario only (probability weight = 50%) to provide the most-likely trajectory.',
+      'Stage classification follows IFRS 9 criteria: Stage 1 = 12-month ECL, Stage 2 = lifetime ECL (SICR), Stage 3 = lifetime ECL (credit-impaired).',
+      'Quarterly data points are end-of-quarter snapshots.',
+      'Stacked area ordering: Stage 1 (bottom), Stage 2 (middle), Stage 3 (top).',
+    ],
+    calculationMethod:
+      'ECL amounts per stage are extracted from the ecl_forecast table, filtered to the Base scenario and current scope. Quarters are sorted chronologically. The D3 stacked area chart renders cumulative ECL with each stage as a distinct layer.',
+    dataInputs: [
+      'ecl_forecast table: quarter, stage, scenario, ecl_amount_usd',
+      'Scope filter (subsidiary_id, region)',
+    ],
+    limitations: [
+      'Only shows Base scenario; users must switch to Scenario Engine to compare across scenarios.',
+      'Does not show the drivers of stage migration (see ECL Waterfall in Scenario Engine).',
+    ],
+    references: [
+      'IFRS 9 Financial Instruments — Impairment staging criteria',
+    ],
+  },
+  {
+    id: 'rating-distribution-shift',
+    title: 'Rating Distribution — Current vs Projected',
+    subTab: 'Portfolio Health',
+    description:
+      'Side-by-side bar chart comparing the current portfolio rating composition to the projected distribution after applying the forward PD migration matrix, highlighting expected credit quality migration.',
+    assumptions: [
+      '8-grade internal rating scale (AAA through D).',
+      'Current distribution reflects the latest rating assignment snapshot.',
+      'Projected distribution applies the forward migration matrix (adjusted for credit cycle Z-factor) to the current composition.',
+      'New originations at 15% of portfolio at BBB-equivalent quality, proportional run-off.',
+    ],
+    calculationMethod:
+      'Current: count or exposure by rating grade from the rating_distribution table. Projected: Current Distribution vector × Forward Migration Matrix, with origination and run-off adjustments. Both normalised to percentage shares for visual comparison.',
+    dataInputs: [
+      'rating_distribution table: grade, count/exposure for current and projected',
+      'Forward migration matrix from PD & Migration models',
+    ],
+    limitations: [
+      'BBB assumption for new originations is a simplification.',
+      'Single-step projection; multi-period compounding not shown here (see PD Term Structure).',
+    ],
+    references: [
+      'S&P Global — Annual Global Corporate Default Studies',
+    ],
+  },
+  {
+    id: 'provision-coverage-trend',
+    title: 'Provision Coverage Ratio Trend',
+    subTab: 'Portfolio Health',
+    description:
+      'Line chart tracking the provision coverage ratio (total provisions / gross loans) across quarters under all three macroeconomic scenarios, enabling comparison of coverage adequacy trajectories.',
+    assumptions: [
+      'Coverage Ratio = Total Provisions / Gross Loans.',
+      'Three scenario lines: Base, Adverse, Severe.',
+      'Portfolio balance assumptions: stable (Base), −5% (Adverse), −10% (Severe).',
+      'Coverage floor of 1% assumed for display purposes.',
+    ],
+    calculationMethod:
+      'Provisions from ECL forecast aggregated across stages per quarter per scenario. Gross loans from portfolio balance projections. Ratio computed per quarter and rendered as three scenario-coloured lines.',
+    dataInputs: [
+      'ECL forecast outputs by scenario and quarter',
+      'Projected portfolio balances per scenario',
+    ],
+    limitations: [
+      'Portfolio balance is assumed, not modelled dynamically.',
+      'Does not distinguish between Stage 3 coverage and total coverage in this view.',
+    ],
+    references: [
+      'IFRS 9 Financial Instruments (IASB, 2014)',
+    ],
+  },
+
+  // ── Stress Heatmap ──────────────────────────────────────────────
+  {
+    id: 'subsidiary-stress-scoring',
+    title: 'Subsidiary Stress Scoring Framework',
+    subTab: 'Stress Heatmap',
+    description:
+      'Scores each subsidiary on 5 risk dimensions (0–100) with RAG classification, providing a consolidated view of which entities face the highest forward-looking risk across multiple vectors.',
+    assumptions: [
+      'Five risk dimensions: Macro Outlook, Portfolio Vulnerability, Collections Effectiveness, Provision Adequacy, Capital Absorption.',
+      'Scores range 0–100: Green (65–100), Amber (40–64), Red (0–39).',
+      'Each dimension has 2–4 quantitative drivers that are weighted to produce the composite score.',
+      'Drivers are recalibrated quarterly using the latest available data.',
+    ],
+    calculationMethod:
+      'Macro Outlook: Weighted composite of GDP growth forecast, unemployment direction, PMI trend, and sovereign risk spread for each subsidiary\'s operating geography. Portfolio Vulnerability: Weighted combination of NPL ratio, Stage 2 migration rate, concentration risk (HHI by sector), and 30+ DPD entry rate. Collections Effectiveness: Weighted average of recovery rate, roll-back (cure) rate, average days-to-resolution, and coverage ratio for defaulted assets. Provision Adequacy: Compares current provisions to model-implied ECL under Base and Adverse, penalising under-provisioning. Capital Absorption: Ratio of excess capital (above regulatory minimum) to potential stressed losses, scored against peer benchmarks.',
+    dataInputs: [
+      'Macroeconomic forecasts per geography (GDP, unemployment, PMI, spreads)',
+      'Internal portfolio metrics (NPL ratio, stage migration, HHI, DPD entry rates)',
+      'Collections performance data (recovery rate, cure rate, days-to-resolution)',
+      'ECL model outputs for provision adequacy comparison',
+      'Capital adequacy data (CET1 ratio, stressed loss estimates, regulatory minimums)',
+    ],
+    limitations: [
+      'Equal weighting across dimensions may not reflect the actual risk priority for each subsidiary.',
+      'Quarterly recalibration means intra-quarter deterioration is not immediately reflected.',
+      'Scoring thresholds (65/40) are management-set and not statistically optimised.',
+      'Cross-subsidiary comparisons assume homogeneous scoring methodology despite different operating environments.',
+    ],
+    references: [
+      'Basel III Pillar 2 — ICAAP and SREP frameworks',
+      'EBA Guidelines on common SREP methodology (2022)',
+      'McKinsey "Credit Monitoring for Competitive Advantage"',
+    ],
+  },
+  {
+    id: 'stress-driver-drilldown',
+    title: 'Risk Driver Drill-Down',
+    subTab: 'Stress Heatmap',
+    description:
+      'Detailed breakdown of the quantitative drivers behind each subsidiary\'s dimension score, accessible via the drill-down drawer when clicking a heatmap cell or row.',
+    assumptions: [
+      'Each driver has a label (metric name) and detail (current reading with context).',
+      'Drivers are stored as JSONB arrays in the subsidiary_stress_scores table.',
+      'Driver readings reflect the latest quarterly assessment.',
+    ],
+    calculationMethod:
+      'For each subsidiary × dimension combination, the underlying metrics are evaluated against historical benchmarks and peer comparisons. The driver detail text provides the current value, direction, and contributing factors. The aggregate row view combines drivers across all 5 dimensions for a holistic subsidiary assessment.',
+    dataInputs: [
+      'subsidiary_stress_scores table: subsidiary_id, dimension, score, rag_status, drivers JSONB',
+      'Historical metric benchmarks for contextualising driver readings',
+    ],
+    limitations: [
+      'Driver details are descriptive text, not interactive charts.',
+      'Historical benchmarks used for driver context may become stale between quarterly refreshes.',
+    ],
+    references: [
+      'EBA Guidelines on ICAAP and ILAAP information (2022)',
+    ],
+  },
+
   // ── ECL & Provisions ────────────────────────────────────────────
   {
     id: 'ecl-forecast',
