@@ -657,8 +657,77 @@ export function CorporateOverviewSection({ scope }: Props) {
   const pipelineRows = pipelineData ?? [];
   const maturityRows = maturity ?? [];
 
+  // Periods to use for tables — fall back to allPeriods before useEffect fires
+  const tablePeriods = visiblePeriods.length > 0 ? visiblePeriods : allPeriods;
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          PORTFOLIO SUMMARY TABLE
+          ═══════════════════════════════════════════════════════════════ */}
+      {(portfolio ?? []).length > 0 && tablePeriods.length > 0 && (
+        <Card sx={{ p: 2 }}>
+          <Typography variant="subtitle2" sx={SECTION_TITLE}>Portfolio Summary</Typography>
+          <TableContainer sx={{ maxHeight: 480 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell rowSpan={2} sx={HDR}>Particular</TableCell>
+                  {tablePeriods.map((p) => (
+                    <TableCell key={p} align="center" colSpan={3} sx={{ ...HDR, borderBottom: 0 }}>{p}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow>
+                  {tablePeriods.map((p) => [
+                    <TableCell key={`${p}-t`} align="right" sx={HDR}>Total</TableCell>,
+                    <TableCell key={`${p}-f`} align="right" sx={HDR}>Fund Based</TableCell>,
+                    <TableCell key={`${p}-n`} align="right" sx={HDR}>Non-FB</TableCell>,
+                  ])}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(portfolio ?? []).map((row, idx) => {
+                  const isGrowthRate = row.particular.includes('Growth Rate');
+                  const isPercent = isGrowthRate;
+                  return (
+                    <TableRow key={idx} hover>
+                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600 }}>{row.particular}</TableCell>
+                      {tablePeriods.map((p) => {
+                        const v = row.months[p];
+                        if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
+                        const fmt = isPercent
+                          ? (val: number | string) => typeof val === 'number' ? formatPercent(val) : String(val)
+                          : (val: number | string) => typeof val === 'number' ? formatCurrency(val) : String(val);
+                        return [
+                          <TableCell key={`${p}-t`} align="right" sx={CELL}>{fmt(v.total)}</TableCell>,
+                          <TableCell key={`${p}-f`} align="right" sx={CELL}>{fmt(v.fundBased)}</TableCell>,
+                          <TableCell key={`${p}-n`} align="right" sx={CELL}>{fmt(v.nonFB)}</TableCell>,
+                        ];
+                      })}
+                    </TableRow>
+                  );
+                })}
+                {utilizationRows.map((row, idx) => (
+                  <TableRow key={`util-${idx}`} hover sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
+                    <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic' }}>{row.particular}</TableCell>
+                    {tablePeriods.map((p) => {
+                      const v = row.months[p];
+                      if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
+                      const t = Number(v.total), f = Number(v.fundBased), n = Number(v.nonFB);
+                      return [
+                        <TableCell key={`${p}-t`} align="right" sx={{ ...CELL, color: utilizationColor(t) }}>{formatPercent(t)}</TableCell>,
+                        <TableCell key={`${p}-f`} align="right" sx={{ ...CELL, color: utilizationColor(f) }}>{formatPercent(f)}</TableCell>,
+                        <TableCell key={`${p}-n`} align="right" sx={{ ...CELL, color: utilizationColor(n) }}>{formatPercent(n)}</TableCell>,
+                      ];
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════
           GROUP A: PORTFOLIO KPIs + DISBURSEMENT FLOW
