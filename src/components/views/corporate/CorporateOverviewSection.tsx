@@ -304,7 +304,7 @@ function SectorPivotTable({
   formatCurrency,
 }: {
   data: CorporateIndustryConcentrationRow[];
-  valueField: 'disbursement' | 'pos';
+  valueField: 'disbursement' | 'pos' | 'sanctioned';
   valueLabel: string;
   formatCurrency: (v: number) => string;
 }) {
@@ -400,7 +400,7 @@ export function CorporateOverviewSection({ scope }: Props) {
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
   const [topN, setTopN] = useState<number>(20);
   const [customerTab, setCustomerTab] = useState<'disbursement' | 'pos' | 'sanctioned'>('disbursement');
-  const [sectorTab, setSectorTab] = useState<'disbursement' | 'pos'>('disbursement');
+  const [sectorTab, setSectorTab] = useState<'disbursement' | 'pos' | 'sanctioned'>('disbursement');
   const [collateralFilter, setCollateralFilter] = useState<string | null>(null);
 
   // ── Derived data ──
@@ -664,16 +664,61 @@ export function CorporateOverviewSection({ scope }: Props) {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
       {/* ═══════════════════════════════════════════════════════════════
+          PERIOD FILTER (applies to everything below)
+          ═══════════════════════════════════════════════════════════════ */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', mr: 1 }}>
+          Period
+        </Typography>
+        {[
+          { label: 'Last 3', value: 3 },
+          { label: 'Last 6', value: 6 },
+          { label: 'All', value: -1 },
+        ].map(({ label, value }) => (
+          <Chip
+            key={label}
+            label={label}
+            size="small"
+            variant={
+              (value === -1 && selectedPeriods.length === allPeriods.length) ||
+              (value !== -1 && selectedPeriods.length === value && selectedPeriods.join() === allPeriods.slice(-value).join())
+                ? 'filled' : 'outlined'
+            }
+            color={
+              (value === -1 && selectedPeriods.length === allPeriods.length) ||
+              (value !== -1 && selectedPeriods.length === value && selectedPeriods.join() === allPeriods.slice(-value).join())
+                ? 'primary' : 'default'
+            }
+            onClick={() => setPeriodPreset(value)}
+            sx={{ fontWeight: 600, fontSize: '0.68rem' }}
+          />
+        ))}
+        <Box sx={{ borderLeft: '1px solid', borderColor: 'divider', pl: 1, ml: 0.5, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+          {allPeriods.map((p) => (
+            <Chip
+              key={p}
+              label={p}
+              size="small"
+              variant={selectedPeriods.includes(p) ? 'filled' : 'outlined'}
+              color={selectedPeriods.includes(p) ? 'primary' : 'default'}
+              onClick={() => togglePeriod(p)}
+              sx={{ fontSize: '0.65rem' }}
+            />
+          ))}
+        </Box>
+      </Box>
+
+      {/* ═══════════════════════════════════════════════════════════════
           PORTFOLIO SUMMARY TABLE
           ═══════════════════════════════════════════════════════════════ */}
       {(portfolio ?? []).length > 0 && tablePeriods.length > 0 && (
         <Card sx={{ p: 2 }}>
           <Typography variant="subtitle2" sx={SECTION_TITLE}>Portfolio Summary</Typography>
-          <TableContainer sx={{ maxHeight: 480 }}>
-            <Table size="small" stickyHeader>
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="small" stickyHeader sx={{ minWidth: tablePeriods.length > 3 ? tablePeriods.length * 320 : undefined }}>
               <TableHead>
                 <TableRow>
-                  <TableCell rowSpan={2} sx={HDR}>Particular</TableCell>
+                  <TableCell rowSpan={2} sx={{ ...HDR, position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper' }}>Particular</TableCell>
                   {tablePeriods.map((p) => (
                     <TableCell key={p} align="center" colSpan={3} sx={{ ...HDR, borderBottom: 0 }}>{p}</TableCell>
                   ))}
@@ -692,7 +737,7 @@ export function CorporateOverviewSection({ scope }: Props) {
                   const isPercent = isGrowthRate;
                   return (
                     <TableRow key={idx} hover>
-                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600 }}>{row.particular}</TableCell>
+                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>{row.particular}</TableCell>
                       {tablePeriods.map((p) => {
                         const v = row.months[p];
                         if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
@@ -710,7 +755,7 @@ export function CorporateOverviewSection({ scope }: Props) {
                 })}
                 {utilizationRows.map((row, idx) => (
                   <TableRow key={`util-${idx}`} hover sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
-                    <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic' }}>{row.particular}</TableCell>
+                    <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic', position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>{row.particular}</TableCell>
                     {tablePeriods.map((p) => {
                       const v = row.months[p];
                       if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
@@ -733,50 +778,7 @@ export function CorporateOverviewSection({ scope }: Props) {
           GROUP A: PORTFOLIO KPIs + DISBURSEMENT FLOW
           ═══════════════════════════════════════════════════════════════ */}
 
-      {/* Month Range Selector */}
       <Card sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-          <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', mr: 1 }}>
-            Period
-          </Typography>
-          {[
-            { label: 'Last 3', value: 3 },
-            { label: 'Last 6', value: 6 },
-            { label: 'All', value: -1 },
-          ].map(({ label, value }) => (
-            <Chip
-              key={label}
-              label={label}
-              size="small"
-              variant={
-                (value === -1 && selectedPeriods.length === allPeriods.length) ||
-                (value !== -1 && selectedPeriods.length === value && selectedPeriods.join() === allPeriods.slice(-value).join())
-                  ? 'filled' : 'outlined'
-              }
-              color={
-                (value === -1 && selectedPeriods.length === allPeriods.length) ||
-                (value !== -1 && selectedPeriods.length === value && selectedPeriods.join() === allPeriods.slice(-value).join())
-                  ? 'primary' : 'default'
-              }
-              onClick={() => setPeriodPreset(value)}
-              sx={{ fontWeight: 600, fontSize: '0.68rem' }}
-            />
-          ))}
-          <Box sx={{ borderLeft: '1px solid', borderColor: 'divider', pl: 1, ml: 0.5, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-            {allPeriods.map((p) => (
-              <Chip
-                key={p}
-                label={p}
-                size="small"
-                variant={selectedPeriods.includes(p) ? 'filled' : 'outlined'}
-                color={selectedPeriods.includes(p) ? 'primary' : 'default'}
-                onClick={() => togglePeriod(p)}
-                sx={{ fontSize: '0.65rem' }}
-              />
-            ))}
-          </Box>
-        </Box>
-
         {/* KPI Strip */}
         {kpiItems.length > 0 && (
           <Box sx={{ mb: 2 }}>
@@ -884,7 +886,7 @@ export function CorporateOverviewSection({ scope }: Props) {
             <SectorBreakdownChart
               data={industry ?? []}
               period={visiblePeriods[visiblePeriods.length - 1] ?? ''}
-              valueField={customerTab === 'pos' ? 'pos' : 'disbursement'}
+              valueField={customerTab === 'pos' ? 'pos' : customerTab === 'sanctioned' ? 'sanctioned' : 'disbursement'}
             />
           </Grid>
           <Grid item xs={12} md={8}>
@@ -908,12 +910,13 @@ export function CorporateOverviewSection({ scope }: Props) {
           >
             <Tab label="Sector Disbursement" value="disbursement" />
             <Tab label="Sector Principal O/s" value="pos" />
+            <Tab label="Sector Sanctioned" value="sanctioned" />
           </Tabs>
         </Box>
         <SectorPivotTable
           data={industry ?? []}
           valueField={sectorTab}
-          valueLabel={sectorTab === 'disbursement' ? 'Disbursed' : 'Principal'}
+          valueLabel={sectorTab === 'disbursement' ? 'Disbursed' : sectorTab === 'sanctioned' ? 'Sanctioned' : 'Principal'}
           formatCurrency={formatCurrency}
         />
       </Card>

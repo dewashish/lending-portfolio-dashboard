@@ -13,7 +13,7 @@ import type { CorporateIndustryConcentrationRow } from '@/lib/types';
 interface Props {
   data: CorporateIndustryConcentrationRow[];
   period: string;
-  valueField: 'disbursement' | 'pos';
+  valueField: 'disbursement' | 'pos' | 'sanctioned';
 }
 
 export function SectorBreakdownChart({ data, period, valueField }: Props) {

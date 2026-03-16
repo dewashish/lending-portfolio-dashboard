@@ -309,6 +309,7 @@ export async function fetchCorporateIndustryConcentration(scope?: ScopeSelection
     period: r.period,
     disbursement: r.disbursement_usd ?? r.disbursement ?? 0,
     pos: r.pos_usd ?? r.pos ?? 0,
+    sanctioned: r.sanctioned_usd ?? r.sanctioned ?? 0,
     portfolioShare: r.portfolio_share ?? 0,
     irr: r.irr,
     facilityCount: r.facility_count ?? 0,

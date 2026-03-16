@@ -533,6 +533,7 @@ export interface CorporateIndustryConcentrationRow {
   period: string;
   disbursement: number;
   pos: number;
+  sanctioned: number;
   portfolioShare: number;
   irr: number | null;
   facilityCount: number;
