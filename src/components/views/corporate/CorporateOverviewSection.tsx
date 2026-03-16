@@ -709,70 +709,80 @@ export function CorporateOverviewSection({ scope }: Props) {
       </Box>
 
       {/* ═══════════════════════════════════════════════════════════════
-          PORTFOLIO SUMMARY TABLE
+          PORTFOLIO SUMMARY TABLE (monthly only, single Total column per month)
           ═══════════════════════════════════════════════════════════════ */}
-      {(portfolio ?? []).length > 0 && tablePeriods.length > 0 && (
-        <Card sx={{ p: 2 }}>
-          <Typography variant="subtitle2" sx={SECTION_TITLE}>Portfolio Summary</Typography>
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table size="small" stickyHeader sx={{ minWidth: tablePeriods.length > 3 ? tablePeriods.length * 320 : undefined }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell rowSpan={2} sx={{ ...HDR, position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper' }}>Particular</TableCell>
-                  {tablePeriods.map((p) => (
-                    <TableCell key={p} align="center" colSpan={3} sx={{ ...HDR, borderBottom: 0 }}>{p}</TableCell>
-                  ))}
-                </TableRow>
-                <TableRow>
-                  {tablePeriods.map((p) => [
-                    <TableCell key={`${p}-t`} align="right" sx={HDR}>Total</TableCell>,
-                    <TableCell key={`${p}-f`} align="right" sx={HDR}>Fund Based</TableCell>,
-                    <TableCell key={`${p}-n`} align="right" sx={HDR}>Non-FB</TableCell>,
-                  ])}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(portfolio ?? []).map((row, idx) => {
-                  const isGrowthRate = row.particular.includes('Growth Rate');
-                  const isPercent = isGrowthRate;
-                  return (
-                    <TableRow key={idx} hover>
-                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>{row.particular}</TableCell>
-                      {tablePeriods.map((p) => {
-                        const v = row.months[p];
-                        if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
-                        const fmt = isPercent
-                          ? (val: number | string) => typeof val === 'number' ? formatPercent(val) : String(val)
-                          : (val: number | string) => typeof val === 'number' ? formatCurrency(val) : String(val);
-                        return [
-                          <TableCell key={`${p}-t`} align="right" sx={CELL}>{fmt(v.total)}</TableCell>,
-                          <TableCell key={`${p}-f`} align="right" sx={CELL}>{fmt(v.fundBased)}</TableCell>,
-                          <TableCell key={`${p}-n`} align="right" sx={CELL}>{fmt(v.nonFB)}</TableCell>,
-                        ];
+      {(() => {
+        // Filter to monthly periods only (exclude Q1, Q2, etc.)
+        const monthlyPeriods = tablePeriods.filter((p) => !p.startsWith('Q'));
+        if (!(portfolio ?? []).length || !monthlyPeriods.length) return null;
+
+        // Build utilization % rows from portfolio data
+        const num = (v: number | string): number => (typeof v === 'number' ? v : 0);
+        const outstandingRow = portfolio!.find((r) => r.particular === 'Outstanding');
+        const sanctionedRow = portfolio!.find((r) => r.particular === 'Sanctioned Limit');
+        const disbLimitRow = portfolio!.find((r) => r.particular === 'Disbursement Limit');
+
+        return (
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" sx={SECTION_TITLE}>Portfolio Summary</Typography>
+            <TableContainer sx={{ overflowX: 'auto' }}>
+              <Table size="small" stickyHeader sx={{ minWidth: monthlyPeriods.length > 4 ? monthlyPeriods.length * 120 : undefined }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ ...HDR, position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper' }}>Particular</TableCell>
+                    {monthlyPeriods.map((p) => (
+                      <TableCell key={p} align="right" sx={HDR}>{p}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(portfolio ?? []).map((row, idx) => {
+                    const isGrowthRate = row.particular.includes('Growth Rate');
+                    const isPercent = isGrowthRate;
+                    return (
+                      <TableRow key={idx} hover>
+                        <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>{row.particular}</TableCell>
+                        {monthlyPeriods.map((p) => {
+                          const v = row.months[p];
+                          if (!v) return <TableCell key={p} />;
+                          const fmt = isPercent
+                            ? (val: number | string) => typeof val === 'number' ? formatPercent(val) : String(val)
+                            : (val: number | string) => typeof val === 'number' ? formatCurrency(val) : String(val);
+                          return <TableCell key={p} align="right" sx={CELL}>{fmt(v.total)}</TableCell>;
+                        })}
+                      </TableRow>
+                    );
+                  })}
+                  {/* % POS / Sanctioned Limit */}
+                  {outstandingRow && sanctionedRow && (
+                    <TableRow hover sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
+                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic', position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>% POS / Sanctioned</TableCell>
+                      {monthlyPeriods.map((p) => {
+                        const posVal = num(outstandingRow.months[p]?.total ?? 0);
+                        const slVal = num(sanctionedRow.months[p]?.total ?? 0);
+                        const ratio = slVal > 0 ? posVal / slVal : 0;
+                        return <TableCell key={p} align="right" sx={{ ...CELL, color: utilizationColor(ratio) }}>{formatPercent(ratio)}</TableCell>;
                       })}
                     </TableRow>
-                  );
-                })}
-                {utilizationRows.map((row, idx) => (
-                  <TableRow key={`util-${idx}`} hover sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
-                    <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic', position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>{row.particular}</TableCell>
-                    {tablePeriods.map((p) => {
-                      const v = row.months[p];
-                      if (!v) return [<TableCell key={`${p}-t`} />, <TableCell key={`${p}-f`} />, <TableCell key={`${p}-n`} />];
-                      const t = Number(v.total), f = Number(v.fundBased), n = Number(v.nonFB);
-                      return [
-                        <TableCell key={`${p}-t`} align="right" sx={{ ...CELL, color: utilizationColor(t) }}>{formatPercent(t)}</TableCell>,
-                        <TableCell key={`${p}-f`} align="right" sx={{ ...CELL, color: utilizationColor(f) }}>{formatPercent(f)}</TableCell>,
-                        <TableCell key={`${p}-n`} align="right" sx={{ ...CELL, color: utilizationColor(n) }}>{formatPercent(n)}</TableCell>,
-                      ];
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Card>
-      )}
+                  )}
+                  {/* % POS / Disbursement Limit */}
+                  {outstandingRow && disbLimitRow && (
+                    <TableRow hover sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
+                      <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, fontStyle: 'italic', position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>% POS / Disbursed</TableCell>
+                      {monthlyPeriods.map((p) => {
+                        const posVal = num(outstandingRow.months[p]?.total ?? 0);
+                        const dlVal = num(disbLimitRow.months[p]?.total ?? 0);
+                        const ratio = dlVal > 0 ? posVal / dlVal : 0;
+                        return <TableCell key={p} align="right" sx={{ ...CELL, color: utilizationColor(ratio) }}>{formatPercent(ratio)}</TableCell>;
+                      })}
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        );
+      })()}
 
       {/* ═══════════════════════════════════════════════════════════════
           GROUP A: PORTFOLIO KPIs + DISBURSEMENT FLOW
