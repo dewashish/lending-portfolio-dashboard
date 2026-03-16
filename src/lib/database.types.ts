@@ -1496,6 +1496,9 @@ export interface Database {
           submission_date: string | null; approval_for_extension: string | null;
           npa_flag: boolean; restructured_flag: boolean;
           watchlist_flag: boolean; writeoff_flag: boolean;
+          creation_date: string | null; extended_closure_date: string | null;
+          rm_name: string; rm_email: string; rm_phone: string; rm_department: string;
+          breached: boolean; days_since_breach: number;
           report_date: string; data_source_id: number | null; created_at: string;
         };
         Insert: {
@@ -1512,6 +1515,9 @@ export interface Database {
           submission_date?: string | null; approval_for_extension?: string | null;
           npa_flag?: boolean; restructured_flag?: boolean;
           watchlist_flag?: boolean; writeoff_flag?: boolean;
+          creation_date?: string | null; extended_closure_date?: string | null;
+          rm_name?: string; rm_email?: string; rm_phone?: string; rm_department?: string;
+          breached?: boolean; days_since_breach?: number;
           report_date?: string; data_source_id?: number | null; created_at?: string;
         };
         Update: {
@@ -1528,6 +1534,9 @@ export interface Database {
           submission_date?: string | null; approval_for_extension?: string | null;
           npa_flag?: boolean; restructured_flag?: boolean;
           watchlist_flag?: boolean; writeoff_flag?: boolean;
+          creation_date?: string | null; extended_closure_date?: string | null;
+          rm_name?: string; rm_email?: string; rm_phone?: string; rm_department?: string;
+          breached?: boolean; days_since_breach?: number;
           report_date?: string; data_source_id?: number | null; created_at?: string;
         };
         Relationships: [];
