@@ -430,9 +430,9 @@ export function CorporateOverviewSection({ scope }: Props) {
   // Utilization rows (SL % and DL %) for disbursement flow table
   const utilizationRows = useMemo(() => {
     if (!portfolio?.length) return [];
-    const outstandingRow = portfolio.find((r) => r.particular === 'Outstanding');
-    const sanctionedRow = portfolio.find((r) => r.particular === 'Sanctioned Limit');
-    const disbLimitRow = portfolio.find((r) => r.particular === 'Disbursement Limit');
+    const outstandingRow = portfolio.find((r) => r.particular === 'Current POS');
+    const sanctionedRow = portfolio.find((r) => r.particular === 'Total Sanctioned Limit');
+    const disbLimitRow = portfolio.find((r) => r.particular === 'Total Disbursement');
 
     if (!outstandingRow || !sanctionedRow) return [];
 
@@ -503,8 +503,8 @@ export function CorporateOverviewSection({ scope }: Props) {
     const repayRow = findRow('Repayments (for the month)');
     const netRow = findRow('Net Change');
     const growthRow = findRow('Growth Rate (in % vs earlier year)');
-    const posRow = findRow('Outstanding');
-    const sanctionRow = findRow('Sanctioned Limit');
+    const posRow = findRow('Current POS');
+    const sanctionRow = findRow('Total Sanctioned Limit');
 
     const items: KPIItem[] = [];
 
@@ -572,7 +572,7 @@ export function CorporateOverviewSection({ scope }: Props) {
       });
     }
 
-    const disbLimitRow = findRow('Disbursement Limit');
+    const disbLimitRow = findRow('Total Disbursement');
     if (posRow && disbLimitRow) {
       const posVal = getValue(posRow, latestPeriod);
       const dlVal = getValue(disbLimitRow, latestPeriod);
@@ -717,9 +717,13 @@ export function CorporateOverviewSection({ scope }: Props) {
         if (!(portfolio ?? []).length || !tablePeriods.length) return null;
 
         const num = (v: number | string): number => (typeof v === 'number' ? v : 0);
-        const outstandingRow = portfolio!.find((r) => r.particular === 'Outstanding');
-        const sanctionedRow = portfolio!.find((r) => r.particular === 'Sanctioned Limit');
-        const disbLimitRow = portfolio!.find((r) => r.particular === 'Disbursement Limit');
+        const outstandingRow = portfolio!.find((r) => r.particular === 'Current POS');
+        const sanctionedRow = portfolio!.find((r) => r.particular === 'Total Sanctioned Limit');
+        const disbLimitRow = portfolio!.find((r) => r.particular === 'Total Disbursement');
+
+        // Filter out rows that are redundant with the FB/NFB sub-columns
+        const HIDDEN_ROWS = new Set(['Fund Based Exposure', 'Non-Fund Based Exposure']);
+        const displayRows = (portfolio ?? []).filter((r) => !HIDDEN_ROWS.has(r.particular));
 
         const fmtCell = (val: number | string, isPercent: boolean) =>
           typeof val === 'number' ? (isPercent ? formatPercent(val) : formatCurrency(val)) : String(val);
@@ -747,8 +751,8 @@ export function CorporateOverviewSection({ scope }: Props) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(portfolio ?? []).map((row, idx) => {
-                    const isPercent = row.particular.includes('Growth Rate') || row.particular.startsWith('Utilization');
+                  {displayRows.map((row, idx) => {
+                    const isPercent = row.particular.includes('Growth Rate') || row.particular.startsWith('Utilization') || row.particular === 'Avg. Yield';
                     return (
                       <TableRow key={idx} hover>
                         <TableCell sx={{ ...CELL_TEXT, fontWeight: 600, whiteSpace: 'nowrap', position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}>{row.particular}</TableCell>
