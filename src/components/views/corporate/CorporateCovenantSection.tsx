@@ -132,12 +132,19 @@ export function CorporateCovenantSection({ scope }: Props) {
 
   if (isLoading) return <LoadingSkeleton />;
 
+  // ── Utilization aggregates ───────────────────────────────────────────
+  const totalPOS = rows.reduce((s, r) => s + r.currentPOS, 0);
+  const totalSanctioned = rows.reduce((s, r) => s + r.sanctionedLimit, 0);
+  const totalDisbursed = rows.reduce((s, r) => s + r.disbursedAmount, 0);
+
   // ── KPI Strip ──────────────────────────────────────────────────────
   const kpis: KPIItem[] = [
     { label: 'Total Covenants', value: String(rows.length), color: '#1565c0' },
     { label: 'Breach Rate', value: formatPercent(breachRate), color: breachRate > 0.15 ? '#f44336' : '#ff9800', metricKey: 'corp_covenant_breach_rate', rawValue: breachRate, thresholdContext: ctx },
     { label: 'Financial Covenants', value: String(financialCount), color: '#1976d2' },
     { label: 'Extensions Approved', value: String(extensionsApproved), color: '#4caf50' },
+    { label: '% Sanctioned Used', value: formatPercent(totalSanctioned > 0 ? totalPOS / totalSanctioned : 0), info: 'Total POS / Total Sanctioned Limit' },
+    { label: '% Disbursed Used', value: formatPercent(totalDisbursed > 0 ? totalPOS / totalDisbursed : 0), info: 'Total POS / Total Disbursed' },
   ];
 
   return (

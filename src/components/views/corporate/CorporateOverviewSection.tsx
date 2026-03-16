@@ -559,6 +559,30 @@ export function CorporateOverviewSection({ scope }: Props) {
       });
     }
 
+    // Utilization KPIs
+    if (posRow && sanctionRow) {
+      const posVal = getValue(posRow, latestPeriod);
+      const slVal = getValue(sanctionRow, latestPeriod);
+      items.push({
+        label: '% Sanctioned Used',
+        value: formatPercent(slVal > 0 ? posVal / slVal : 0),
+        subtitle: latestPeriod,
+        info: 'Outstanding / Sanctioned Limit',
+      });
+    }
+
+    const disbLimitRow = findRow('Disbursement Limit');
+    if (posRow && disbLimitRow) {
+      const posVal = getValue(posRow, latestPeriod);
+      const dlVal = getValue(disbLimitRow, latestPeriod);
+      items.push({
+        label: '% Disbursed Used',
+        value: formatPercent(dlVal > 0 ? posVal / dlVal : 0),
+        subtitle: latestPeriod,
+        info: 'Outstanding / Disbursement Limit',
+      });
+    }
+
     return items;
   }, [portfolio, visiblePeriods, formatCurrency]);
 

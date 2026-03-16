@@ -91,6 +91,16 @@ export function CorporateFinanceView({ scope, initialSubTab }: Props) {
         rawValue: summary.provisionCoverageRatio,
         thresholdContext: ctx,
       },
+      {
+        label: '% Sanctioned Used',
+        value: formatPercent(summary.totalSanctioned > 0 ? summary.totalPOS / summary.totalSanctioned : 0),
+        info: 'Total POS / Total Sanctioned Limit',
+      },
+      {
+        label: '% Disbursed Used',
+        value: formatPercent(summary.totalDisbursement > 0 ? summary.totalPOS / summary.totalDisbursement : 0),
+        info: 'Total POS / Total Disbursement',
+      },
     ];
   }, [summary, getColor, formatCurrencyMM, ctx]);
 
