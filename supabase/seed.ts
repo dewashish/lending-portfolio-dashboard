@@ -1970,25 +1970,77 @@ function buildCorporatePortfolioMetrics(): Row[] {
 // ---------------------------------------------------------------------------
 // 19. corporate_watchlist (flagged borrowers per subsidiary)
 // ---------------------------------------------------------------------------
+const WATCHLIST_TRIGGERS: { trigger: string; category: string }[] = [
+  // Financial (5)
+  { trigger: 'Revenue decline >15%', category: 'Financial' },
+  { trigger: 'Debt/EBITDA >4x', category: 'Financial' },
+  { trigger: 'Interest coverage <1.5x', category: 'Financial' },
+  { trigger: 'Covenant breach - DSCR', category: 'Financial' },
+  { trigger: 'Cash flow deterioration', category: 'Financial' },
+  // Operational (5)
+  { trigger: 'Management change', category: 'Operational' },
+  { trigger: 'Audit qualification', category: 'Operational' },
+  { trigger: 'Promoter pledge increase', category: 'Operational' },
+  { trigger: 'Related party transactions', category: 'Operational' },
+  { trigger: 'Key personnel departure', category: 'Operational' },
+  // External (5)
+  { trigger: 'Regulatory action', category: 'External' },
+  { trigger: 'Sector stress - commodity price', category: 'External' },
+  { trigger: 'FX exposure unhedged', category: 'External' },
+  { trigger: 'Geopolitical risk escalation', category: 'External' },
+  { trigger: 'Supply chain disruption', category: 'External' },
+  // Behavioral (5)
+  { trigger: 'Significant customer loss', category: 'Behavioral' },
+  { trigger: 'Credit rating downgrade', category: 'Behavioral' },
+  { trigger: 'Working capital squeeze', category: 'Behavioral' },
+  { trigger: 'Irregular account activity', category: 'Behavioral' },
+  { trigger: 'Delayed financial reporting', category: 'Behavioral' },
+];
+
+const WATCHLIST_STATUSES = ['Active Watch', 'Escalated', 'Monitoring', 'Review Pending'];
+const WATCHLIST_ACTIONS = [
+  'Enhanced monitoring', 'Restructuring review', 'Collateral revaluation',
+  'Covenant reset negotiation', 'Exit strategy preparation', 'Intensified collections',
+  'Facility reduction plan', 'Independent audit requested',
+];
+const WATCHLIST_RATING_LADDER = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'BBB+', 'BBB', 'BB+', 'BB', 'B', 'C/D'];
+
 function buildCorporateWatchlist(): Row[] {
   const rows: Row[] = [];
-  const watchlistCustomers = CORP_CUSTOMERS.slice(10); // last 5 customers
+  const watchlistCustomers = CORP_CUSTOMERS.slice(5); // last 10 customers for more entries
   for (const sub of SUBSIDIARIES) {
     const aumUsd = toUSD(sub.aumLocal, sub.currencyCode, FX_MAP);
     const perCust = aumUsd * 0.25 / CORP_CUSTOMERS.length;
 
     watchlistCustomers.forEach((cust, ci) => {
       const n = noise(sub.id, ci + 10, 33);
+      const triggerEntry = WATCHLIST_TRIGGERS[(ci * 3 + sub.id) % WATCHLIST_TRIGGERS.length];
+
+      // Rating: current = worse, prior = 1-2 notches better
+      const ratingIdx = Math.min(WATCHLIST_RATING_LADDER.length - 1, Math.round(noiseRange(4, 11, sub.id, ci, 1950)));
+      const internalRating = WATCHLIST_RATING_LADDER[ratingIdx];
+      const notchesUp = Math.round(noiseRange(1, 2, sub.id, ci, 1951));
+      const priorRating = WATCHLIST_RATING_LADDER[Math.max(0, ratingIdx - notchesUp)];
+
+      // Days on watchlist: 30-365
+      const daysOnWatchlist = Math.round(noiseRange(30, 365, sub.id, ci, 1952));
+      const reportDate = new Date('2025-08-15');
+      const dateAdded = new Date(reportDate.getTime() - daysOnWatchlist * 86400000);
+
       rows.push({
         subsidiary_id: sub.id,
         borrower: cust.name,
         sector: cust.sector,
         exposure: +(perCust * n).toFixed(2),
         exposure_usd: +(perCust * n).toFixed(2),
-        ews_trigger_type: ['Financial Stress', 'Rating Downgrade', 'Sector Risk', 'Cash Flow', 'Covenant Breach'][ci % 5],
-        internal_rating: cust.rating,
-        status: ci % 2 === 0 ? 'Active' : 'Under Review',
-        remedial_action: ci % 3 === 0 ? 'Enhanced monitoring' : 'Restructuring review',
+        ews_trigger_type: triggerEntry.trigger,
+        trigger_category: triggerEntry.category,
+        internal_rating: internalRating,
+        prior_rating: priorRating,
+        status: WATCHLIST_STATUSES[(ci + sub.id) % WATCHLIST_STATUSES.length],
+        remedial_action: WATCHLIST_ACTIONS[(ci * 2 + sub.id) % WATCHLIST_ACTIONS.length],
+        date_added: dateAdded.toISOString().slice(0, 10),
+        days_on_watchlist: daysOnWatchlist,
         report_date: '2025-08-15',
         data_source_id: sub.dsOffset,
       });

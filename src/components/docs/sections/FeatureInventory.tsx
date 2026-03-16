@@ -92,10 +92,10 @@ const FEATURE_MAP: TabFeatures[] = [
     color: '#009688',
     icon: 'TrendingUp',
     features: [
-      { subTab: 'KPI Row', components: 'ForwardOutlookKPIRow (4 cards)', keyMetrics: 'Expected Credit Loss (Base), Provision Coverage %, Forecasted Loss Rate, 90+ DPD Forecast' },
-      { subTab: 'ECL & Provision Forecast', components: 'ECLStackedArea + ProvisionCoverageLine', keyMetrics: 'ECL by IFRS stage (stacked area with scenario dropdown), weighted-avg provision coverage ratio trend' },
-      { subTab: 'Forward Risk Indicators', components: 'VintageProjectionChart + ScenarioImpactTable', keyMetrics: 'Vintage delinquency forecast (solid=actual, dashed=projected), scenario comparison (Base/Adverse/Severe)' },
-      { subTab: 'Methodology', components: 'FilteredMethodologySection (4 accordions)', keyMetrics: 'ECL Forecast, Provision Coverage, Vintage Delinquency, Scenario Analysis — assumptions, methods, limitations' },
+      { subTab: 'Portfolio Health', components: 'ForwardOutlookKPIRow (8 KPIs), ECLStackedArea, RatingDistributionBar, ProvisionCoverageLine, Stage mix chips', keyMetrics: 'Total ECL, Provision Coverage, Avg 1Y PD, CET1 (Base), Forecasted Loss Rate, 90+ DPD Forecast, EWS Red Alerts, Stage 2+3 Share' },
+      { subTab: 'Stress Heatmap', components: 'SubsidiaryRiskHeatmap (5 dimensions), StressDriverDrawer', keyMetrics: 'Per-subsidiary RAG scoring: Macro Outlook, Portfolio Vulnerability, Collections Effectiveness, Provision Adequacy, Capital Absorption — click to drill down' },
+      { subTab: 'Scenario Engine', components: '4 collapsible accordions: ECLProvisionsSection, StressTestingSection, PDMigrationSection, VintageForecastSection, ScenarioImpactTable', keyMetrics: 'ECL stacked area + waterfall, scenario loss heatmap, CET1 trajectory, sensitivity tornado, migration matrix, PD term structure, rating distribution, vintage projection, roll rate forecast — 10+ charts' },
+      { subTab: 'Early Warning & Actions', components: 'AlertSummaryBar, MacroEWSSection (Leading Indicators + Macro-Credit Linkage), ActionPlaybookCards with category filters', keyMetrics: 'EWS Red/Amber/Green signal counts, 8 leading indicators with z-scores and RAG, macro-credit lead-lag relationships, management actions by category (underwriting/pricing/collections/provisioning/capital/portfolio)' },
     ],
   },
 ];
@@ -105,7 +105,7 @@ export function FeatureInventory() {
     <PRDSection id="feature-inventory" title="Feature Inventory" sectionNumber={6}>
       <Typography variant="body2" sx={{ mb: 2.5, lineHeight: 1.8 }}>
         The platform is organized into six main navigation tabs, each containing multiple sub-views
-        with specialized charts, tables, and analytics. The total feature surface spans 38+ sub-views,
+        with specialized charts, tables, and analytics. The total feature surface spans 42+ sub-views,
         50+ chart types, and 15+ table components.
       </Typography>
 

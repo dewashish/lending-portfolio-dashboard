@@ -11,7 +11,7 @@ const DOMAINS = [
   { domain: 'Trade Finance', tables: 12, color: '#9c27b0', examples: 'trade_facilities, trade_entity_performance, trade_product_mix, trade_asset_quality, trade_rating_distribution, trade_concentrations, trade_collection_efficiency, trade_watchlist, trade_stage_migration, trade_dpd_roll_rate, trade_dpd_aging_by_subsidiary' },
   { domain: 'Corporate Finance', tables: 13, color: '#ff9800', examples: 'corporate_delinquency, corporate_portfolio_metrics, corporate_watchlist, corporate_covenants, corporate_facilities, corporate_top_customers, corporate_industry_concentration, corporate_collateral_analysis, corporate_ltv_distribution, corporate_maturity_profile, corporate_provisioning_ecl, corporate_rating_analysis, corporate_rating_migration' },
   { domain: 'Early Warning System', tables: 2, color: '#f44336', examples: 'ews_entity_summary, ews_facility_alerts' },
-  { domain: 'Risk & Macro', tables: 2, color: '#e91e63', examples: 'fx_risk, country_risk' },
+  { domain: 'Risk & Macro', tables: 4, color: '#e91e63', examples: 'fx_risk, country_risk, subsidiary_stress_scores, management_actions' },
   { domain: 'Collections', tables: 5, color: '#795548', examples: 'col_agencies, col_assignments, col_actions, col_recovery_payments, col_legal_cases' },
   { domain: 'Reference Data', tables: 7, color: '#607d8b', examples: 'profiles, regions, subsidiaries, currencies, fx_rates, data_sources, product_catalog' },
   { domain: 'Views (Materialized)', tables: 8, color: '#78909c', examples: 'v_group_aum_summary, v_subsidiary_scorecard, v_region_summary, v_fx_latest, v_group_trade_overview, v_group_corporate_overview, v_group_ews_summary, v_group_consolidated_scorecard' },
@@ -22,7 +22,7 @@ export function DataArchitecture() {
   return (
     <PRDSection id="data-architecture" title="Data Architecture" sectionNumber={7}>
       <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.8 }}>
-        The platform is backed by a PostgreSQL database (Supabase) with 75+ tables organized into
+        The platform is backed by a PostgreSQL database (Supabase) with 80+ tables organized into
         10 functional domains. Data flows from source systems through a structured schema that
         supports multi-geography filtering, time-series analysis, and hierarchical aggregation.
       </Typography>
@@ -42,7 +42,7 @@ export function DataArchitecture() {
   │                                                                     │
   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
   │  │ Consumer │  │  Trade   │  │Corporate │  │   Risk   │           │
-  │  │ 15 tbls  │  │ 12 tbls  │  │ 13 tbls  │  │  4 tbls  │           │
+  │  │ 15 tbls  │  │ 12 tbls  │  │ 13 tbls  │  │  6 tbls  │           │
   │  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │
   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
   │  │   LOS    │  │   LMS    │  │  Collect  │  │   Ref    │           │
@@ -60,14 +60,14 @@ export function DataArchitecture() {
   │                         APPLICATION                                 │
   │                                                                     │
   │  ┌──────────────────────┐      ┌──────────────────────┐            │
-  │  │   60+ Query Functions │─────▶│   50+ SWR Hooks      │            │
+  │  │   65+ Query Functions │─────▶│   55+ SWR Hooks      │            │
   │  │   (src/lib/queries/) │      │   (src/hooks/)       │            │
   │  └──────────────────────┘      └──────────┬───────────┘            │
   │                                            │                        │
   │                                            ▼                        │
   │                               ┌───────────────────────┐            │
   │                               │   React Components    │            │
-  │                               │   40+ Charts (D3.js)  │            │
+  │                               │   60+ Charts (D3.js)  │            │
   │                               │   12 Tables (TanStack) │            │
   │                               │   PDF + Excel Exports │            │
   │                               └───────────────────────┘            │

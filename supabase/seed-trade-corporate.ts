@@ -298,11 +298,18 @@ const CORPORATE_BORROWERS: Record<number, string[]> = {
 const RATING_BANDS = ['1-2', '3', '4', '5', '6', '7', '8', '9-10'];
 
 const EWS_TRIGGERS = [
+  // Financial (5)
   'Revenue decline >15%', 'Debt/EBITDA >4x', 'Interest coverage <1.5x',
-  'Covenant breach - DSCR', 'Credit rating downgrade', 'Significant customer loss',
-  'Management change', 'Regulatory action', 'Sector stress - commodity price',
-  'FX exposure unhedged', 'Working capital squeeze', 'Audit qualification',
-  'Promoter pledge increase', 'Related party transactions', 'Cash flow deterioration',
+  'Covenant breach - DSCR', 'Cash flow deterioration',
+  // Operational (5)
+  'Management change', 'Audit qualification', 'Promoter pledge increase',
+  'Related party transactions', 'Key personnel departure',
+  // External (5)
+  'Regulatory action', 'Sector stress - commodity price', 'FX exposure unhedged',
+  'Geopolitical risk escalation', 'Supply chain disruption',
+  // Behavioral (5)
+  'Significant customer loss', 'Credit rating downgrade', 'Working capital squeeze',
+  'Irregular account activity', 'Delayed financial reporting',
 ];
 
 const REMEDIAL_ACTIONS = [
@@ -1013,21 +1020,30 @@ function buildCountryRisk(): Row[] {
 // =============================================================================
 // Trigger category mapping for watchlist
 const TRIGGER_CATEGORY_MAP: Record<string, string> = {
+  // Financial
   'Revenue decline >15%': 'Financial',
   'Debt/EBITDA >4x': 'Financial',
   'Interest coverage <1.5x': 'Financial',
   'Covenant breach - DSCR': 'Financial',
   'Cash flow deterioration': 'Financial',
-  'Working capital squeeze': 'Financial',
-  'Credit rating downgrade': 'Financial',
+  // Operational
   'Management change': 'Operational',
   'Audit qualification': 'Operational',
   'Related party transactions': 'Operational',
   'Promoter pledge increase': 'Operational',
+  'Key personnel departure': 'Operational',
+  // External
   'Regulatory action': 'External',
   'Sector stress - commodity price': 'External',
   'FX exposure unhedged': 'External',
+  'Geopolitical risk escalation': 'External',
+  'Supply chain disruption': 'External',
+  // Behavioral
   'Significant customer loss': 'Behavioral',
+  'Credit rating downgrade': 'Behavioral',
+  'Working capital squeeze': 'Behavioral',
+  'Irregular account activity': 'Behavioral',
+  'Delayed financial reporting': 'Behavioral',
 };
 
 // Rating ladder for prior rating calculation

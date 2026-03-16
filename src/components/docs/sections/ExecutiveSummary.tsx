@@ -7,9 +7,9 @@ import { APP_VERSION } from '@/lib/version';
 const STATS = [
   { label: 'Business Tabs', value: '6' },
   { label: 'Risk Metrics', value: '38+' },
-  { label: 'Database Tables', value: '87+' },
+  { label: 'Database Tables', value: '89+' },
   { label: 'Subsidiaries', value: '5' },
-  { label: 'Chart Types', value: '50+' },
+  { label: 'Chart Types', value: '60+' },
 ];
 
 export function ExecutiveSummary() {
@@ -25,8 +25,9 @@ export function ExecutiveSummary() {
 
       <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.8 }}>
         The platform consolidates data from Loan Origination Systems (LOS), Loan Management Systems (LMS),
-        collections engines, and external risk feeds into a comprehensive dashboard with 40+ interactive
+        collections engines, and external risk feeds into a comprehensive dashboard with 60+ interactive
         D3.js visualizations, hierarchical risk appetite governance, Early Warning System (EWS) monitoring,
+        forward-looking scenario analysis, management action playbook,
         and automated Portfolio Quality Report (PQR) generation. It serves financial holding companies
         operating across multiple regions with diverse subsidiary structures and regulatory environments.
       </Typography>

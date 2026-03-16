@@ -10,7 +10,7 @@ const TABS = [
   { name: 'Trade Finance', subTabs: 6, color: '#9c27b0', desc: 'Facility analytics, product mix, concentrations, watchlist, EWS, macro risk' },
   { name: 'Corporate Finance', subTabs: 9, color: '#ff9800', desc: 'Portfolio metrics, industry concentration, collateral, covenants, rating analysis' },
   { name: 'Risk & Concentrations', subTabs: 4, color: '#f44336', desc: 'EWS radar, obligor/sector treemaps, FX risk, country risk' },
-  { name: 'Forward Outlook', subTabs: 3, color: '#009688', desc: 'ECL forecast, provision coverage trend, delinquency forecast, scenario impact analysis, methodology' },
+  { name: 'Forward Outlook', subTabs: 4, color: '#009688', desc: 'Four-layer risk framework: Portfolio Health snapshot, Subsidiary Stress Heatmap, Scenario Engine (ECL, stress testing, PD migration, vintage), Early Warning & Management Actions' },
 ];
 
 export function ProductOverview() {
@@ -48,7 +48,7 @@ export function ProductOverview() {
   │           └─────┬──────┘  └──────────────┘  └──────────────┘  │
   │                 │                                              │
   │     ┌───────────┴───────────────┐  ┌──────────────────────┐   │
-  │     │  87+ Tables  │  12 Views  │  │ 20 Ingestion API     │   │
+  │     │  89+ Tables  │  12 Views  │  │ 20 Ingestion API     │   │
   │     └───────────────────────────┘  │ Endpoints + Zod v4   │   │
   │     Row-Level Security (RLS)       └──────────────────────┘   │
   └─────────────────────────────────────────────────────────────────┘`}

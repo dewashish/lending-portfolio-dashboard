@@ -1018,15 +1018,22 @@ Content-Type: application/json
   { name: 'sector', type: 'TEXT', req: 'No', desc: 'Industry sector' },
   { name: 'exposure', type: 'NUMERIC', req: 'Yes', desc: 'Total exposure in local currency (>= 0)' },
   { name: 'ews_trigger_type', type: 'TEXT', req: 'No', desc: 'EWS trigger category' },
+  { name: 'trigger_category', type: 'TEXT', req: 'No', desc: "'Financial' | 'Operational' | 'External' | 'Behavioral' — classifies the watchlist trigger" },
   { name: 'internal_rating', type: 'TEXT', req: 'No', desc: 'Internal rating' },
+  { name: 'prior_rating', type: 'TEXT', req: 'No', desc: 'Previous internal rating before deterioration' },
   { name: 'status', type: 'TEXT', req: 'No', desc: 'Watchlist status' },
   { name: 'remedial_action', type: 'TEXT', req: 'No', desc: 'Remedial action' },
+  { name: 'date_added', type: 'TEXT', req: 'No', desc: 'Date borrower was added to watchlist (YYYY-MM-DD)' },
+  { name: 'days_on_watchlist', type: 'INTEGER', req: 'No', desc: 'Computed days since addition to watchlist' },
 ]} />
 
 {/* ════════════════════════════════════════════════════════════════
    20. EWS
    ════════════════════════════════════════════════════════════════ */}
 <SectionTitle id="api-ews">20. Early Warning System (EWS)</SectionTitle>
+<Alert severity="info" sx={{ mb: 2 }}>
+  <strong>Schema V8 addition:</strong> Two new tables were added to support the Forward Outlook / Risk Outlook features: <code>subsidiary_stress_scores</code> (subsidiary-level stress test results and scenario scores) and <code>management_actions</code> (tracked management responses and remediation plans). Integration endpoints for these tables are forthcoming.
+</Alert>
 <Endpoint method="POST" path="/api/ingest/risk/ews" description="EWS entity summary or facility-level alerts" />
 <Alert severity="info" sx={{ mb: 2 }}>Set <code>type</code> to <code>&quot;entity&quot;</code> (single summary row) or <code>&quot;alerts&quot;</code> (multiple facility rows).</Alert>
 
