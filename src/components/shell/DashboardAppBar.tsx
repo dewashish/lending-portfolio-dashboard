@@ -5,7 +5,7 @@ import {
   AppBar, Toolbar, Typography, Box, IconButton, Tooltip, Avatar, Button,
   ToggleButtonGroup, ToggleButton, Select, MenuItem,
 } from '@mui/material';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import { ExcelExportButton } from '@/components/export/ExcelExportButton';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -82,7 +82,7 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
             animation: 'spin 4s ease-in-out infinite',
           }}
         >
-          <AccountBalanceIcon sx={{ fontSize: 16, color: '#fff' }} />
+          <ShowChartIcon sx={{ fontSize: 16, color: '#fff' }} />
         </Box>
         <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary', letterSpacing: '0.02em' }}>
           Avaloura Portfolio Monitor

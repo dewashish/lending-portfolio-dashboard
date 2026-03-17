@@ -20,7 +20,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Portfolio Monitor — Lending Risk Dashboard',
+  title: 'Avaloura Portfolio Monitor',
   description: 'Group-level portfolio quality monitoring across consumer, trade, and corporate finance',
 };
 
