@@ -9,9 +9,17 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { QueryInput } from './QueryInput';
 
 import type { ScopeSelection } from '@/lib/types';
@@ -35,6 +43,109 @@ const SUGGESTED_QUESTIONS = [
   'What are the top concentration risks?',
   'How is the EWS score trending?',
 ];
+
+const mdComponents: Components = {
+  table: ({ children }) => (
+    <TableContainer sx={{ my: 1 }}>
+      <Table size="small">{children}</Table>
+    </TableContainer>
+  ),
+  thead: ({ children }) => <TableHead>{children}</TableHead>,
+  tbody: ({ children }) => <TableBody>{children}</TableBody>,
+  tr: ({ children }) => <TableRow>{children}</TableRow>,
+  th: ({ children }) => (
+    <TableCell
+      sx={{
+        fontWeight: 700,
+        fontSize: '0.75rem',
+        py: 0.5,
+        px: 1,
+        whiteSpace: 'nowrap',
+        borderColor: 'divider',
+      }}
+    >
+      {children}
+    </TableCell>
+  ),
+  td: ({ children }) => (
+    <TableCell
+      sx={{
+        fontSize: '0.75rem',
+        py: 0.5,
+        px: 1,
+        fontFamily: 'monospace',
+        borderColor: 'divider',
+      }}
+    >
+      {children}
+    </TableCell>
+  ),
+  p: ({ children }) => (
+    <Typography variant="body2" sx={{ fontSize: '0.8rem', my: 0.5 }}>
+      {children}
+    </Typography>
+  ),
+  h2: ({ children }) => (
+    <Typography variant="subtitle2" sx={{ fontWeight: 700, mt: 1.5, mb: 0.5 }}>
+      {children}
+    </Typography>
+  ),
+  h3: ({ children }) => (
+    <Typography variant="subtitle2" sx={{ fontWeight: 700, mt: 1, mb: 0.5, fontSize: '0.8rem' }}>
+      {children}
+    </Typography>
+  ),
+  ul: ({ children }) => (
+    <Box component="ul" sx={{ m: 0, pl: 2.5, fontSize: '0.8rem', '& li': { mb: 0.25 } }}>
+      {children}
+    </Box>
+  ),
+  ol: ({ children }) => (
+    <Box component="ol" sx={{ m: 0, pl: 2.5, fontSize: '0.8rem', '& li': { mb: 0.25 } }}>
+      {children}
+    </Box>
+  ),
+  li: ({ children }) => (
+    <Box component="li" sx={{ fontSize: '0.8rem' }}>
+      {children}
+    </Box>
+  ),
+  code: ({ children, className }) => {
+    const isBlock = className?.startsWith('language-');
+    if (isBlock) {
+      return (
+        <Box
+          component="pre"
+          sx={{
+            bgcolor: 'rgba(0,0,0,0.3)',
+            borderRadius: 1,
+            p: 1,
+            my: 0.5,
+            fontSize: '0.75rem',
+            fontFamily: 'monospace',
+            overflowX: 'auto',
+          }}
+        >
+          <code>{children}</code>
+        </Box>
+      );
+    }
+    return (
+      <Box
+        component="code"
+        sx={{
+          fontFamily: 'monospace',
+          fontSize: '0.75rem',
+          bgcolor: 'rgba(255,255,255,0.08)',
+          px: 0.5,
+          borderRadius: 0.5,
+        }}
+      >
+        {children}
+      </Box>
+    );
+  },
+};
 
 export function AIQueryPanel({ open, onClose, scope }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -82,7 +193,7 @@ export function AIQueryPanel({ open, onClose, scope }: Props) {
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: 420,
+          width: 520,
           bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column',
@@ -166,9 +277,15 @@ export function AIQueryPanel({ open, onClose, scope }: Props) {
                 color: msg.role === 'user' ? 'primary.contrastText' : 'text.primary',
               }}
             >
-              <Typography variant="body2" sx={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
-                {msg.text}
-              </Typography>
+              {msg.role === 'user' ? (
+                <Typography variant="body2" sx={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
+                  {msg.text}
+                </Typography>
+              ) : (
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                  {msg.text}
+                </ReactMarkdown>
+              )}
             </Box>
           </Box>
         ))}

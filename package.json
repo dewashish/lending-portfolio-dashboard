@@ -1,6 +1,6 @@
 {
   "name": "lending-portfolio-dashboard",
-  "version": "0.5.16",
+  "version": "0.5.17",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -32,6 +32,7 @@
     "react-dom": "^18",
     "react-joyride": "^2.9.3",
     "react-markdown": "^9.0.0",
+    "remark-gfm": "^4.0.1",
     "swr": "^2.2.0",
     "zod": "^4.3.6"
   },

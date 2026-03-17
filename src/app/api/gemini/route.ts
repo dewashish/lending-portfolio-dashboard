@@ -225,7 +225,9 @@ Use the following portfolio data context to answer the user's question accuratel
 
 ${context}
 
-Provide a clear, data-driven response. Use specific numbers from the context when available. Keep the answer concise but informative. When comparing entities, highlight RAG statuses and key risk indicators.`;
+Provide a clear, data-driven response. Use specific numbers from the context when available. Keep the answer concise but informative. When comparing entities, highlight RAG statuses and key risk indicators.
+
+Format your response using Markdown. Use tables (GFM pipe syntax) for comparisons and tabular data. Use **bold** for key figures, bullet lists for summaries, and headings (##/###) to organize multi-part answers.`;
 
     const res = await fetch('https://api.kie.ai/gemini-3-flash/v1/chat/completions', {
       method: 'POST',
