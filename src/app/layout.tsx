@@ -22,6 +22,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: 'Avaloura Portfolio Monitor',
   description: 'Group-level portfolio quality monitoring across consumer, trade, and corporate finance',
+  icons: { icon: '/favicon.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

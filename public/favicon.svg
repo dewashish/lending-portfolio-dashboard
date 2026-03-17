@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00897b"/>
+      <stop offset="100%" stop-color="#004d40"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="6" fill="url(#g)"/>
+  <!-- AccountBalance / temple icon -->
+  <path d="M16 6l10 5v2H6v-2l10-5zm-8 9h3v7H8v-7zm5 0h3v7h-3v-7zm5 0h3v7h-3v-7zM6 24h20v2H6v-2z" fill="#fff"/>
+</svg>
