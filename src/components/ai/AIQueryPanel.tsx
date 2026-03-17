@@ -17,6 +17,8 @@ import {
   TableRow,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -150,7 +152,14 @@ const mdComponents: Components = {
 export function AIQueryPanel({ open, onClose, scope }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleCopy = async (text: string, idx: number) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 1500);
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -282,9 +291,28 @@ export function AIQueryPanel({ open, onClose, scope }: Props) {
                   {msg.text}
                 </Typography>
               ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                  {msg.text}
-                </ReactMarkdown>
+                <>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                    {msg.text}
+                  </ReactMarkdown>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleCopy(msg.text, idx)}
+                      sx={{
+                        opacity: 0.5,
+                        '&:hover': { opacity: 1 },
+                        p: 0.5,
+                      }}
+                    >
+                      {copiedIdx === idx ? (
+                        <CheckIcon sx={{ fontSize: 14, color: 'success.main' }} />
+                      ) : (
+                        <ContentCopyIcon sx={{ fontSize: 14 }} />
+                      )}
+                    </IconButton>
+                  </Box>
+                </>
               )}
             </Box>
           </Box>
