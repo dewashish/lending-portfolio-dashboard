@@ -701,10 +701,32 @@ export function CorporateOverviewSection({ scope }: Props) {
     else setSelectedPeriods(allPeriods.slice(-n));
   };
 
+  // Aggregate PD distribution by band (group level has rows per subsidiary)
+  const pdRows = useMemo(() => {
+    const raw = pdDist ?? [];
+    const map = new Map<string, { sanctioned: number; disbursed: number; pos: number }>();
+    const order: string[] = [];
+    raw.forEach((r) => {
+      const cur = map.get(r.pdBand);
+      if (cur) {
+        cur.sanctioned += r.sanctionedAmount;
+        cur.disbursed += r.disbursedAmount;
+        cur.pos += r.principalOS;
+      } else {
+        order.push(r.pdBand);
+        map.set(r.pdBand, { sanctioned: r.sanctionedAmount, disbursed: r.disbursedAmount, pos: r.principalOS });
+      }
+    });
+    const totalPOS = Array.from(map.values()).reduce((s, v) => s + v.pos, 0);
+    return order.map((band) => {
+      const v = map.get(band)!;
+      return { pdBand: band, sanctionedAmount: v.sanctioned, disbursedAmount: v.disbursed, principalOS: v.pos, principalShare: totalPOS > 0 ? v.pos / totalPOS : 0 };
+    });
+  }, [pdDist]);
+
   // ── Loading ──
   if (l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9) return <LoadingSkeleton />;
 
-  const pdRows = pdDist ?? [];
   const pipelineRows = pipelineData ?? [];
   const maturityRows = maturity ?? [];
 
