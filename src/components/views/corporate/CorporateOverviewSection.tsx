@@ -605,10 +605,12 @@ export function CorporateOverviewSection({ scope }: Props) {
     const totalSanctioned = all.reduce((s, r) => s + r.sanctionedLimit, 0);
     const totalDisbursed = all.reduce((s, r) => s + r.disbursedAmount, 0);
     const topNPOS = topSlice.reduce((s, r) => s + r.currentPOS, 0);
+    const topNSanctioned = topSlice.reduce((s, r) => s + r.sanctionedLimit, 0);
+    const topNDisbursed = topSlice.reduce((s, r) => s + r.disbursedAmount, 0);
     return {
       posConc: totalPOS > 0 ? topNPOS / totalPOS : 0,
-      posToSanction: totalSanctioned > 0 ? topNPOS / totalSanctioned : 0,
-      posToDisbursed: totalDisbursed > 0 ? topNPOS / totalDisbursed : 0,
+      sanctionConc: totalSanctioned > 0 ? topNSanctioned / totalSanctioned : 0,
+      disbursedConc: totalDisbursed > 0 ? topNDisbursed / totalDisbursed : 0,
     };
   }, [topCustomers, visibleTopCustomers]);
 
@@ -920,26 +922,12 @@ export function CorporateOverviewSection({ scope }: Props) {
             <Tab label="Top Principal O/s" value="pos" />
             <Tab label="Top Sanctioned" value="sanctioned" />
           </Tabs>
-          <FormControl size="small" sx={{ minWidth: 90 }}>
-            <InputLabel sx={{ fontSize: '0.72rem' }}>Show</InputLabel>
-            <Select
-              value={topN}
-              label="Show"
-              onChange={(e) => setTopN(Number(e.target.value))}
-              sx={{ fontSize: '0.72rem' }}
-            >
-              <MenuItem value={10}>Top 10</MenuItem>
-              <MenuItem value={20}>Top 20</MenuItem>
-              <MenuItem value={50}>Top 50</MenuItem>
-              <MenuItem value={-1}>All</MenuItem>
-            </Select>
-          </FormControl>
           {topN !== -1 && (
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
               {([
                 ['POS Conc.', concentrationKpis.posConc],
-                ['POS / Sanction', concentrationKpis.posToSanction],
-                ['POS / Disbursed', concentrationKpis.posToDisbursed],
+                ['Sanction Conc.', concentrationKpis.sanctionConc],
+                ['Disbursed Conc.', concentrationKpis.disbursedConc],
               ] as [string, number][]).map(([label, val]) => (
                 <Chip
                   key={label}
@@ -954,6 +942,20 @@ export function CorporateOverviewSection({ scope }: Props) {
               ))}
             </Box>
           )}
+          <FormControl size="small" sx={{ minWidth: 90 }}>
+            <InputLabel sx={{ fontSize: '0.72rem' }}>Show</InputLabel>
+            <Select
+              value={topN}
+              label="Show"
+              onChange={(e) => setTopN(Number(e.target.value))}
+              sx={{ fontSize: '0.72rem' }}
+            >
+              <MenuItem value={10}>Top 10</MenuItem>
+              <MenuItem value={20}>Top 20</MenuItem>
+              <MenuItem value={50}>Top 50</MenuItem>
+              <MenuItem value={-1}>All</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
