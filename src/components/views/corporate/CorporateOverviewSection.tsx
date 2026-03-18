@@ -922,26 +922,23 @@ export function CorporateOverviewSection({ scope }: Props) {
             <Tab label="Top Principal O/s" value="pos" />
             <Tab label="Top Sanctioned" value="sanctioned" />
           </Tabs>
-          {topN !== -1 && (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              {([
-                ['POS Conc.', concentrationKpis.posConc],
-                ['Sanction Conc.', concentrationKpis.sanctionConc],
-                ['Disbursed Conc.', concentrationKpis.disbursedConc],
-              ] as [string, number][]).map(([label, val]) => (
-                <Chip
-                  key={label}
-                  size="small"
-                  label={
-                    <span>
-                      {label}: <strong>{formatPercent(val, 1)}</strong>
-                    </span>
-                  }
-                  sx={{ fontSize: '0.72rem', bgcolor: 'rgba(255,255,255,0.06)', height: 26 }}
-                />
-              ))}
-            </Box>
-          )}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            {topN !== -1 && ([
+              ['POS Conc.', concentrationKpis.posConc],
+              ['Sanction Conc.', concentrationKpis.sanctionConc],
+              ['Disbursed Conc.', concentrationKpis.disbursedConc],
+            ] as [string, number][]).map(([label, val]) => (
+              <Chip
+                key={label}
+                size="small"
+                label={
+                  <span>
+                    {label}: <strong>{formatPercent(val, 1)}</strong>
+                  </span>
+                }
+                sx={{ fontSize: '0.72rem', bgcolor: 'rgba(255,255,255,0.06)', height: 26 }}
+              />
+            ))}
           <FormControl size="small" sx={{ minWidth: 90 }}>
             <InputLabel sx={{ fontSize: '0.72rem' }}>Show</InputLabel>
             <Select
@@ -956,6 +953,7 @@ export function CorporateOverviewSection({ scope }: Props) {
               <MenuItem value={-1}>All</MenuItem>
             </Select>
           </FormControl>
+          </Box>
         </Box>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
