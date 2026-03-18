@@ -284,10 +284,39 @@ export function CorporateRatingSection({ scope }: Props) {
     ];
   }, [migrationData, formatCurrency]);
 
+  // ── Aggregated rating data (group level has rows per subsidiary) ──
+  const aggregatedRatingData = useMemo(() => {
+    const raw = ratingData ?? [];
+    const key = (r: CorporateRatingAnalysisRow) => `${r.ratingBand}|${r.period}`;
+    const map = new Map<string, CorporateRatingAnalysisRow>();
+    raw.forEach((r) => {
+      const k = key(r);
+      const cur = map.get(k);
+      if (cur) {
+        cur.pos += r.pos;
+        cur.disbursement += r.disbursement;
+        cur.facilityCount += r.facilityCount;
+        // portfolioShare will be recomputed below
+      } else {
+        map.set(k, { ...r });
+      }
+    });
+    // Recompute portfolio share per period
+    const periodTotals = new Map<string, number>();
+    map.forEach((r) => {
+      periodTotals.set(r.period, (periodTotals.get(r.period) ?? 0) + r.pos);
+    });
+    map.forEach((r) => {
+      const total = periodTotals.get(r.period) ?? 1;
+      r.portfolioShare = total > 0 ? r.pos / total : 0;
+    });
+    return Array.from(map.values());
+  }, [ratingData]);
+
   // ── Bar chart data (latest visible period) ──
   const latestPeriod = visiblePeriods[visiblePeriods.length - 1] ?? '';
   const barData: RatingDistribution[] = useMemo(() => {
-    return (ratingData ?? [])
+    return aggregatedRatingData
       .filter((r) => r.period === latestPeriod)
       .map((r) => ({
         ratingBand: r.ratingBand,
@@ -296,7 +325,7 @@ export function CorporateRatingSection({ scope }: Props) {
         portfolioShare: r.portfolioShare,
         avgProvision: 0,
       }));
-  }, [ratingData, latestPeriod]);
+  }, [aggregatedRatingData, latestPeriod]);
 
   // ── YTD Migration Summary by Sector ──
   const sectorSummary = useMemo(() => {
@@ -333,7 +362,7 @@ export function CorporateRatingSection({ scope }: Props) {
   // ── Loading ──
   if (loadingRating || loadingMigration) return <LoadingSkeleton />;
 
-  const ratingRows = ratingData ?? [];
+  const ratingRows = aggregatedRatingData;
   const migrationRows = migrationData ?? [];
 
   return (
