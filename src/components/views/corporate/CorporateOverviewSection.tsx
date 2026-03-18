@@ -597,13 +597,17 @@ export function CorporateOverviewSection({ scope }: Props) {
     return topN === -1 ? source : source.slice(0, topN);
   }, [customerTab, topDisbursements, topCustomers, topSanctioned, topN]);
 
-  // Concentration KPIs: top-N POS vs entire book
+  // Concentration KPIs: top-N vs entire book (use same dataset for both)
   const concentrationKpis = useMemo(() => {
-    const all = topCustomers ?? [];
-    const topSlice = visibleTopCustomers;
-    const totalPOS = all.reduce((s, r) => s + r.currentPOS, 0);
-    const totalSanctioned = all.reduce((s, r) => s + r.sanctionedLimit, 0);
-    const totalDisbursed = all.reduce((s, r) => s + r.disbursedAmount, 0);
+    const allData = customerTab === 'disbursement'
+      ? (topDisbursements ?? [])
+      : customerTab === 'sanctioned'
+        ? (topSanctioned ?? [])
+        : (topCustomers ?? []);
+    const topSlice = topN === -1 ? allData : allData.slice(0, topN);
+    const totalPOS = allData.reduce((s, r) => s + r.currentPOS, 0);
+    const totalSanctioned = allData.reduce((s, r) => s + r.sanctionedLimit, 0);
+    const totalDisbursed = allData.reduce((s, r) => s + r.disbursedAmount, 0);
     const topNPOS = topSlice.reduce((s, r) => s + r.currentPOS, 0);
     const topNSanctioned = topSlice.reduce((s, r) => s + r.sanctionedLimit, 0);
     const topNDisbursed = topSlice.reduce((s, r) => s + r.disbursedAmount, 0);
@@ -612,7 +616,7 @@ export function CorporateOverviewSection({ scope }: Props) {
       sanctionConc: totalSanctioned > 0 ? topNSanctioned / totalSanctioned : 0,
       disbursedConc: totalDisbursed > 0 ? topNDisbursed / totalDisbursed : 0,
     };
-  }, [topCustomers, visibleTopCustomers]);
+  }, [customerTab, topDisbursements, topCustomers, topSanctioned, topN]);
 
   // Maturity pivot
   const maturityPivot = useMemo(() => {
