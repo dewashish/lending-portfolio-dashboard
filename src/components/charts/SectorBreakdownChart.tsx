@@ -46,7 +46,7 @@ export function SectorBreakdownChart({ data, period, valueField }: Props) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-      const barColor = d3.schemeTableau10[0];
+      const color = d3.scaleOrdinal(d3.schemeTableau10);
 
       // Y axis: sector names
       const y = d3
@@ -100,7 +100,7 @@ export function SectorBreakdownChart({ data, period, valueField }: Props) {
         .attr('height', y.bandwidth())
         .attr('x', 0)
         .attr('width', (d) => x(d[valueField]))
-        .attr('fill', barColor)
+        .attr('fill', (_, i) => color(String(i)))
         .attr('rx', 4)
         .attr('opacity', 0.85)
         .style('cursor', 'pointer')
