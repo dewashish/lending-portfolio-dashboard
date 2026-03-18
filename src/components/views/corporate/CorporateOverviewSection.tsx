@@ -923,7 +923,7 @@ export function CorporateOverviewSection({ scope }: Props) {
             <Tab label="Top Sanctioned" value="sanctioned" />
           </Tabs>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            {topN !== -1 && ([
+            {([
               ['POS Conc.', concentrationKpis.posConc],
               ['Sanction Conc.', concentrationKpis.sanctionConc],
               ['Disbursed Conc.', concentrationKpis.disbursedConc],
