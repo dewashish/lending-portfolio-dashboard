@@ -597,26 +597,26 @@ export function CorporateOverviewSection({ scope }: Props) {
     return topN === -1 ? source : source.slice(0, topN);
   }, [customerTab, topDisbursements, topCustomers, topSanctioned, topN]);
 
-  // Concentration KPIs: top-N vs entire book (use same dataset for both)
+  // Concentration KPIs: each metric ranks by its own field, independent of tab
   const concentrationKpis = useMemo(() => {
-    const allData = customerTab === 'disbursement'
-      ? (topDisbursements ?? [])
-      : customerTab === 'sanctioned'
-        ? (topSanctioned ?? [])
-        : (topCustomers ?? []);
-    const topSlice = topN === -1 ? allData : allData.slice(0, topN);
-    const totalPOS = allData.reduce((s, r) => s + r.currentPOS, 0);
-    const totalSanctioned = allData.reduce((s, r) => s + r.sanctionedLimit, 0);
-    const totalDisbursed = allData.reduce((s, r) => s + r.disbursedAmount, 0);
-    const topNPOS = topSlice.reduce((s, r) => s + r.currentPOS, 0);
-    const topNSanctioned = topSlice.reduce((s, r) => s + r.sanctionedLimit, 0);
-    const topNDisbursed = topSlice.reduce((s, r) => s + r.disbursedAmount, 0);
+    const posSorted = topCustomers ?? [];       // ranked by POS
+    const sanctSorted = topSanctioned ?? [];    // ranked by sanctioned
+    const disbSorted = topDisbursements ?? [];  // ranked by disbursement
+
+    const totalPOS = posSorted.reduce((s, r) => s + r.currentPOS, 0);
+    const totalSanctioned = sanctSorted.reduce((s, r) => s + r.sanctionedLimit, 0);
+    const totalDisbursed = disbSorted.reduce((s, r) => s + r.disbursedAmount, 0);
+
+    const posSlice = topN === -1 ? posSorted : posSorted.slice(0, topN);
+    const sanctSlice = topN === -1 ? sanctSorted : sanctSorted.slice(0, topN);
+    const disbSlice = topN === -1 ? disbSorted : disbSorted.slice(0, topN);
+
     return {
-      posConc: totalPOS > 0 ? topNPOS / totalPOS : 0,
-      sanctionConc: totalSanctioned > 0 ? topNSanctioned / totalSanctioned : 0,
-      disbursedConc: totalDisbursed > 0 ? topNDisbursed / totalDisbursed : 0,
+      posConc: totalPOS > 0 ? posSlice.reduce((s, r) => s + r.currentPOS, 0) / totalPOS : 0,
+      sanctionConc: totalSanctioned > 0 ? sanctSlice.reduce((s, r) => s + r.sanctionedLimit, 0) / totalSanctioned : 0,
+      disbursedConc: totalDisbursed > 0 ? disbSlice.reduce((s, r) => s + r.disbursedAmount, 0) / totalDisbursed : 0,
     };
-  }, [customerTab, topDisbursements, topCustomers, topSanctioned, topN]);
+  }, [topCustomers, topSanctioned, topDisbursements, topN]);
 
   // Maturity pivot
   const maturityPivot = useMemo(() => {
