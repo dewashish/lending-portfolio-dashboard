@@ -597,6 +597,21 @@ export function CorporateOverviewSection({ scope }: Props) {
     return topN === -1 ? source : source.slice(0, topN);
   }, [customerTab, topDisbursements, topCustomers, topSanctioned, topN]);
 
+  // Concentration KPIs: top-N POS vs entire book
+  const concentrationKpis = useMemo(() => {
+    const all = topCustomers ?? [];
+    const topSlice = visibleTopCustomers;
+    const totalPOS = all.reduce((s, r) => s + r.currentPOS, 0);
+    const totalSanctioned = all.reduce((s, r) => s + r.sanctionedLimit, 0);
+    const totalDisbursed = all.reduce((s, r) => s + r.disbursedAmount, 0);
+    const topNPOS = topSlice.reduce((s, r) => s + r.currentPOS, 0);
+    return {
+      posConc: totalPOS > 0 ? topNPOS / totalPOS : 0,
+      posToSanction: totalSanctioned > 0 ? topNPOS / totalSanctioned : 0,
+      posToDisbursed: totalDisbursed > 0 ? topNPOS / totalDisbursed : 0,
+    };
+  }, [topCustomers, visibleTopCustomers]);
+
   // Maturity pivot
   const maturityPivot = useMemo(() => {
     const rows = maturity ?? [];
@@ -919,6 +934,26 @@ export function CorporateOverviewSection({ scope }: Props) {
               <MenuItem value={-1}>All</MenuItem>
             </Select>
           </FormControl>
+          {topN !== -1 && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              {([
+                ['POS Conc.', concentrationKpis.posConc],
+                ['POS / Sanction', concentrationKpis.posToSanction],
+                ['POS / Disbursed', concentrationKpis.posToDisbursed],
+              ] as [string, number][]).map(([label, val]) => (
+                <Chip
+                  key={label}
+                  size="small"
+                  label={
+                    <span>
+                      {label}: <strong>{formatPercent(val, 1)}</strong>
+                    </span>
+                  }
+                  sx={{ fontSize: '0.72rem', bgcolor: 'rgba(255,255,255,0.06)', height: 26 }}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
