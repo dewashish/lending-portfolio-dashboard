@@ -30,7 +30,9 @@ export function SectorBreakdownChart({ data, period, valueField }: Props) {
   const title =
     valueField === 'disbursement'
       ? 'Sector Breakdown — Disbursement'
-      : 'Sector Breakdown — POS';
+      : valueField === 'sanctioned'
+        ? 'Sector Breakdown — Sanctioned'
+        : 'Sector Breakdown — POS';
 
   const ref = useD3Chart(
     (svg, width, height) => {
@@ -44,7 +46,7 @@ export function SectorBreakdownChart({ data, period, valueField }: Props) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-      const color = d3.scaleOrdinal(d3.schemeTableau10);
+      const barColor = d3.schemeTableau10[0];
 
       // Y axis: sector names
       const y = d3
@@ -98,7 +100,7 @@ export function SectorBreakdownChart({ data, period, valueField }: Props) {
         .attr('height', y.bandwidth())
         .attr('x', 0)
         .attr('width', (d) => x(d[valueField]))
-        .attr('fill', (_, i) => color(String(i)))
+        .attr('fill', barColor)
         .attr('rx', 4)
         .attr('opacity', 0.85)
         .style('cursor', 'pointer')

@@ -618,6 +618,35 @@ export function CorporateOverviewSection({ scope }: Props) {
     };
   }, [topCustomers, topSanctioned, topDisbursements, topN]);
 
+  // Sector breakdown aggregated from visible top-N customers
+  const sectorBreakdown = useMemo(() => {
+    const map = new Map<string, { disbursement: number; pos: number; sanctioned: number; count: number }>();
+    visibleTopCustomers.forEach((r) => {
+      const key = r.sector || 'Other';
+      const cur = map.get(key) ?? { disbursement: 0, pos: 0, sanctioned: 0, count: 0 };
+      cur.disbursement += r.disbursedAmount;
+      cur.pos += r.currentPOS;
+      cur.sanctioned += r.sanctionedLimit;
+      cur.count += 1;
+      map.set(key, cur);
+    });
+    const totalPOS = visibleTopCustomers.reduce((s, r) => s + r.currentPOS, 0);
+    const rows: CorporateIndustryConcentrationRow[] = [];
+    map.forEach((v, sector) => {
+      rows.push({
+        sector,
+        period: '',
+        disbursement: v.disbursement,
+        pos: v.pos,
+        sanctioned: v.sanctioned,
+        portfolioShare: totalPOS > 0 ? v.pos / totalPOS : 0,
+        irr: null,
+        facilityCount: v.count,
+      });
+    });
+    return rows;
+  }, [visibleTopCustomers]);
+
   // Maturity pivot
   const maturityPivot = useMemo(() => {
     const rows = maturity ?? [];
@@ -962,8 +991,8 @@ export function CorporateOverviewSection({ scope }: Props) {
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
             <SectorBreakdownChart
-              data={industry ?? []}
-              period={visiblePeriods[visiblePeriods.length - 1] ?? ''}
+              data={sectorBreakdown}
+              period=""
               valueField={customerTab === 'pos' ? 'pos' : customerTab === 'sanctioned' ? 'sanctioned' : 'disbursement'}
             />
           </Grid>
