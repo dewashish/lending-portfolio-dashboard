@@ -23,7 +23,7 @@ export default function AboutPage() {
             <AccountBalanceIcon sx={{ fontSize: 32, color: '#fff' }} />
           </Box>
 
-          <Typography variant="h5" fontWeight={800}>Avaloura Portfolio Monitor</Typography>
+          <Typography variant="h5" fontWeight={800}>Avalora Portfolio Monitor</Typography>
           <Typography variant="body2" color="text.secondary">
             Group-level credit risk dashboard for monitoring consumer, trade, and corporate
             lending portfolios across multiple subsidiaries and geographies.

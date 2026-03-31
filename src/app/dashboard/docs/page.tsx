@@ -146,7 +146,7 @@ export default function ProductDocumentationPage() {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Avaloura Docs
+            Avalora Docs
           </Typography>
 
           <Typography
@@ -166,7 +166,7 @@ export default function ProductDocumentationPage() {
             Documentation
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-            Avaloura Portfolio Monitor — Enterprise Lending Portfolio Risk Management Platform
+            Avalora Portfolio Monitor — Enterprise Lending Portfolio Risk Management Platform
           </Typography>
         </Box>
 

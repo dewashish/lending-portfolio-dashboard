@@ -2124,6 +2124,8 @@ function buildCorporateIndustryConcentration(): Row[] {
         const posUsd = toUSD(pos, sub.currencyCode, FX_MAP);
         const disbursement = +(pos * noiseRange(0.8, 1.2, sub.id, pi, sIdx)).toFixed(2);
         const disbursementUsd = toUSD(disbursement, sub.currencyCode, FX_MAP);
+        const sanctioned = +(pos * noiseRange(1.1, 1.5, sub.id, pi, sIdx + 900)).toFixed(2);
+        const sanctionedUsd = toUSD(sanctioned, sub.currencyCode, FX_MAP);
         const facilityCount = Math.round(noiseRange(3, 25, sub.id, sIdx, pi));
         const irr = +(noiseRange(0.08, 0.18, sub.id, sIdx, pi + 600)).toFixed(4);
 
@@ -2135,6 +2137,8 @@ function buildCorporateIndustryConcentration(): Row[] {
           disbursement_usd: disbursementUsd,
           pos,
           pos_usd: posUsd,
+          sanctioned,
+          sanctioned_usd: sanctionedUsd,
           portfolio_share: share,
           irr,
           facility_count: facilityCount,

@@ -7,7 +7,7 @@ export async function generateGroupPQR(scope?: ScopeSelection): Promise<void> {
   const scorecard = await fetchConsolidatedScorecard(scope);
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Avaloura Portfolio Monitor';
+  wb.creator = 'Avalora Portfolio Monitor';
   wb.created = new Date();
   const tabColor = getTabColor(0);
 

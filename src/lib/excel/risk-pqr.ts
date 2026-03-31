@@ -12,7 +12,7 @@ export async function generateRiskPQR(scope?: ScopeSelection): Promise<void> {
   ]);
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Avaloura Portfolio Monitor';
+  wb.creator = 'Avalora Portfolio Monitor';
   wb.created = new Date();
   const tabColor = getTabColor(4);
 

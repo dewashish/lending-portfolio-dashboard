@@ -16,7 +16,7 @@ export function ExecutiveSummary() {
   return (
     <PRDSection id="executive-summary" title="Executive Summary" sectionNumber={1}>
       <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.8 }}>
-        <strong>Avaloura Portfolio Monitor</strong> (v{APP_VERSION}) is an enterprise-grade lending portfolio risk
+        <strong>Avalora Portfolio Monitor</strong> (v{APP_VERSION}) is an enterprise-grade lending portfolio risk
         management platform designed for multi-geography financial institutions. It provides a unified,
         real-time view of credit risk across consumer finance, trade finance, and corporate finance
         portfolios — enabling Group Chief Risk Officers and their teams to monitor, analyze, and act on

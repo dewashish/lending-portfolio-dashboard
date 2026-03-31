@@ -11,7 +11,7 @@ const Joyride = dynamic(() => import('react-joyride'), { ssr: false });
 const ALL_STEPS: Step[] = [
   {
     target: 'body',
-    content: 'Welcome to Avaloura Portfolio Monitor! Let\u2019s take a quick tour of the key features.',
+    content: 'Welcome to Avalora Portfolio Monitor! Let\u2019s take a quick tour of the key features.',
     placement: 'center',
     disableBeacon: true,
     title: 'Welcome',

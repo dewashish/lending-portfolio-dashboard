@@ -147,7 +147,7 @@ export default function LoginPage() {
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h5" fontWeight={800} gutterBottom sx={{ color: '#fff' }}>
-                Avaloura Portfolio Monitor
+                Avalora Portfolio Monitor
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
                 Group Risk Management Engine

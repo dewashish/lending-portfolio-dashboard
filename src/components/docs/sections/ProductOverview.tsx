@@ -17,7 +17,7 @@ export function ProductOverview() {
   return (
     <PRDSection id="product-overview" title="Product Overview" sectionNumber={5}>
       <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.8 }}>
-        Avaloura Portfolio Monitor is a web-based risk management platform that aggregates portfolio
+        Avalora Portfolio Monitor is a web-based risk management platform that aggregates portfolio
         data from multiple source systems into a unified analytics layer. The architecture follows a
         modern client-server pattern with real-time data synchronization.
       </Typography>
