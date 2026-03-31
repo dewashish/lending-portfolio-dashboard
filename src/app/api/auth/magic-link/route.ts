@@ -2,20 +2,26 @@ import { NextResponse, type NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
 import { createSessionToken, SESSION_COOKIE } from '@/lib/auth';
-import { timingSafeEqual } from 'crypto';
 
 const CRO_USERNAME = 'Sudhir Sagar';
 const CRO_ROLE = 'cro';
 
-function tokensMatch(a: string, b: string): boolean {
-  try {
-    const bufA = Buffer.from(a, 'utf-8');
-    const bufB = Buffer.from(b, 'utf-8');
-    if (bufA.length !== bufB.length) return false;
-    return timingSafeEqual(bufA, bufB);
-  } catch {
-    return false;
-  }
+/** Constant-time string comparison using Web Crypto HMAC */
+async function tokensMatch(a: string, b: string): Promise<boolean> {
+  if (a.length !== b.length) return false;
+  const encoder = new TextEncoder();
+  const key = await globalThis.crypto.subtle.importKey(
+    'raw', encoder.encode('key'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const [sigA, sigB] = await Promise.all([
+    globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(a)),
+    globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(b)),
+  ]);
+  const viewA = new Uint8Array(sigA);
+  const viewB = new Uint8Array(sigB);
+  let diff = 0;
+  for (let i = 0; i < viewA.length; i++) diff |= viewA[i] ^ viewB[i];
+  return diff === 0;
 }
 
 export async function GET(request: NextRequest) {
@@ -23,7 +29,7 @@ export async function GET(request: NextRequest) {
   const expectedToken = process.env.MAGIC_LINK_TOKEN_CRO;
   const loginUrl = new URL('/login', request.url);
 
-  if (!token || !expectedToken || !tokensMatch(token, expectedToken)) {
+  if (!token || !expectedToken || !(await tokensMatch(token, expectedToken))) {
     return NextResponse.redirect(loginUrl);
   }
 
