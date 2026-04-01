@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseService } from '@/lib/supabase/service';
 import { createSessionToken, SESSION_COOKIE } from '@/lib/auth';
 
 const CRO_USERNAME = 'Sudhir Sagar';
@@ -34,13 +34,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
     // Look up or create the CRO user
-    let { data: user } = await supabase
+    let { data: user } = await supabaseService
       .from('app_users')
       .select('id, username, role, email')
       .eq('username', CRO_USERNAME)
@@ -48,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       const randomPassword = await bcrypt.hash(crypto.randomUUID(), 10);
-      const { data: newUser, error } = await supabase
+      const { data: newUser, error } = await supabaseService
         .from('app_users')
         .insert({
           username: CRO_USERNAME,
@@ -68,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Record session
     let sessionId: string | undefined;
     try {
-      const { data: session } = await supabase
+      const { data: session } = await supabaseService
         .from('user_sessions')
         .insert({
           user_id: user.id,
