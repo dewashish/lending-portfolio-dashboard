@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Avalora · Consumer Finance Dashboard & PQR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-2: #0f1424;
+    --surface: #141b2d;
+    --surface-2: #1a2237;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #e9edf5;
+    --text-dim: #9aa4b8;
+    --text-faint: #6c7589;
+    --accent: #2196f3;
+    --accent-2: #00b8d4;
+    --accent-glow: rgba(33,150,243,0.35);
+    --consumer: #2196f3;
+    --green: #4caf50;
+    --amber: #ffb300;
+    --red: #ef5350;
+    --purple: #9c27b0;
+    --teal: #009688;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(800px 600px at 15% 10%, rgba(33,150,243,0.10), transparent 60%),
+      radial-gradient(600px 500px at 85% 90%, rgba(0,184,212,0.08), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deck { position: relative; width: 100vw; height: 100vh; z-index: 1; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: 56px 80px 80px;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 420ms cubic-bezier(.22,.61,.36,1), transform 420ms cubic-bezier(.22,.61,.36,1);
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .slide.prev { transform: translateX(-40px); }
+
+  /* ── Slide header ───────────────────────────────── */
+  .slide-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .crumb {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-faint); font-weight: 600;
+  }
+  .crumb .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--consumer); box-shadow: 0 0 12px var(--consumer); }
+  .slide-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+  }
+
+  h1.title {
+    font-size: 64px; font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.025em;
+    background: linear-gradient(135deg, #fff 0%, #c5d4ee 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  h2.title { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 8px; }
+  h3.sub   { font-size: 16px; color: var(--text-dim); font-weight: 400; max-width: 760px; line-height: 1.55; }
+
+  /* ── Title slide ────────────────────────────────── */
+  .title-slide { justify-content: center; align-items: flex-start; padding-left: 100px; padding-right: 100px; }
+  .title-slide .eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 8px 16px; border-radius: 999px;
+    background: rgba(33,150,243,0.10); border: 1px solid rgba(33,150,243,0.30);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+    color: #7fc4ff; margin-bottom: 28px;
+  }
+  .title-slide .eyebrow .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--consumer);
+    box-shadow: 0 0 0 0 var(--accent-glow);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
+    70%  { box-shadow: 0 0 0 16px rgba(33,150,243,0); }
+    100% { box-shadow: 0 0 0 0 rgba(33,150,243,0); }
+  }
+  .title-slide h1 {
+    font-size: 92px; font-weight: 800; line-height: 0.98;
+    letter-spacing: -0.035em; margin-bottom: 22px;
+    background: linear-gradient(135deg, #ffffff 0%, #8ec0ff 60%, #00b8d4 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .title-slide .lede {
+    font-size: 22px; line-height: 1.5; color: var(--text-dim); max-width: 720px; font-weight: 300;
+  }
+  .title-slide .meta {
+    margin-top: 56px; display: flex; gap: 36px; font-size: 13px; color: var(--text-faint);
+  }
+  .title-slide .meta span strong { color: var(--text); font-weight: 600; display: block; margin-bottom: 2px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ── Content layouts ──────────────────────────── */
+  .body { flex: 1; min-height: 0; overflow: auto; padding-right: 8px; }
+  .body::-webkit-scrollbar { width: 6px; }
+  .body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 20px;
+    position: relative;
+    transition: border-color 200ms, transform 200ms;
+  }
+  .card:hover { border-color: var(--border-strong); }
+  .card .label {
+    font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint);
+    font-weight: 600; margin-bottom: 10px;
+  }
+  .card h4 { font-size: 17px; font-weight: 600; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .card p  { font-size: 13.5px; line-height: 1.65; color: var(--text-dim); }
+  .card .accent-bar {
+    position: absolute; top: 0; left: 0; height: 3px; width: 56px;
+    background: var(--consumer); border-radius: 14px 0 14px 0;
+  }
+  .card .ico {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(33,150,243,0.12); border: 1px solid rgba(33,150,243,0.30);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--consumer); font-weight: 700; font-size: 14px;
+    margin-bottom: 14px;
+  }
+
+  /* Tag pills */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag {
+    font-size: 10.5px; font-weight: 500; padding: 3px 9px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  /* Table */
+  .tbl {
+    width: 100%; border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; font-size: 13px;
+  }
+  .tbl th, .tbl td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--border); }
+  .tbl th {
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;
+    color: var(--text-faint); background: rgba(255,255,255,0.02);
+  }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl td.num { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 12.5px; }
+  .tbl td.muted { color: var(--text-dim); }
+  .tbl tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Numbered list */
+  .ol-fancy { list-style: none; counter-reset: step; }
+  .ol-fancy li {
+    counter-increment: step;
+    position: relative;
+    padding: 16px 16px 16px 60px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .ol-fancy li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 14px; color: var(--consumer);
+  }
+  .ol-fancy li strong { color: var(--text); font-weight: 600; }
+  .ol-fancy li span { color: var(--text-dim); }
+
+  /* Sheet matrix (PQR) */
+  .sheets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .sheet {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 16px 14px 14px;
+    position: relative;
+    transition: transform 200ms, border-color 200ms;
+  }
+  .sheet:hover { transform: translateY(-2px); border-color: var(--consumer); }
+  .sheet .n {
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+    color: var(--consumer); font-weight: 700; letter-spacing: 0.06em;
+  }
+  .sheet h5 { font-size: 14px; font-weight: 600; margin: 6px 0 6px; letter-spacing: -0.01em; }
+  .sheet p  { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; }
+
+  /* Pipeline / flow */
+  .flow {
+    display: flex; align-items: stretch; gap: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px; overflow-x: auto;
+  }
+  .flow .step { flex: 1; min-width: 180px; padding: 0 22px; position: relative; }
+  .flow .step:not(:last-child)::after {
+    content: '›'; position: absolute; right: -8px; top: 50%; transform: translateY(-50%);
+    font-size: 28px; color: var(--text-faint);
+  }
+  .flow .step .k { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); font-weight: 600; }
+  .flow .step h5 { font-size: 15px; font-weight: 600; margin: 6px 0 6px; }
+  .flow .step p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+  /* Big stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+  }
+  .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .k { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); font-weight: 600; margin-top: 6px; }
+  .stat .v.blue   { color: var(--consumer); }
+  .stat .v.green  { color: var(--green); }
+  .stat .v.amber  { color: var(--amber); }
+  .stat .v.teal   { color: var(--accent-2); }
+
+  /* Section dividers used as inline heading */
+  .h-row { display: flex; align-items: baseline; gap: 14px; margin: 28px 0 14px; }
+  .h-row .bar { flex: 1; height: 1px; background: var(--border); }
+  .h-row h4 { font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+
+  /* Two-col split */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; min-height: 0; }
+  .split .pane { display: flex; flex-direction: column; gap: 12px; }
+
+  /* Code-like file path */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: rgba(33,150,243,0.08);
+    border: 1px solid rgba(33,150,243,0.20);
+    padding: 2px 6px;
+    border-radius: 5px;
+    color: #9ccfff;
+  }
+
+  /* ── Nav UI ─────────────────────────────────── */
+  .controls {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(20,27,45,0.85); backdrop-filter: blur(12px);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px; padding: 10px 20px;
+    z-index: 100;
+  }
+  .controls button {
+    background: transparent; border: 0; color: var(--text-dim);
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; font-size: 18px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 150ms, color 150ms;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .controls .counter {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text-dim); padding: 0 6px; min-width: 56px; text-align: center;
+  }
+  .dots {
+    position: fixed; right: 28px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 8px; z-index: 100;
+  }
+  .dot-btn { width: 8px; height: 8px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.18); cursor: pointer; padding: 0; transition: all 200ms; }
+  .dot-btn.active { background: var(--consumer); height: 22px; border-radius: 4px; box-shadow: 0 0 12px var(--accent-glow); }
+  .dot-btn:hover:not(.active) { background: rgba(255,255,255,0.35); }
+
+  .brand {
+    position: fixed; top: 22px; left: 28px; z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .brand .mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--consumer), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;
+    color: #08111d;
+  }
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 101;
+    background: rgba(255,255,255,0.04);
+  }
+  .progress .bar {
+    height: 100%; background: linear-gradient(90deg, var(--consumer), var(--accent-2));
+    width: 0%; transition: width 380ms cubic-bezier(.22,.61,.36,1);
+  }
+
+  /* Wide layout adjustments */
+  @media (max-width: 1100px) {
+    .slide { padding: 44px 48px 80px; }
+    .title-slide h1 { font-size: 64px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <span class="mark">A</span>
+  <span>Avalora Portfolio Monitor</span>
+</div>
+
+<div class="progress"><div class="bar" id="progressBar"></div></div>
+
+<div class="deck" id="deck">
+
+  <!-- ─────────────────────── SLIDE 1: TITLE ─────────────────────── -->
+  <section class="slide title-slide active">
+    <div class="eyebrow"><span class="pulse"></span>Consumer Finance · v0.5.18</div>
+    <h1>Consumer Finance<br/>Dashboard &amp; PQR.</h1>
+    <p class="lede">A walkthrough of the Consumer Finance analytics surface in the Avalora Portfolio Monitor — nine sub-views, fourteen Excel sheets, end-to-end portfolio quality reporting.</p>
+    <div class="meta">
+      <span><strong>Module</strong>Consumer Finance Tab</span>
+      <span><strong>Format</strong>Dashboard + Excel PQR</span>
+      <span><strong>Audience</strong>CRO · Risk · Product</span>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 2: AGENDA ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Agenda</div>
+      <div class="slide-num">02 / 14</div>
+    </div>
+    <h2 class="title">What we'll cover.</h2>
+    <h3 class="sub">A guided tour of how Consumer Finance is monitored inside Avalora — from the live dashboard surface to the structured Excel report exported for offline analysis.</h3>
+
+    <div class="body" style="margin-top: 36px;">
+      <ol class="ol-fancy" style="max-width: 860px;">
+        <li><strong>Consumer Finance in context</strong> <span>— where it sits inside the six-tab portfolio monitor.</span></li>
+        <li><strong>Dashboard anatomy</strong> <span>— the nine sub-views of the Consumer Finance tab and what each answers.</span></li>
+        <li><strong>Key components &amp; metrics</strong> <span>— charts, tables, and the KPIs that drive risk decisions.</span></li>
+        <li><strong>Portfolio Quality Report (PQR)</strong> <span>— the fourteen-sheet Excel artefact and its structure.</span></li>
+        <li><strong>Data lineage</strong> <span>— queries, PQR tables, and how the report is generated.</span></li>
+        <li><strong>How to run it</strong> <span>— scope selection and the export flow in the UI.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 3: WHERE IT FITS ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Context</div>
+      <div class="slide-num">03 / 14</div>
+    </div>
+    <h2 class="title">Consumer Finance in the portfolio monitor.</h2>
+    <h3 class="sub">Avalora consolidates credit risk across three business lines and five subsidiaries. Consumer Finance is the deepest of the three — nine sub-views, fourteen PQR sheets, the lion's share of operational risk signal.</h3>
+
+    <div class="body" style="margin-top: 30px;">
+      <div class="grid cols-3" style="margin-bottom: 18px;">
+        <div class="card" style="border-left: 3px solid var(--consumer);">
+          <div class="label">Business Line</div>
+          <h4 style="color: var(--consumer);">Consumer Finance</h4>
+          <p>Retail unsecured &amp; secured loans. Highest velocity, deepest analytics — DPD aging, vintage cohorts, origination funnel, collections.</p>
+          <div class="tags"><span class="tag">9 sub-views</span><span class="tag">14 PQR sheets</span></div>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--purple); opacity: 0.85;">
+          <div class="label">Business Line</div>
+          <h4 style="color: var(--purple);">Trade Finance</h4>
+          <p>Facility-level monitoring — LC, SBLC, BG, trade loans. Concentrations, watchlist, EWS, macro risk.</p>
+          <div class="tags"><span class="tag">6 sub-views</span></div>
+        </div>
+        <div class="card" style="border-left: 3px solid #ff9800; opacity: 0.85;">
+          <div class="label">Business Line</div>
+          <h4 style="color: #ff9800;">Corporate Finance</h4>
+          <p>Sanction limit / disbursement / POS, industry concentration, covenants, ratings, collateral &amp; LTV.</p>
+          <div class="tags"><span class="tag">9 sub-views</span></div>
+        </div>
+      </div>
+
+      <div class="h-row"><h4>Group-Level Tabs</h4><div class="bar"></div></div>
+      <div class="grid cols-3">
+        <div class="card"><div class="label">Tab</div><h4>Group CRO Overview</h4><p>Hero KPIs, breach panel, portfolio composition, risk heatmap, trend grid, consolidated scorecard.</p></div>
+        <div class="card"><div class="label">Tab</div><h4>Risk &amp; Concentrations</h4><p>EWS radar, obligor &amp; sector concentrations, FX risk, country risk.</p></div>
+        <div class="card"><div class="label">Tab</div><h4>Forward Outlook</h4><p>Portfolio health KPIs, stress heatmap, scenario engine, early warning &amp; actions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 4: DASHBOARD OVERVIEW ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Consumer Dashboard</div>
+      <div class="slide-num">04 / 14</div>
+    </div>
+    <h2 class="title">Nine sub-views, one risk story.</h2>
+    <h3 class="sub">The Consumer Finance tab is structured around the full lifecycle of a retail loan — from origination through collections and into vintage learning.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="stats">
+        <div class="stat"><div class="v blue">9</div><div class="k">Sub-Views</div></div>
+        <div class="stat"><div class="v teal">30+</div><div class="k">Chart Components</div></div>
+        <div class="stat"><div class="v green">14</div><div class="k">PQR Sheets</div></div>
+        <div class="stat"><div class="v amber">3</div><div class="k">Scope Levels</div></div>
+      </div>
+
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="width: 18%;">Sub-View</th>
+            <th style="width: 42%;">Primary Components</th>
+            <th>Key Metrics Answered</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Overview</strong></td><td class="muted">DPDBucketDistribution · ConsumerOverallTable</td><td class="muted">AUM, 30+ DPD%, NPL, Stage 2+3%, stacked DPD bucket area</td></tr>
+          <tr><td><strong>Origination</strong></td><td class="muted">MTDFunnelComparison · DailyDisbursementTrend · LOSComparisonTable</td><td class="muted">8-stage funnel (Clicks→Disbursement), MTD vs LMTD, daily amounts</td></tr>
+          <tr><td><strong>Products</strong></td><td class="muted">ConsumerProductTable · CollectionTrend</td><td class="muted">Product-level AUM, delinquency, disbursement, collection trends</td></tr>
+          <tr><td><strong>Delinquency</strong></td><td class="muted">RollRateHeatmap · DPDRollRateHeatmap</td><td class="muted">DPD bucket transitions, roll-forward / backward, cure rates</td></tr>
+          <tr><td><strong>Collections</strong></td><td class="muted">CollectionTrend · CollectionMetricsTable</td><td class="muted">Collection efficiency, recovery, bucket migration</td></tr>
+          <tr><td><strong>Vintage</strong></td><td class="muted">VintageCurves · VintageHeatmap</td><td class="muted">Delinquency by cohort, MOB progression</td></tr>
+          <tr><td><strong>Non-Starters</strong></td><td class="muted">NonStarterTable</td><td class="muted">Origination counts by category &amp; product that never performed</td></tr>
+          <tr><td><strong>Risk Analytics</strong></td><td class="muted">Risk grade distribution charts</td><td class="muted">Risk grade distribution, IFRS stage breakdown</td></tr>
+          <tr><td><strong>TDD</strong></td><td class="muted">TDDTable</td><td class="muted">Pre- &amp; post-disbursal bureau score distributions</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 5: OVERVIEW + ORIGINATION ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Sub-Views · 1 of 3</div>
+      <div class="slide-num">05 / 14</div>
+    </div>
+    <h2 class="title">Portfolio health, at first glance.</h2>
+    <h3 class="sub">The first three sub-views answer "how big, how healthy, and how is the front-door performing right now?"</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="grid cols-3">
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">01</div>
+          <h4>Overview</h4>
+          <p>Top-of-funnel snapshot: AUM, 30+ DPD %, NPL, Stage 2+3 share. A stacked DPD-bucket area shows how the portfolio is distributed across Current → 120+ buckets over time.</p>
+          <div class="tags">
+            <span class="tag">DPDBucketDistribution</span>
+            <span class="tag">ConsumerOverallTable</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">02</div>
+          <h4>Origination</h4>
+          <p>An 8-stage MTD funnel from Clicks → Disbursement with conversion at each step, daily disbursement trend (amount &amp; count), and an MTD vs LMTD operational comparison.</p>
+          <div class="tags">
+            <span class="tag">MTDFunnelComparison</span>
+            <span class="tag">DailyDisbursementTrend</span>
+            <span class="tag">LOSComparisonTable</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">03</div>
+          <h4>Products</h4>
+          <p>Per-product breakdown of AUM, delinquency, disbursement, and a collection trend line. Lets product analysts spot which SKU is dragging portfolio quality.</p>
+          <div class="tags">
+            <span class="tag">ConsumerProductTable</span>
+            <span class="tag">CollectionTrend</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-row"><h4>Why this matters</h4><div class="bar"></div></div>
+      <p style="color: var(--text-dim); font-size: 14px; line-height: 1.7; max-width: 920px;">
+        The first three sub-views compress a full month-end pack into a single screen. A CRO opening the tab can confirm portfolio size, current quality, and origination momentum in under thirty seconds — before drilling into causes.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 6: DELINQUENCY + COLLECTIONS ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Sub-Views · 2 of 3</div>
+      <div class="slide-num">06 / 14</div>
+    </div>
+    <h2 class="title">Where the cracks form.</h2>
+    <h3 class="sub">Roll rates, collection efficiency, and vintage cohorts — the three lenses risk analysts use to diagnose deterioration.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="grid cols-3">
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">04</div>
+          <h4>Delinquency</h4>
+          <p>Two heatmaps capture bucket transitions: net flow (how many <em>net</em> accounts move forward each month) and DPD-specific roll-rates with cure / forward indicators.</p>
+          <div class="tags">
+            <span class="tag">RollRateHeatmap</span>
+            <span class="tag">DPDRollRateHeatmap</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">05</div>
+          <h4>Collections</h4>
+          <p>Bucket-level collection performance — amount, transitions, normalized %, roll-backward (cure), stabilized, roll-forward. Highlights agency &amp; bucket-specific recovery efficiency.</p>
+          <div class="tags">
+            <span class="tag">CollectionTrend</span>
+            <span class="tag">CollectionMetricsTable</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">06</div>
+          <h4>Vintage Analysis</h4>
+          <p>Cohort curves by origination month and Months-On-Book (MOB). A heatmap reveals whether a recent vintage is decaying faster than its predecessors — the canary in the underwriting coal mine.</p>
+          <div class="tags">
+            <span class="tag">VintageCurves</span>
+            <span class="tag">VintageHeatmap</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-row"><h4>What a bad signal looks like</h4><div class="bar"></div></div>
+      <div class="grid cols-3">
+        <div class="card" style="background: rgba(239,83,80,0.05); border-color: rgba(239,83,80,0.25);">
+          <div class="label" style="color: var(--red);">Roll Forward Spike</div>
+          <p>A row in the roll-rate heatmap shifts from green to red — accounts are moving from 1–30 DPD to 31–60 DPD faster than last month.</p>
+        </div>
+        <div class="card" style="background: rgba(255,179,0,0.05); border-color: rgba(255,179,0,0.25);">
+          <div class="label" style="color: var(--amber);">Cure Rate Drop</div>
+          <p>Roll-backward % falls below tolerance — collections is failing to bring delinquent accounts back to current.</p>
+        </div>
+        <div class="card" style="background: rgba(239,83,80,0.05); border-color: rgba(239,83,80,0.25);">
+          <div class="label" style="color: var(--red);">Vintage Decay</div>
+          <p>A recent cohort hits 5% delinquency at MOB-3 while older cohorts only crossed that line at MOB-6 — underwriting drift.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 7: NON-STARTERS / RISK ANALYTICS / TDD ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Sub-Views · 3 of 3</div>
+      <div class="slide-num">07 / 14</div>
+    </div>
+    <h2 class="title">Underwriting truth-tellers.</h2>
+    <h3 class="sub">Three diagnostic views that explain <em>why</em> the portfolio looks the way it does — non-starters, risk grade mix, and bureau score discipline.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="grid cols-3">
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">07</div>
+          <h4>Non-Starters</h4>
+          <p>Origination counts of loans that never made their first payment — sliced by category &amp; product. A non-starter is the cheapest, fastest signal that screening let the wrong applicant through.</p>
+          <div class="tags"><span class="tag">NonStarterTable</span></div>
+        </div>
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">08</div>
+          <h4>Risk Analytics</h4>
+          <p>Risk-grade distribution and IFRS 9 stage breakdown. Confirms the portfolio is loaded with the credit quality you priced it at — and shows migration when it isn't.</p>
+          <div class="tags"><span class="tag">Risk grade charts</span><span class="tag">IFRS stage mix</span></div>
+        </div>
+        <div class="card">
+          <div class="accent-bar"></div>
+          <div class="ico">09</div>
+          <h4>TDD</h4>
+          <p>Through-The-Door bureau analytics. Pre-disbursal and post-disbursal score distributions tell you whether your accepted population matches your target risk band.</p>
+          <div class="tags"><span class="tag">TDDTable · Pre</span><span class="tag">TDDTable · Post</span></div>
+        </div>
+      </div>
+
+      <div class="h-row"><h4>Three views, three timeframes</h4><div class="bar"></div></div>
+      <div class="flow">
+        <div class="step">
+          <div class="k">Day 0</div>
+          <h5>TDD</h5>
+          <p>Bureau score of applicants &amp; approved customers — pre-disbursal screening discipline.</p>
+        </div>
+        <div class="step">
+          <div class="k">Month 1</div>
+          <h5>Non-Starters</h5>
+          <p>Disbursed loans that never made a payment — first signal of an underwriting miss.</p>
+        </div>
+        <div class="step">
+          <div class="k">Month 3+</div>
+          <h5>Risk Analytics</h5>
+          <p>Grade migration &amp; IFRS staging — has the book drifted away from the policy?</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 8: PQR INTRO ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Portfolio Quality Report</div>
+      <div class="slide-num">08 / 14</div>
+    </div>
+    <h2 class="title">The Consumer PQR.</h2>
+    <h3 class="sub">A one-click Excel artefact that mirrors the dashboard and lets risk, finance, and audit work with the underlying numbers offline.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="label">What it is</div>
+          <h4>Fourteen-sheet workbook</h4>
+          <p>Generated client-side via <code>ExcelJS</code> from the same query layer the dashboard uses. Every sheet is a flat, pivot-ready dataset — no merged cells, formatted percentages, currencies, and dates.</p>
+          <div class="tags">
+            <span class="tag">ExcelJS</span>
+            <span class="tag">.xlsx</span>
+            <span class="tag">tab-coloured</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">Why it exists</div>
+          <h4>Offline truth, identical to the screen</h4>
+          <p>Boards want PDFs. Analysts want Excel. PQR closes that gap — same scope filter, same data, fully transparent. Auditors can trace every dashboard number to a sheet.</p>
+          <div class="tags">
+            <span class="tag">Group / Region / Subsidiary scope</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-row"><h4>At a glance</h4><div class="bar"></div></div>
+      <div class="stats">
+        <div class="stat"><div class="v blue">14</div><div class="k">Worksheets</div></div>
+        <div class="stat"><div class="v teal">14</div><div class="k">Parallel Queries</div></div>
+        <div class="stat"><div class="v green">100%</div><div class="k">Dashboard Parity</div></div>
+        <div class="stat"><div class="v amber">1-Click</div><div class="k">From the UI</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 9: PQR SHEETS 1-7 ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>PQR Structure · Sheets 1–7</div>
+      <div class="slide-num">09 / 14</div>
+    </div>
+    <h2 class="title">Sheets 1 – 7 · Portfolio performance.</h2>
+    <h3 class="sub">The first half of the workbook covers the live portfolio — what's on book, where it sits in DPD, and how it's flowing between buckets.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="sheets">
+        <div class="sheet"><div class="n">SHEET 01</div><h5>Portfolio Summary</h5><p>Pivoted time-series of overall consumer KPIs (AUM, 30+ DPD, NPL, Stage mix) by period.</p></div>
+        <div class="sheet"><div class="n">SHEET 02</div><h5>Product Metrics</h5><p>Long-form per-product / per-metric rows pivoted across periods. AUM, disbursement, delinquency per SKU.</p></div>
+        <div class="sheet"><div class="n">SHEET 03</div><h5>Net Flow Rates</h5><p>Monthly net flow across DPD buckets — how the portfolio composition is changing period over period.</p></div>
+        <div class="sheet"><div class="n">SHEET 04</div><h5>Roll Rates</h5><p>Bucket-to-bucket transition probabilities, period-pivoted. Forward and backward flows.</p></div>
+        <div class="sheet"><div class="n">SHEET 05</div><h5>Collections</h5><p>Per-portfolio / per-bucket: amount, transitions, normalized %, roll-backward, stabilized, roll-forward.</p></div>
+        <div class="sheet"><div class="n">SHEET 06</div><h5>Vintage Analysis</h5><p>Cohort × MOB rows with loan amount, delinquency rate, metric type. Drives the vintage heatmap.</p></div>
+        <div class="sheet"><div class="n">SHEET 07</div><h5>Non-Starters</h5><p>Category × Product × Metric, pivoted across months. First-payment-default analysis.</p></div>
+      </div>
+
+      <div class="h-row"><h4>Pivot convention</h4><div class="bar"></div></div>
+      <p style="color: var(--text-dim); font-size: 13.5px; line-height: 1.7; max-width: 980px;">
+        Time-series sheets share a single utility — <code>pivotTimeSeries()</code> — that turns long records into a metric × period grid with consistent header formatting. The result is identical handling across PQRs, so a user who knows the Consumer report can navigate Group, Trade, Corporate, or Risk PQRs without re-learning the structure.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 10: PQR SHEETS 8-14 ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>PQR Structure · Sheets 8–14</div>
+      <div class="slide-num">10 / 14</div>
+    </div>
+    <h2 class="title">Sheets 8 – 14 · Origination &amp; bureau.</h2>
+    <h3 class="sub">The second half captures the front-door — bureau scores, accept / reject populations, the LOS funnel, and daily disbursement detail.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="sheets">
+        <div class="sheet"><div class="n">SHEET 08</div><h5>TDD Pre-Disbursal</h5><p>Bureau score distributions of applicants — pivoted across periods.</p></div>
+        <div class="sheet"><div class="n">SHEET 09</div><h5>TDD Post-Disbursal</h5><p>Variant × bureau-bucket grid across periods — what actually got booked.</p></div>
+        <div class="sheet"><div class="n">SHEET 10</div><h5>Approved Base</h5><p>Loan-amount band × score-band matrix with totals — the shape of the accepted population.</p></div>
+        <div class="sheet"><div class="n">SHEET 11</div><h5>Rejected Base</h5><p>Loan-type × amount-band matrix — what's being declined and at what size.</p></div>
+        <div class="sheet"><div class="n">SHEET 12</div><h5>LOS Metrics</h5><p>FTD / MTD / LMTD / LM-Full, MoM Δ, Target, Achievement — operational origination KPIs.</p></div>
+        <div class="sheet"><div class="n">SHEET 13</div><h5>LOS Funnel</h5><p>Stage × Product with FTD / MTD / LMTD volumes and conversion rate at each step.</p></div>
+        <div class="sheet"><div class="n">SHEET 14</div><h5>LOS Daily</h5><p>Date × Product daily counts, disbursed amount, and average ticket size.</p></div>
+      </div>
+
+      <div class="h-row"><h4>Cell-level formatting</h4><div class="bar"></div></div>
+      <div class="grid cols-4">
+        <div class="card" style="padding: 16px;"><div class="label">Currency</div><p style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--green);">EXCEL.currency</p></div>
+        <div class="card" style="padding: 16px;"><div class="label">Percentages</div><p style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-2);">EXCEL.percent</p></div>
+        <div class="card" style="padding: 16px;"><div class="label">Numbers</div><p style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--consumer);">EXCEL.number</p></div>
+        <div class="card" style="padding: 16px;"><div class="label">Tab colour</div><p style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--consumer);">getTabColor(1)</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 11: DATA PIPELINE ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>How it's built</div>
+      <div class="slide-num">11 / 14</div>
+    </div>
+    <h2 class="title">From ingest to Excel.</h2>
+    <h3 class="sub">The PQR isn't a separate ETL — it reuses the exact query layer that powers the dashboard, so every cell in the workbook is reachable from the UI.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="flow">
+        <div class="step">
+          <div class="k">Step 01</div>
+          <h5>Source systems</h5>
+          <p>LOS, LMS, Collections feeds land via <code>/api/ingest/*</code> endpoints with API-key auth, Zod validation, FX conversion.</p>
+        </div>
+        <div class="step">
+          <div class="k">Step 02</div>
+          <h5>PQR tables</h5>
+          <p>Pre-aggregated metrics: <code>consumer_overall_metrics</code>, <code>consumer_product_metrics</code>, <code>roll_rate_series</code>, <code>vintage_points</code>, <code>non_starters</code>, <code>collection_metrics</code>.</p>
+        </div>
+        <div class="step">
+          <div class="k">Step 03</div>
+          <h5>Query layer</h5>
+          <p><code>src/lib/queries/consumer.ts</code> · 757 lines of typed Supabase queries. Same code serves the dashboard and the PQR.</p>
+        </div>
+        <div class="step">
+          <div class="k">Step 04</div>
+          <h5>Excel build</h5>
+          <p><code>src/lib/excel/consumer-pqr.ts</code> · runs 14 queries in parallel, builds 14 sheets, triggers a browser download.</p>
+        </div>
+      </div>
+
+      <div class="h-row"><h4>The 14 parallel queries powering it</h4><div class="bar"></div></div>
+      <div class="grid cols-4">
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchConsumerOverall</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchProductMetrics</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchNetFlowRates</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchRollRates</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchCollectionMetrics</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchVintagePoints</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchNonStarters</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchTDDPre · fetchTDDPost</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchApprovedBase</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchRejectedBase</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchLOSMetrics</p></div>
+        <div class="card" style="padding: 14px 16px;"><p style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text);">fetchLOSFunnel · fetchLOSDaily</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 12: HOW TO RUN IT ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Operating the report</div>
+      <div class="slide-num">12 / 14</div>
+    </div>
+    <h2 class="title">Running the Consumer PQR.</h2>
+    <h3 class="sub">Three steps. Honors the dashboard's scope selection so the report always matches the view in front of you.</h3>
+
+    <div class="body" style="margin-top: 30px;">
+      <ol class="ol-fancy" style="max-width: 920px;">
+        <li><strong>Pick your scope.</strong> <span>Group, Region, or Subsidiary — the same selector that filters the dashboard determines the PQR contents.</span></li>
+        <li><strong>Open the Consumer Finance tab.</strong> <span>The export action is contextual to the active tab — being on Consumer routes you to <code>generateConsumerPQR()</code>.</span></li>
+        <li><strong>Trigger the export.</strong> <span>Fourteen queries run in parallel, the workbook is built in-browser, and a tab-coloured <code>.xlsx</code> downloads with a scope-stamped filename.</span></li>
+      </ol>
+
+      <div class="h-row"><h4>Scope behaviour</h4><div class="bar"></div></div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th>What the PQR contains</th>
+            <th>Typical user</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Group</strong></td><td class="muted">Consolidated across all subsidiaries in USD via FX rates table</td><td class="muted">Group CRO, board pack preparation</td></tr>
+          <tr><td><strong>Region</strong></td><td class="muted">Regional rollup — sum of subsidiaries within the chosen region</td><td class="muted">Regional risk head</td></tr>
+          <tr><td><strong>Subsidiary</strong></td><td class="muted">Single-entity detail in local currency &amp; USD</td><td class="muted">Subsidiary CRO, local risk &amp; product team</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 13: WHO USES WHAT ─────────────────────── -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="crumb"><span class="dot"></span>Audience map</div>
+      <div class="slide-num">13 / 14</div>
+    </div>
+    <h2 class="title">Who reaches for which view.</h2>
+    <h3 class="sub">The Consumer Finance surface serves four distinct personas. The dashboard is the shared workspace; the PQR is the shared artefact.</h3>
+
+    <div class="body" style="margin-top: 26px;">
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="label">Persona</div>
+          <h4>Chief Risk Officer</h4>
+          <p>Lands on Overview, scans Stage 2+3 share and 30+ DPD trend, glances at Vintage to confirm new cohorts aren't decaying faster than old ones. Exports the PQR for board packs.</p>
+          <div class="tags"><span class="tag">Overview</span><span class="tag">Vintage</span><span class="tag">PQR export</span></div>
+        </div>
+        <div class="card">
+          <div class="label">Persona</div>
+          <h4>Risk Analyst</h4>
+          <p>Lives in Delinquency, Collections, and Vintage. Uses the heatmaps to find the bucket / cohort that's slipping, then drills into the PQR's roll-rate and vintage sheets for the underlying numbers.</p>
+          <div class="tags"><span class="tag">Delinquency</span><span class="tag">Collections</span><span class="tag">Roll Rates sheet</span></div>
+        </div>
+        <div class="card">
+          <div class="label">Persona</div>
+          <h4>Product Analyst</h4>
+          <p>Starts on Products and Origination — which SKU is converting, what's the average ticket, which products carry the worst non-starter rate. PQR's Product Metrics &amp; LOS sheets feed product reviews.</p>
+          <div class="tags"><span class="tag">Products</span><span class="tag">Origination</span><span class="tag">Non-Starters</span></div>
+        </div>
+        <div class="card">
+          <div class="label">Persona</div>
+          <h4>Credit Policy Owner</h4>
+          <p>TDD, Risk Analytics, Approved / Rejected Base. Confirms accepted population matches the policy band and that rejection reasons are concentrated where expected.</p>
+          <div class="tags"><span class="tag">TDD</span><span class="tag">Risk Analytics</span><span class="tag">Approved &amp; Rejected Base</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── SLIDE 14: CLOSE ─────────────────────── -->
+  <section class="slide title-slide">
+    <div class="eyebrow"><span class="pulse"></span>Recap</div>
+    <h1 style="font-size: 72px;">One tab.<br/>Nine views.<br/>One report.</h1>
+    <p class="lede">Consumer Finance is the deepest analytical surface in Avalora. The dashboard answers <em>what's happening</em> in the portfolio right now; the fourteen-sheet PQR provides the auditable, offline counterpart — same queries, same scope, same truth.</p>
+    <div class="meta">
+      <span><strong>Dashboard</strong><code>src/components/views/consumer/</code></span>
+      <span><strong>Queries</strong><code>src/lib/queries/consumer.ts</code></span>
+      <span><strong>PQR</strong><code>src/lib/excel/consumer-pqr.ts</code></span>
+    </div>
+  </section>
+
+</div>
+
+<!-- ── Controls ────────────────────────────────── -->
+<div class="dots" id="dots"></div>
+<div class="controls">
+  <button id="prev" aria-label="Previous">‹</button>
+  <span class="counter" id="counter">01 / 14</span>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let idx = 0;
+
+  const counter = document.getElementById('counter');
+  const bar = document.getElementById('progressBar');
+  const dotsWrap = document.getElementById('dots');
+
+  // Build dot navigation
+  slides.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.className = 'dot-btn' + (i === 0 ? ' active' : '');
+    b.setAttribute('aria-label', `Slide ${i + 1}`);
+    b.addEventListener('click', () => go(i));
+    dotsWrap.appendChild(b);
+  });
+  const dotBtns = dotsWrap.querySelectorAll('.dot-btn');
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function go(n) {
+    if (n < 0 || n >= total || n === idx) return;
+    const dir = n > idx ? 1 : -1;
+    slides[idx].classList.remove('active');
+    if (dir === 1) slides[idx].classList.add('prev');
+    else slides[idx].classList.remove('prev');
+    idx = n;
+    slides[idx].classList.remove('prev');
+    slides[idx].classList.add('active');
+    counter.textContent = `${pad(idx + 1)} / ${pad(total)}`;
+    bar.style.width = `${((idx + 1) / total) * 100}%`;
+    dotBtns.forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
+
+  document.getElementById('prev').addEventListener('click', () => go(idx - 1));
+  document.getElementById('next').addEventListener('click', () => go(idx + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(idx - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(total - 1);
+  });
+
+  // Initialize progress bar
+  bar.style.width = `${(1 / total) * 100}%`;
+  counter.textContent = `01 / ${pad(total)}`;
+</script>
+
+</body>
+</html>
