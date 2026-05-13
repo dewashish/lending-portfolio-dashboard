@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Avalora Portfolio Monitor · Cheat Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4efe2;
+    --paper: #ffffff;
+    --paper-2: #fbf8ee;
+    --paper-3: #f0eadb;
+    --ink: #15140f;
+    --ink-2: #2c2a22;
+    --muted: #58554a;
+    --faint: #918b78;
+    --line: #ddd6c0;
+    --line-2: #c5bca0;
+    --rule: #312d22;
+    --accent: #1f3b6b;
+    --accent-2: #355e94;
+    --accent-soft: #e9eff8;
+    --accent-line: #b9c8e2;
+    --sienna: #7b3a16;
+    --sienna-soft: #f5ede4;
+    --green: #2c5a3a;
+    --green-soft: #ecf2eb;
+    --amber: #93571a;
+    --amber-soft: #f3eadb;
+    --plum: #5f2f60;
+    --plum-soft: #f0e9f0;
+    --teal: #155e6b;
+    --teal-soft: #e3eef0;
+    --red: #8a2e2e;
+    --red-soft: #f3e6e6;
+
+    --c-go: #00897b;
+    --c-cf: #2196f3;
+    --c-tf: #9c27b0;
+    --c-cp: #ff9800;
+    --c-rc: #f44336;
+    --c-fo: #009688;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+    line-height: 1.45;
+  }
+
+  /* ── Background ─────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image:
+      radial-gradient(1500px 1000px at -10% -5%, rgba(31,59,107,0.08), transparent 60%),
+      radial-gradient(1200px 800px at 110% 30%, rgba(123,58,22,0.06), transparent 60%),
+      radial-gradient(1100px 900px at 50% 110%, rgba(45,90,58,0.05), transparent 60%);
+    animation: bg-drift 30s ease-in-out infinite alternate;
+  }
+  @keyframes bg-drift {
+    0%, 100% { background-position: 0% 0%, 100% 30%, 50% 100%; }
+    50%      { background-position: 6% -4%, 94% 36%, 56% 96%; }
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(31,59,107,0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.5;
+  }
+
+  /* ── Typography ─────────────────────────────── */
+  em.italic { font-style: italic; font-variation-settings: 'opsz' 144, 'SOFT' 100; }
+
+  /* ── Page layout ────────────────────────────── */
+  .page {
+    width: 100vw;
+    height: 100vh;
+    padding: 1.4vh 1.6vw;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.8vh;
+  }
+
+  /* ── Header ─────────────────────────────────── */
+  header.top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.4rem 0.6rem 0.6rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .brand .mark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 7px;
+    background: var(--rule);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 1.2rem;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    position: relative;
+    overflow: hidden;
+  }
+  .brand .mark::after {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
+    animation: shimmer 5s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { transform: translateX(-100%); }
+    50%      { transform: translateX(100%); }
+  }
+  .brand .name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .brand .name span {
+    color: var(--faint);
+    font-weight: 400;
+    margin-left: 0.4rem;
+    font-size: 0.78rem;
+  }
+  .title-center {
+    text-align: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .header-meta .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--green);
+  }
+  .header-meta .live .pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%   { box-shadow: 0 0 0 0 rgba(44,90,58,0.55); }
+    70%  { box-shadow: 0 0 0 9px rgba(44,90,58,0); }
+    100% { box-shadow: 0 0 0 0 rgba(44,90,58,0); }
+  }
+
+  .header-meta .hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--faint);
+  }
+  .header-meta .hint .key {
+    display: inline-block;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--line-2);
+    border-radius: 4px;
+    background: var(--paper-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  /* ── Main grid ──────────────────────────────── */
+  main.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    gap: 0.7vh 0.6vw;
+    min-height: 0;
+    position: relative;
+    grid-template-areas:
+      "h h h h h h h a a a a a"
+      "h h h h h h h a a a a a"
+      "m1 m1 m2 m2 m3 m3 m4 m4 m5 m5 m6 m6"
+      "c1 c1 c2 c2 c3 c3 b1 b1 b2 b2 b3 b3"
+      "c4 c4 c5 c5 c6 c6 b4 b4 b5 b5 b6 b6"
+      "p1 p1 p1 p2 p2 p2 p3 p3 p3 p4 p4 p4"
+      "r1 r1 r1 r2 r2 r2 r3 r3 r3 r4 r4 r4";
+  }
+
+  /* ── Slot wrapper keeps grid positions ──────── */
+  .slot { min-width: 0; min-height: 0; position: relative; }
+
+  /* ── Tile base ──────────────────────────────── */
+  .tile {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition:
+      transform 320ms cubic-bezier(.22,.61,.36,1),
+      box-shadow 320ms cubic-bezier(.22,.61,.36,1),
+      border-color 240ms,
+      opacity 320ms;
+    overflow: hidden;
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 10px 24px -14px rgba(0,0,0,0.12);
+    border-color: var(--line-2);
+  }
+  .tile::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(31,59,107,0.05), transparent 60%);
+    opacity: 0;
+    transition: opacity 350ms;
+    pointer-events: none;
+  }
+  .tile:hover::after { opacity: 1; }
+
+  .tile .ico {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+    transition: transform 300ms cubic-bezier(.22,.61,.36,1);
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    flex-shrink: 0;
+  }
+  .tile:hover .ico { transform: rotate(-4deg) scale(1.06); }
+
+  .tile .ttl {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--ink);
+    line-height: 1.1;
+    letter-spacing: -0.005em;
+    margin-bottom: 0.18rem;
+  }
+  .tile .tagline {
+    font-size: 0.7rem;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .tile .lbl {
+    font-size: 0.56rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .tile .top-accent {
+    position: absolute;
+    top: 0; left: 0.8rem;
+    height: 3px;
+    width: 2rem;
+    background: var(--accent);
+    border-radius: 0 0 3px 3px;
+    transform-origin: left;
+    transform: scaleX(0.55);
+    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+  }
+  .tile:hover .top-accent { transform: scaleX(1); }
+
+  /* Per-module accent colours */
+  .tile.go .top-accent { background: var(--c-go); }
+  .tile.cf .top-accent { background: var(--c-cf); }
+  .tile.tf .top-accent { background: var(--c-tf); }
+  .tile.cp .top-accent { background: var(--c-cp); }
+  .tile.rc .top-accent { background: var(--c-rc); }
+  .tile.fo .top-accent { background: var(--c-fo); }
+  .tile.go .ico { background: rgba(0,137,123,0.10); border-color: rgba(0,137,123,0.30); color: var(--c-go); }
+  .tile.cf .ico { background: rgba(33,150,243,0.10); border-color: rgba(33,150,243,0.30); color: var(--c-cf); }
+  .tile.tf .ico { background: rgba(156,39,176,0.10); border-color: rgba(156,39,176,0.30); color: var(--c-tf); }
+  .tile.cp .ico { background: rgba(255,152,0,0.10); border-color: rgba(255,152,0,0.30); color: var(--c-cp); }
+  .tile.rc .ico { background: rgba(244,67,54,0.10); border-color: rgba(244,67,54,0.30); color: var(--c-rc); }
+  .tile.fo .ico { background: rgba(0,150,136,0.10); border-color: rgba(0,150,136,0.30); color: var(--c-fo); }
+
+  /* Categories */
+  .tile.ctrl  .top-accent { background: var(--sienna); }
+  .tile.ctrl  .ico { background: var(--sienna-soft); border-color: #e3cdb2; color: var(--sienna); }
+  .tile.bene  .top-accent { background: var(--green); }
+  .tile.bene  .ico { background: var(--green-soft); border-color: #cad9c5; color: var(--green); }
+  .tile.pers  .top-accent { background: var(--plum); }
+  .tile.pers  .ico { background: var(--plum-soft); border-color: #d8c0d8; color: var(--plum); }
+  .tile.role  .top-accent { background: var(--accent); }
+  .tile.role  .ico { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+
+  /* ── Hero tile (no click expand, animated) ─── */
+  .tile.hero {
+    cursor: default;
+    background: linear-gradient(155deg, var(--paper) 0%, var(--paper-2) 60%, var(--accent-soft) 200%);
+    padding: 1rem 1.4rem 1rem;
+    overflow: hidden;
+  }
+  .tile.hero:hover { transform: none; box-shadow: none; }
+  .tile.hero::after { display: none; }
+  .tile.hero .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+  .tile.hero .eyebrow::before {
+    content: '';
+    width: 1.6rem;
+    height: 1px;
+    background: var(--accent);
+    animation: line-grow 1.6s cubic-bezier(.22,.61,.36,1) 0.2s both;
+    transform-origin: left;
+  }
+  @keyframes line-grow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+  .tile.hero h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
+    font-weight: 500;
+    font-size: clamp(2rem, 3.2vw, 3.2rem);
+    line-height: 0.97;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.7rem;
+    max-width: 24ch;
+  }
+  .tile.hero h1 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .tile.hero h1 .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.35em);
+    animation: word-rise 800ms cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes word-rise { to { opacity: 1; transform: translateY(0); } }
+  .tile.hero .lede {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.45;
+    max-width: 50ch;
+    margin-bottom: 0.8rem;
+  }
+  .tile.hero .lede em {
+    color: var(--ink);
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+  }
+  .tile.hero .marquee {
+    margin-top: auto;
+    padding: 0.45rem 0;
+    border-top: 1px solid var(--line);
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+    position: relative;
+  }
+  .tile.hero .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 45s linear infinite;
+    gap: 2.4rem;
+  }
+  .tile.hero .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 18;
+    font-weight: 500;
+    color: var(--ink);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+  .tile.hero .marquee-item em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 18, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .tile.hero .marquee-item .sep {
+    color: var(--sienna);
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-size: 1rem;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ── AI tile (featured) ─────────────────────── */
+  .tile.ai {
+    background: linear-gradient(135deg, var(--paper) 0%, var(--accent-soft) 200%);
+    border-color: var(--accent-line);
+    padding: 1rem 1.2rem 1.1rem;
+    overflow: hidden;
+  }
+  .tile.ai::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(31,59,107,0.14), transparent 70%);
+    animation: orbit 14s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes orbit {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(-15px, 15px); }
+  }
+  .tile.ai .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    align-self: flex-start;
+  }
+  .tile.ai .pill::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #84d3a0;
+    animation: pulse-mini 1.8s infinite;
+  }
+  @keyframes pulse-mini {
+    0%   { box-shadow: 0 0 0 0 rgba(132,211,160,0.7); }
+    70%  { box-shadow: 0 0 0 7px rgba(132,211,160,0); }
+    100% { box-shadow: 0 0 0 0 rgba(132,211,160,0); }
+  }
+  .tile.ai h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 48, 'SOFT' 50;
+    font-weight: 500;
+    font-size: 1.4rem;
+    line-height: 1.05;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.012em;
+  }
+  .tile.ai h3 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 48, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .tile.ai .desc {
+    font-size: 0.76rem;
+    color: var(--muted);
+    line-height: 1.45;
+    margin-bottom: 0.55rem;
+  }
+  .tile.ai .feats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.18rem 0.4rem;
+    margin-top: auto;
+  }
+  .tile.ai .feats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .tile.ai .feats span::before {
+    content: '';
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ── Persona tile ───────────────────────────── */
+  .tile.pers {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .tile.pers .avatar {
+    width: 2.2rem; height: 2.2rem;
+    border-radius: 50%;
+    background: var(--plum-soft);
+    border: 1px solid #d8c0d8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 1.05rem;
+    color: var(--plum);
+    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+    grid-row: span 2;
+    margin-bottom: 0;
+  }
+  .tile.pers:hover .avatar { transform: scale(1.07) rotate(-4deg); }
+  .tile.pers .role-tag {
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--plum);
+    font-weight: 600;
+  }
+  .tile.pers .ttl { margin-bottom: 0.1rem; }
+  .tile.pers .tagline { grid-column: 2; font-size: 0.7rem; }
+
+  /* ── Role tile ──────────────────────────────── */
+  .tile.role {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .tile.role .badge {
+    width: 2.2rem; height: 2.2rem;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 1.1rem;
+    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+    grid-row: span 2;
+  }
+  .tile.role:hover .badge { transform: scale(1.07) rotate(4deg); }
+  .tile.role.amber .badge { background: var(--amber); }
+  .tile.role.green .badge { background: var(--green); }
+  .tile.role.plum  .badge { background: var(--plum); }
+  .tile.role .ttl { margin-bottom: 0.1rem; }
+  .tile.role .role-tag {
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .tile.role.amber .role-tag { color: var(--amber); }
+  .tile.role.green .role-tag { color: var(--green); }
+  .tile.role.plum  .role-tag { color: var(--plum); }
+  .tile.role .tagline { grid-column: 2; font-size: 0.7rem; }
+
+  /* ── Detail (hidden in compact, shown on expand) ─ */
+  .detail {
+    display: none;
+  }
+
+  /* ── Footer ─────────────────────────────────── */
+  footer.bot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.6rem 0.2rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.7rem;
+    color: var(--faint);
+  }
+  footer.bot .left { display: inline-flex; align-items: center; gap: 0.6rem; }
+  footer.bot .left .swatches {
+    display: inline-flex;
+    gap: 0.25rem;
+  }
+  footer.bot .swatches span {
+    display: inline-block;
+    width: 0.6rem; height: 0.6rem;
+    border-radius: 50%;
+  }
+  footer.bot .right {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--sienna);
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 500;
+  }
+
+  /* ── Grid area assignments ──────────────────── */
+  .a-hero { grid-area: h; }
+  .a-ai   { grid-area: a; }
+  .a-m1 { grid-area: m1; } .a-m2 { grid-area: m2; }
+  .a-m3 { grid-area: m3; } .a-m4 { grid-area: m4; }
+  .a-m5 { grid-area: m5; } .a-m6 { grid-area: m6; }
+  .a-c1 { grid-area: c1; } .a-c2 { grid-area: c2; } .a-c3 { grid-area: c3; }
+  .a-c4 { grid-area: c4; } .a-c5 { grid-area: c5; } .a-c6 { grid-area: c6; }
+  .a-b1 { grid-area: b1; } .a-b2 { grid-area: b2; } .a-b3 { grid-area: b3; }
+  .a-b4 { grid-area: b4; } .a-b5 { grid-area: b5; } .a-b6 { grid-area: b6; }
+  .a-p1 { grid-area: p1; } .a-p2 { grid-area: p2; }
+  .a-p3 { grid-area: p3; } .a-p4 { grid-area: p4; }
+  .a-r1 { grid-area: r1; } .a-r2 { grid-area: r2; }
+  .a-r3 { grid-area: r3; } .a-r4 { grid-area: r4; }
+
+  /* ── Expanded state ─────────────────────────── */
+  body.modal-open .slot .tile:not(.expanded) {
+    opacity: 0.35;
+    transform: scale(0.97);
+    pointer-events: none;
+  }
+  body.modal-open .tile.hero,
+  body.modal-open .tile.ai:not(.expanded) {
+    opacity: 0.35;
+    transform: scale(0.97);
+  }
+
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(244, 239, 226, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 320ms ease;
+    z-index: 50;
+  }
+  body.modal-open .backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .tile.expanded {
+    z-index: 100;
+    cursor: default;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 30px 60px -20px rgba(0,0,0,0.25);
+    padding: 1.6rem 1.8rem 1.8rem;
+    overflow: auto;
+    display: block !important;
+  }
+  .tile.expanded:hover { transform: none; }
+  .tile.expanded::after { display: none; }
+  .tile.expanded .top-accent { transform: scaleX(1); height: 4px; width: 3rem; }
+
+  .tile.expanded .compact-only { display: none; }
+  .tile.expanded .detail {
+    display: block;
+    animation: detail-in 480ms 180ms cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes detail-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tile.expanded .exp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .tile.expanded .exp-head .left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .tile.expanded .exp-head .ico {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-bottom: 0;
+    font-size: 1.4rem;
+  }
+  .tile.expanded .exp-head h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 72, 'SOFT' 50;
+    font-weight: 500;
+    font-size: 1.8rem;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+  }
+  .tile.expanded .exp-head h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 72, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .tile.expanded .exp-head .meta {
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+  }
+  .tile.expanded .close-btn {
+    width: 2rem; height: 2rem;
+    border-radius: 50%;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 180ms, color 180ms, transform 180ms;
+  }
+  .tile.expanded .close-btn:hover {
+    background: var(--ink);
+    color: var(--bg);
+    transform: rotate(90deg);
+  }
+
+  .tile.expanded .exp-lede {
+    font-size: 1rem;
+    color: var(--ink-2);
+    line-height: 1.55;
+    margin-bottom: 1.1rem;
+    max-width: 56ch;
+  }
+  .tile.expanded .exp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.7rem;
+    margin-bottom: 1.1rem;
+  }
+  .tile.expanded .exp-item {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem 0.75rem;
+  }
+  .tile.expanded .exp-item .ihead {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+  }
+  .tile.expanded .exp-item p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .tile.expanded .exp-bullets {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+  }
+  .tile.expanded .exp-bullets li {
+    font-size: 0.88rem;
+    color: var(--ink-2);
+    padding-left: 1.4rem;
+    position: relative;
+    line-height: 1.5;
+  }
+  .tile.expanded .exp-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.8rem;
+    height: 1.5px;
+    background: var(--accent);
+  }
+  .tile.expanded .exp-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding-top: 0.8rem;
+    border-top: 1px dashed var(--line);
+  }
+  .tile.expanded .exp-foot .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    padding: 0.15rem 0.5rem;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    border-radius: 4px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .tile.expanded .exp-foot .chip.s {
+    background: var(--sienna-soft);
+    border-color: #e3cdb2;
+    color: var(--sienna);
+  }
+  .tile.expanded .exp-foot .chip.g {
+    background: var(--green-soft);
+    border-color: #cad9c5;
+    color: var(--green);
+  }
+
+  /* ── Body modal-open overrides ──────────────── */
+  body.modal-open { overflow: hidden; }
+
+  /* ── Reduce motion ──────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop" id="backdrop"></div>
+
+<div class="page">
+
+  <!-- ─── Top header ─── -->
+  <header class="top">
+    <div class="brand">
+      <span class="mark">A</span>
+      <div class="name">Avalora Portfolio Monitor <span>Cheat Sheet</span></div>
+    </div>
+    <div class="title-center">One workspace for credit risk, across every subsidiary.</div>
+    <div class="header-meta">
+      <span class="live"><span class="pulse"></span> Live</span>
+      <span class="hint">Click any tile <span class="key">⌃</span></span>
+    </div>
+  </header>
+
+  <!-- ─── Main grid ─── -->
+  <main class="grid">
+
+    <!-- HERO -->
+    <div class="slot a-hero">
+      <div class="tile hero" data-static>
+        <div class="eyebrow">Lending Portfolio Intelligence</div>
+        <h1>
+          <span class="word" style="animation-delay:0.05s;">One</span>
+          <span class="word" style="animation-delay:0.15s;">workspace</span>
+          <span class="word" style="animation-delay:0.25s;">for</span>
+          <span class="word" style="animation-delay:0.35s;"><em>credit risk</em>,</span>
+          <span class="word" style="animation-delay:0.45s;">across</span>
+          <span class="word" style="animation-delay:0.55s;">every</span>
+          <span class="word" style="animation-delay:0.65s;">subsidiary.</span>
+        </h1>
+        <p class="lede">Live risk analytics, an <em>AI assistant</em>, and configurable risk-appetite thresholds in a single place. The same data risk teams have always worked with, now <em>interactive, queryable, auditable</em>.</p>
+        <div class="marquee">
+          <div class="marquee-track">
+            <span class="marquee-item">Live portfolio quality</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Scope-aware roll-ups</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item"><em>AI</em> portfolio queries</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">One-click report export</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Risk-appetite tracking</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Breach alerts</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Vintage analytics</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Audit trail end to end</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Live portfolio quality</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Scope-aware roll-ups</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item"><em>AI</em> portfolio queries</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">One-click report export</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Risk-appetite tracking</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Breach alerts</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Vintage analytics</span>
+            <span class="marquee-item sep">~</span>
+            <span class="marquee-item">Audit trail end to end</span>
+            <span class="marquee-item sep">~</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="slot a-ai">
+      <div class="tile ai" data-expand>
+        <div class="compact-only">
+          <span class="pill">AI Model · Always on</span>
+          <h3>Ask the portfolio <em>in plain language</em>.</h3>
+          <p class="desc">Natural-language access to live portfolio context. The assistant builds context from across the data layer and answers in plain language.</p>
+          <div class="feats">
+            <span>Scope-aware</span>
+            <span>Multi-domain context</span>
+            <span>Streaming output</span>
+            <span>Copy-ready markdown</span>
+          </div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">∗</div>
+              <h2>The <em>AI assistant</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">A panel that takes natural-language questions about the portfolio. It pulls live data from across consumer, trade, corporate, and risk domains in parallel, assembles a structured context, and streams a markdown answer using the same numbers the dashboard surfaces visually.</p>
+          <ul class="exp-bullets">
+            <li>Reads the active scope (group, region, subsidiary) and the active product filter before answering.</li>
+            <li>Returns formatted markdown with copy-to-clipboard for board packs and chat summaries.</li>
+            <li>No SQL, no filter chains. The same questions a CRO would ask a junior analyst.</li>
+            <li>Live data on every query — never serves a stale cached answer.</li>
+          </ul>
+          <div class="exp-grid">
+            <div class="exp-item"><div class="ihead">Example</div><p>"What is the current non-performing ratio and how has it moved over the last quarter?"</p></div>
+            <div class="exp-item"><div class="ihead">Example</div><p>"Show me the top obligors by exposure with their early-warning scores."</p></div>
+            <div class="exp-item"><div class="ihead">Example</div><p>"How did the most recent vintage age compared with the prior three cohorts?"</p></div>
+            <div class="exp-item"><div class="ihead">Example</div><p>"Which sectors are above the appetite line on concentration?"</p></div>
+          </div>
+          <div class="exp-foot">
+            <span class="chip">Live data</span>
+            <span class="chip">Scope-aware</span>
+            <span class="chip">Streaming markdown</span>
+            <span class="chip s">Always on</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MODULES ─── -->
+    <div class="slot a-m1">
+      <div class="tile go" data-expand>
+        <div class="top-accent"></div>
+        <div class="compact-only">
+          <div class="ico">⌂</div>
+          <div class="ttl">Group overview</div>
+          <div class="tagline">Consolidated KPIs, breach panel, scorecard.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⌂</div>
+              <h2>Group <em>overview</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">A consolidated view across every subsidiary and business line. Designed for senior risk roles to land, scan, and act.</p>
+          <ul class="exp-bullets">
+            <li>Headline KPIs with sparkline trends across the full portfolio.</li>
+            <li>Breach alert panel surfacing tolerance and appetite violations.</li>
+            <li>Subsidiary risk heatmap covering delinquency, watchlist, early warning, FX, country, and provision dimensions.</li>
+            <li>Consolidated scorecard with currency-normalised group totals.</li>
+            <li>Trend grid with sparklines per business line.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Strategic view</span>
+            <span class="chip">CRO landing page</span>
+            <span class="chip">Group-level roll-ups</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-m2">
+      <div class="tile cf" data-expand>
+        <div class="top-accent"></div>
+        <div class="compact-only">
+          <div class="ico">⊙</div>
+          <div class="ttl">Consumer lending</div>
+          <div class="tagline">Retail loans, end to end.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⊙</div>
+              <h2>Consumer <em>lending</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Retail unsecured and secured lending, end to end. The deepest analytical surface in the platform, covering everything from application through to write-off and recovery.</p>
+          <ul class="exp-bullets">
+            <li>DPD bucket distribution and roll-rate heatmaps.</li>
+            <li>Multi-stage origination funnel with daily disbursement trends.</li>
+            <li>Vintage curves and cohort progression by months-on-book.</li>
+            <li>Through-the-door bureau analytics, pre and post disbursal.</li>
+            <li>Non-starter detection — loans that never made a first payment.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Most-used module</span>
+            <span class="chip">Risk analyst home</span>
+            <span class="chip">Vintage + collections</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-m3">
+      <div class="tile tf" data-expand>
+        <div class="top-accent"></div>
+        <div class="compact-only">
+          <div class="ico">⌖</div>
+          <div class="ttl">Trade finance</div>
+          <div class="tagline">Documentary &amp; contingent exposures.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⌖</div>
+              <h2>Trade <em>finance</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Facility-level monitoring for documentary and contingent trade exposures. Built around the concentration and counterparty questions trade teams answer most often.</p>
+          <ul class="exp-bullets">
+            <li>Obligor and sector concentration with portfolio share treemap.</li>
+            <li>Watchlist of facilities with early-warning scores and trigger reasons.</li>
+            <li>Stage migration sankey and risk radar by score band.</li>
+            <li>Macro and country-risk overlays affecting the trade book.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Facility-level</span>
+            <span class="chip">Counterparty focus</span>
+            <span class="chip">Macro overlay</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-m4">
+      <div class="tile cp" data-expand>
+        <div class="top-accent"></div>
+        <div class="compact-only">
+          <div class="ico">▣</div>
+          <div class="ttl">Corporate credit</div>
+          <div class="tagline">Limits, collateral, covenants.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">▣</div>
+              <h2>Corporate <em>credit</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Limits, utilisation, collateral, ratings, and covenants in one workspace. For relationship managers and corporate credit risk, with drill-down at every level.</p>
+          <ul class="exp-bullets">
+            <li>Sanctioned, disbursed, and outstanding views with utilisation ratios.</li>
+            <li>Industry concentration with drill-through to sector detail.</li>
+            <li>Collateral coverage donut and loan-to-value bands.</li>
+            <li>Covenant compliance matrix with category breakdown.</li>
+            <li>Maturity profile and provisioning by stage.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Limit utilisation</span>
+            <span class="chip">Industry view</span>
+            <span class="chip">Covenant tracker</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-m5">
+      <div class="tile rc" data-expand>
+        <div class="top-accent"></div>
+        <div class="compact-only">
+          <div class="ico">◬</div>
+          <div class="ttl">Risk &amp; concentrations</div>
+          <div class="tagline">Single-name, sector, currency, country.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">◬</div>
+              <h2>Risk &amp; <em>concentrations</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Cross-portfolio risk signals. Surfaces where concentration, currency, and country risk are accumulating beyond appetite.</p>
+          <ul class="exp-bullets">
+            <li>Early-warning radar with score bands across the portfolio.</li>
+            <li>Single-name and sector concentration with portfolio share.</li>
+            <li>Currency volatility (30-day and 90-day) and year-to-date depreciation.</li>
+            <li>Sovereign rating and composite country risk score.</li>
+            <li>Capital impact estimation by jurisdiction.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Cross-portfolio</span>
+            <span class="chip">Early-warning radar</span>
+            <span class="chip">Country &amp; FX</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-m6">
+      <div class="tile fo" data-expand>
+        <div class="top-accent"></div>
+        <div class="compact-only">
+          <div class="ico">↗</div>
+          <div class="ttl">Forward outlook</div>
+          <div class="tagline">Loss forecast &amp; scenarios.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">↗</div>
+              <h2>Forward <em>outlook</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Forward-looking expected loss, scenario analysis, and management action playbooks. Designed for stress testing, board reporting, and capital planning conversations.</p>
+          <ul class="exp-bullets">
+            <li>Forecast loss and provision coverage projection.</li>
+            <li>Stress heatmap with driver drill-down (macro, portfolio, collections, provisioning, capital).</li>
+            <li>Scenario engine with rating migration, vintage forecast, sensitivity tornado.</li>
+            <li>Macro early-warning leading indicators with lead-lag relationships.</li>
+            <li>Action playbook cards organised by category.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Forward-looking</span>
+            <span class="chip">Scenarios &amp; stress</span>
+            <span class="chip">Action playbooks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CONTROLS ─── -->
+    <div class="slot a-c1">
+      <div class="tile ctrl" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Oversight</div>
+        <div class="compact-only">
+          <div class="ico">◇</div>
+          <div class="ttl">Role-based access</div>
+          <div class="tagline">Scoped visibility per role.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">◇</div>
+              <h2>Role-based <em>access</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Different roles see different surfaces. Read access is scoped per role; administrative actions are restricted to authorised users only.</p>
+          <ul class="exp-bullets">
+            <li>Profile and role enforced at the data layer through row-level security policies.</li>
+            <li>Administrative actions require an additional confirmation step.</li>
+            <li>Read-only audit visibility for compliance and observer roles.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip s">Oversight</span>
+            <span class="chip">Per-role surfaces</span>
+            <span class="chip">Data-layer enforced</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-c2">
+      <div class="tile ctrl" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Oversight</div>
+        <div class="compact-only">
+          <div class="ico">⌬</div>
+          <div class="ttl">Secure session</div>
+          <div class="tagline">Signed, time-limited.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⌬</div>
+              <h2>Secure <em>session</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Time-limited sessions secured with cryptographically signed tokens. Constant-time secret comparison protects shared links from leaking through timing.</p>
+          <ul class="exp-bullets">
+            <li>Signed JWT-style session tokens with expiry.</li>
+            <li>Magic-link entry for senior roles, with HMAC-based token check.</li>
+            <li>Service-role credentials never leave the server.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip s">Oversight</span>
+            <span class="chip">Signed tokens</span>
+            <span class="chip">Constant-time check</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-c3">
+      <div class="tile ctrl" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Oversight</div>
+        <div class="compact-only">
+          <div class="ico">△</div>
+          <div class="ttl">Appetite registry</div>
+          <div class="tagline">Configurable thresholds.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">△</div>
+              <h2>Risk-appetite <em>registry</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Configurable tolerance and appetite limits per metric. Resolvable by group, region, subsidiary, business line, and product. Drives the RAG indicators across the dashboard.</p>
+          <ul class="exp-bullets">
+            <li>Thresholds editable by administrators only, behind a confirmation gate.</li>
+            <li>Scope-aware resolution returns the most specific applicable limit.</li>
+            <li>RAG status applied uniformly across charts, scorecards, and breach panels.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip s">Oversight</span>
+            <span class="chip">RAG indicators</span>
+            <span class="chip">Scope-aware</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-c4">
+      <div class="tile ctrl" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Oversight</div>
+        <div class="compact-only">
+          <div class="ico">✓</div>
+          <div class="ttl">Validated ingest</div>
+          <div class="tagline">Schema-checked, currency-normalised.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">✓</div>
+              <h2>Validated <em>ingest</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Every incoming feed is schema-validated, currency-normalised, and audit-logged before it touches the data store. Bad payloads are rejected outright, not silently coerced.</p>
+          <ul class="exp-bullets">
+            <li>API-key authentication on every ingest endpoint.</li>
+            <li>Strict typed validation rejects malformed data on arrival.</li>
+            <li>FX conversion applied so group totals can be computed in a common currency.</li>
+            <li>Replayable logs let any feed be re-processed without source-system involvement.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip s">Oversight</span>
+            <span class="chip">Strict validation</span>
+            <span class="chip">Replayable</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-c5">
+      <div class="tile ctrl" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Oversight</div>
+        <div class="compact-only">
+          <div class="ico">∑</div>
+          <div class="ttl">Correct roll-ups</div>
+          <div class="tagline">Weighted for rates, summed for cash.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">∑</div>
+              <h2>Aggregation <em>rigour</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Rate metrics are weighted by exposure across subsidiaries. Monetary metrics are summed in a common currency. The rule is encoded in one place so every surface behaves identically.</p>
+          <ul class="exp-bullets">
+            <li>Single source of truth for aggregation logic — no spreadsheet drift.</li>
+            <li>Same rule applied across dashboard, AI assistant, and exported reports.</li>
+            <li>Eliminates the manual reconciliation that used to slow down month-end.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip s">Oversight</span>
+            <span class="chip">Weighted averages</span>
+            <span class="chip">Single source of truth</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-c6">
+      <div class="tile ctrl" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Oversight</div>
+        <div class="compact-only">
+          <div class="ico">⌽</div>
+          <div class="ttl">Health monitoring</div>
+          <div class="tagline">Freshness, errors, ingest status.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⌽</div>
+              <h2>Health <em>monitoring</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">A data-status surface shows freshness per source, the last successful ingest, and any validation failures still outstanding. Client and server errors are captured continuously.</p>
+          <ul class="exp-bullets">
+            <li>Per-source data-freshness indicators visible to all readers.</li>
+            <li>Validation failures attached to the source and the upload time.</li>
+            <li>Error-capture pipeline for client and server-side issues.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip s">Oversight</span>
+            <span class="chip">Freshness</span>
+            <span class="chip">Error capture</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── BENEFITS ─── -->
+    <div class="slot a-b1">
+      <div class="tile bene" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Benefit</div>
+        <div class="compact-only">
+          <div class="ico">↻</div>
+          <div class="ttl">Month-end speed</div>
+          <div class="tagline">Days of work, now one click.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">↻</div>
+              <h2>Month-end <em>speed</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Compiling the portfolio quality pack for a board meeting used to take two to three working days. Now it's a one-click export from the live data, with the same structure the workbook always had.</p>
+          <ul class="exp-bullets">
+            <li>No manual copy-paste between subsidiary files.</li>
+            <li>No re-keying of currency conversions.</li>
+            <li>The exported workbook matches the dashboard, line for line.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip g">Benefit</span>
+            <span class="chip">Time saved</span>
+            <span class="chip">One-click export</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-b2">
+      <div class="tile bene" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Benefit</div>
+        <div class="compact-only">
+          <div class="ico">⇆</div>
+          <div class="ttl">Scope switch</div>
+          <div class="tagline">Group, region, or one entity.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⇆</div>
+              <h2>Instant <em>scope switch</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">A single control swaps the entire view between group, region, and subsidiary. Every chart, every KPI, every export updates against the selected scope.</p>
+          <ul class="exp-bullets">
+            <li>No need to maintain separate workbooks per entity.</li>
+            <li>Regional managers see only their region, executives see the whole group.</li>
+            <li>Filters carry through into the AI assistant and the exported reports.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip g">Benefit</span>
+            <span class="chip">Three scopes</span>
+            <span class="chip">One control</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-b3">
+      <div class="tile bene" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Benefit</div>
+        <div class="compact-only">
+          <div class="ico">?</div>
+          <div class="ttl">Ask, don't dig</div>
+          <div class="tagline">Type the question, get the answer.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">?</div>
+              <h2>Ask, don't <em>dig</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">"What's our deep-delinquency on unsecured by subsidiary?" used to mean ten minutes of tab-flipping. Now the same question gets typed into the AI assistant and answered in seconds.</p>
+          <ul class="exp-bullets">
+            <li>Lowers the analytical barrier — anyone in the team can ask.</li>
+            <li>Frees specialist analysts to focus on the harder questions.</li>
+            <li>Output is markdown — paste into a chat or board pack as is.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip g">Benefit</span>
+            <span class="chip">Natural language</span>
+            <span class="chip">Self-service</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-b4">
+      <div class="tile bene" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Benefit</div>
+        <div class="compact-only">
+          <div class="ico">!</div>
+          <div class="ttl">Earlier signals</div>
+          <div class="tagline">Breaches surface the moment they happen.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">!</div>
+              <h2>Earlier breach <em>signals</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Tolerance and appetite indicators surface the moment a metric crosses a line. No more relying on the reader to remember the benchmark conventions.</p>
+          <ul class="exp-bullets">
+            <li>Breach panel highlights every red and amber threshold violation.</li>
+            <li>Pulse animation draws attention to active issues.</li>
+            <li>Drill-through from the breach to the underlying chart and table.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip g">Benefit</span>
+            <span class="chip">Real-time RAG</span>
+            <span class="chip">Auto-detect</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-b5">
+      <div class="tile bene" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Benefit</div>
+        <div class="compact-only">
+          <div class="ico">∑</div>
+          <div class="ttl">Correct totals</div>
+          <div class="tagline">No spreadsheet maths.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">∑</div>
+              <h2>Correct group <em>totals</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">No more spreadsheet maths to roll up subsidiary numbers. The platform applies the right aggregation rule for the right metric — exposure-weighted for rates, summed in a common currency for cash.</p>
+          <ul class="exp-bullets">
+            <li>Eliminates the most common source of reporting error.</li>
+            <li>Same numbers wherever the rolled-up figure appears.</li>
+            <li>Defensible in audit because the rule is documented and centralised.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip g">Benefit</span>
+            <span class="chip">Defensible</span>
+            <span class="chip">Centralised rule</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-b6">
+      <div class="tile bene" data-expand>
+        <div class="top-accent"></div>
+        <div class="lbl">Benefit</div>
+        <div class="compact-only">
+          <div class="ico">⚐</div>
+          <div class="ttl">Audit any number</div>
+          <div class="tagline">Trace back to the upload.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">⚐</div>
+              <h2>Audit any <em>number</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Every figure on the dashboard can be traced back to its originating upload, with the timestamp, the source system, and any validation issues that came with it.</p>
+          <ul class="exp-bullets">
+            <li>Dashboard → underlying table → ingest log → source feed.</li>
+            <li>Failed uploads remain visible, with their reasons attached.</li>
+            <li>Auditors can verify provenance without leaving the platform.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip g">Benefit</span>
+            <span class="chip">End-to-end trail</span>
+            <span class="chip">Audit-ready</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PERSONAS ─── -->
+    <div class="slot a-p1">
+      <div class="tile pers" data-expand>
+        <div class="avatar">α</div>
+        <div class="compact-only">
+          <div class="role-tag">Strategic</div>
+          <div class="ttl">Chief Risk Officer</div>
+          <div class="tagline">Scans headlines, drills into trends.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">α</div>
+              <h2>Chief Risk <em>Officer</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Lands on the consolidated overview, scans headline metrics, the breach panel, and the subsidiary heatmap. Drills into delinquency trends when a number deserves a second look. Exports the portfolio quality pack for board meetings.</p>
+          <ul class="exp-bullets">
+            <li>Group overview is the typical landing page.</li>
+            <li>Pays particular attention to stage 2+3 share and 30-plus DPD trend.</li>
+            <li>Uses the AI assistant to ask cross-portfolio questions before meetings.</li>
+            <li>Exports the full portfolio quality report for offline board distribution.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Strategic</span>
+            <span class="chip">Board reporting</span>
+            <span class="chip">Group overview</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-p2">
+      <div class="tile pers" data-expand>
+        <div class="avatar">β</div>
+        <div class="compact-only">
+          <div class="role-tag">Investigative</div>
+          <div class="ttl">Risk Analyst</div>
+          <div class="tagline">Lives in delinquency, collections, vintage.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">β</div>
+              <h2>Risk <em>Analyst</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Lives in delinquency, collections, and vintage. Uses the heatmaps to find the bucket or cohort that's slipping, then pulls the underlying detail for the write-up. The largest day-to-day user of the platform.</p>
+          <ul class="exp-bullets">
+            <li>Roll-rate heatmap and vintage curves are the most-visited views.</li>
+            <li>Uses the static-pool data to compare new origination cohorts against older ones.</li>
+            <li>Asks the AI assistant for cross-product comparisons.</li>
+            <li>Exports the consumer portfolio quality report for deeper analysis.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Investigative</span>
+            <span class="chip">Heatmaps &amp; vintage</span>
+            <span class="chip">Daily user</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-p3">
+      <div class="tile pers" data-expand>
+        <div class="avatar">γ</div>
+        <div class="compact-only">
+          <div class="role-tag">Operational</div>
+          <div class="ttl">Product Analyst</div>
+          <div class="tagline">Watches origination, products, conversion.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">γ</div>
+              <h2>Product <em>Analyst</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Starts on products and origination. Watches which lines are converting, what the average ticket size is, and which products carry the worst early-default rate. Their feedback shapes the next campaign or policy change.</p>
+          <ul class="exp-bullets">
+            <li>Origination funnel and daily disbursement trend are home base.</li>
+            <li>Compares product-level KPIs to identify drag and opportunity.</li>
+            <li>Uses non-starter analysis to flag origination quality issues fast.</li>
+            <li>Asks the AI assistant for which products fall outside policy bands.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Operational</span>
+            <span class="chip">Product KPIs</span>
+            <span class="chip">Early signals</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-p4">
+      <div class="tile pers" data-expand>
+        <div class="avatar">δ</div>
+        <div class="compact-only">
+          <div class="role-tag">Governance</div>
+          <div class="ttl">Credit Policy Owner</div>
+          <div class="tagline">Confirms the book matches policy.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">δ</div>
+              <h2>Credit Policy <em>Owner</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Reviews bureau analytics, approved and rejected populations, and rejection reasons. Confirms the accepted book matches the policy band and that rejection reasons are concentrated where expected.</p>
+          <ul class="exp-bullets">
+            <li>Through-the-door bureau distributions are the first stop.</li>
+            <li>Compares approved versus rejected base by amount and loan type.</li>
+            <li>Uses risk-grade and stage breakdowns to confirm portfolio shape.</li>
+            <li>Refers to the risk-appetite registry for policy reference.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">Governance</span>
+            <span class="chip">Bureau analytics</span>
+            <span class="chip">Policy band</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ROLES ─── -->
+    <div class="slot a-r1">
+      <div class="tile role" data-expand>
+        <div class="badge">A</div>
+        <div class="compact-only">
+          <div class="role-tag">Full control</div>
+          <div class="ttl">Administrator</div>
+          <div class="tagline">Manages thresholds &amp; access.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">A</div>
+              <h2><em>Administrator</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Manages thresholds, scope definitions, and user access. The only role permitted to edit appetite registry values. Administrative actions are gated by an additional confirmation step.</p>
+          <ul class="exp-bullets">
+            <li>Reads every surface, including audit and configuration.</li>
+            <li>Edits risk-appetite thresholds at every scope level.</li>
+            <li>Manages user provisioning, role assignment, and access scope.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">View all</span>
+            <span class="chip">Edit thresholds</span>
+            <span class="chip">Manage users</span>
+            <span class="chip">Read audit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-r2">
+      <div class="tile role plum" data-expand>
+        <div class="badge">R</div>
+        <div class="compact-only">
+          <div class="role-tag">Senior risk</div>
+          <div class="ttl">Risk Owner</div>
+          <div class="tagline">Full read &amp; export.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">R</div>
+              <h2>Risk <em>Owner</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Senior risk role with full read access and exporter privileges, including board packs and executive summaries. Cannot edit configuration directly — requests are routed to administrators.</p>
+          <ul class="exp-bullets">
+            <li>Full read across every module and scope.</li>
+            <li>Permission to export full portfolio quality reports.</li>
+            <li>Can submit threshold-change requests, but not apply them.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">View all</span>
+            <span class="chip">Export reports</span>
+            <span class="chip">Request changes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-r3">
+      <div class="tile role green" data-expand>
+        <div class="badge">A</div>
+        <div class="compact-only">
+          <div class="role-tag">Day-to-day</div>
+          <div class="ttl">Analyst</div>
+          <div class="tagline">Dashboards, AI, exports.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">A</div>
+              <h2><em>Analyst</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">The day-to-day user. Reads dashboards, uses the AI assistant, and exports portfolio quality reports for own analysis. The largest population of users.</p>
+          <ul class="exp-bullets">
+            <li>Full read access to all dashboard modules.</li>
+            <li>Can use the AI assistant within the active scope.</li>
+            <li>Permission to export reports for the scope they can see.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">View all</span>
+            <span class="chip">AI queries</span>
+            <span class="chip">Export reports</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot a-r4">
+      <div class="tile role amber" data-expand>
+        <div class="badge">V</div>
+        <div class="compact-only">
+          <div class="role-tag">Read-only</div>
+          <div class="ttl">Viewer &middot; Audit</div>
+          <div class="tagline">Full visibility, no modify.</div>
+        </div>
+        <div class="detail">
+          <div class="exp-head">
+            <div class="left">
+              <div class="ico">V</div>
+              <h2>Viewer &amp; <em>Audit</em>.</h2>
+            </div>
+            <button class="close-btn" data-close aria-label="Close">×</button>
+          </div>
+          <p class="exp-lede">Read-only access with full visibility of the data trail. Cannot modify configuration. Used for audit, compliance, and observer roles.</p>
+          <ul class="exp-bullets">
+            <li>Full read across the dashboard and supporting data.</li>
+            <li>Access to the audit log to verify any number to its source.</li>
+            <li>No write permissions anywhere in the platform.</li>
+          </ul>
+          <div class="exp-foot">
+            <span class="chip">View all</span>
+            <span class="chip">Read audit log</span>
+            <span class="chip">No writes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ─── Footer ─── -->
+  <footer class="bot">
+    <div class="left">
+      <span class="swatches">
+        <span style="background: var(--c-go);"></span>
+        <span style="background: var(--c-cf);"></span>
+        <span style="background: var(--c-tf);"></span>
+        <span style="background: var(--c-cp);"></span>
+        <span style="background: var(--c-rc);"></span>
+        <span style="background: var(--c-fo);"></span>
+      </span>
+      <span>Six modules · One workspace · One source of truth</span>
+    </div>
+    <div class="right">Decide sooner, with the same data.</div>
+  </footer>
+
+</div>
+
+<script>
+  // ── Pointer-follow glow ──
+  document.querySelectorAll('.tile').forEach(card => {
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    });
+  });
+
+  // ── Click to expand (FLIP-style) ──
+  let activeTile = null;
+  let originalRect = null;
+
+  function expand(tile) {
+    if (activeTile) collapse();
+
+    activeTile = tile;
+    originalRect = tile.getBoundingClientRect();
+
+    // Target dimensions
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetW = Math.min(vw * 0.7, 1100);
+    const targetH = Math.min(vh * 0.82, 720);
+    const targetX = (vw - targetW) / 2;
+    const targetY = (vh - targetH) / 2;
+
+    // Pin tile at current position
+    tile.style.position = 'fixed';
+    tile.style.top = originalRect.top + 'px';
+    tile.style.left = originalRect.left + 'px';
+    tile.style.width = originalRect.width + 'px';
+    tile.style.height = originalRect.height + 'px';
+    tile.style.zIndex = '100';
+
+    // Force reflow
+    void tile.offsetHeight;
+
+    // Animate to target
+    tile.style.transition =
+      'top 420ms cubic-bezier(.22,.61,.36,1), ' +
+      'left 420ms cubic-bezier(.22,.61,.36,1), ' +
+      'width 420ms cubic-bezier(.22,.61,.36,1), ' +
+      'height 420ms cubic-bezier(.22,.61,.36,1), ' +
+      'border-radius 320ms, padding 320ms, box-shadow 320ms';
+    tile.style.top = targetY + 'px';
+    tile.style.left = targetX + 'px';
+    tile.style.width = targetW + 'px';
+    tile.style.height = targetH + 'px';
+
+    tile.classList.add('expanded');
+    document.body.classList.add('modal-open');
+  }
+
+  function collapse() {
+    if (!activeTile || !originalRect) return;
+    const tile = activeTile;
+
+    // Animate back to original rect (which is still in the same screen space)
+    const slot = tile.closest('.slot');
+    const slotRect = slot.getBoundingClientRect();
+    tile.style.top = slotRect.top + 'px';
+    tile.style.left = slotRect.left + 'px';
+    tile.style.width = slotRect.width + 'px';
+    tile.style.height = slotRect.height + 'px';
+
+    tile.classList.remove('expanded');
+    document.body.classList.remove('modal-open');
+
+    // After animation, reset inline styles so tile returns to grid flow
+    const finish = () => {
+      tile.style.position = '';
+      tile.style.top = '';
+      tile.style.left = '';
+      tile.style.width = '';
+      tile.style.height = '';
+      tile.style.zIndex = '';
+      tile.style.transition = '';
+      tile.removeEventListener('transitionend', finish);
+    };
+    tile.addEventListener('transitionend', finish, { once: true });
+
+    activeTile = null;
+    originalRect = null;
+  }
+
+  document.querySelectorAll('[data-expand]').forEach(tile => {
+    tile.addEventListener('click', (e) => {
+      if (e.target.closest('[data-close]')) return;
+      if (tile.classList.contains('expanded')) return;
+      expand(tile);
+    });
+  });
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      collapse();
+    });
+  });
+
+  document.getElementById('backdrop').addEventListener('click', collapse);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && activeTile) collapse();
+  });
+
+  // ── On resize, recompute expanded tile position ──
+  window.addEventListener('resize', () => {
+    if (!activeTile) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetW = Math.min(vw * 0.7, 1100);
+    const targetH = Math.min(vh * 0.82, 720);
+    activeTile.style.top = ((vh - targetH) / 2) + 'px';
+    activeTile.style.left = ((vw - targetW) / 2) + 'px';
+    activeTile.style.width = targetW + 'px';
+    activeTile.style.height = targetH + 'px';
+  });
+</script>
+
+</body>
+</html>
