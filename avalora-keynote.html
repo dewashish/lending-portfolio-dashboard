@@ -20,6 +20,7 @@
     --line: #ddd6c0;
     --line-2: #c5bca0;
     --rule: #312d22;
+
     --accent: #1f3b6b;
     --accent-2: #355e94;
     --accent-soft: #e9eff8;
@@ -32,15 +33,17 @@
     --amber-soft: #f3eadb;
     --plum: #5f2f60;
     --plum-soft: #f0e9f0;
-    --teal: #155e6b;
-    --red: #8a2e2e;
 
-    --c-go: #00897b;
-    --c-cf: #2196f3;
-    --c-tf: #9c27b0;
-    --c-cp: #ff9800;
-    --c-rc: #f44336;
-    --c-fo: #009688;
+    /* Muted module accents — tone-on-tone classical financial register */
+    --c-go-mute: #3d7269;
+    --c-cf-mute: #4f7aa3;
+    --c-tf-mute: #6c4d75;
+    --c-cp-mute: #a87238;
+    --c-rc-mute: #985454;
+    --c-fo-mute: #467c75;
+
+    /* Easing reused everywhere — slower arrival */
+    --ease: cubic-bezier(.2,.7,.2,1);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,26 +56,26 @@
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1, 'cv11' 1;
     line-height: 1.45;
     overflow: hidden;
   }
 
-  /* ── Background ─────────────────────────────── */
+  /* ── Background: calm ambient gradient + baseline-grid hairlines ── */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -2;
     background-image:
-      radial-gradient(1500px 1000px at -10% -5%, rgba(31,59,107,0.08), transparent 60%),
-      radial-gradient(1200px 800px at 110% 30%, rgba(123,58,22,0.06), transparent 60%),
-      radial-gradient(1100px 900px at 50% 110%, rgba(45,90,58,0.05), transparent 60%);
-    animation: bg-drift 30s ease-in-out infinite alternate;
+      radial-gradient(1500px 1000px at -10% -5%, rgba(31,59,107,0.07), transparent 60%),
+      radial-gradient(1200px 800px at 110% 30%, rgba(123,58,22,0.05), transparent 60%),
+      radial-gradient(1100px 900px at 50% 110%, rgba(45,90,58,0.04), transparent 60%);
+    animation: bg-drift 60s ease-in-out infinite alternate;
   }
   @keyframes bg-drift {
     0%, 100% { background-position: 0% 0%, 100% 30%, 50% 100%; }
-    50%      { background-position: 6% -4%, 94% 36%, 56% 96%; }
+    50%      { background-position: 4% -3%, 96% 33%, 53% 97%; }
   }
   body::after {
     content: '';
@@ -80,9 +83,9 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image: radial-gradient(rgba(31,59,107,0.04) 1px, transparent 1px);
-    background-size: 28px 28px;
-    opacity: 0.5;
+    background-image:
+      linear-gradient(to bottom, rgba(21,20,15,0.04) 1px, transparent 1px);
+    background-size: 100% 32px;
   }
 
   /* ── Top chrome ─────────────────────────────── */
@@ -104,7 +107,7 @@
   .brand .mark {
     width: 2rem;
     height: 2rem;
-    border-radius: 7px;
+    border-radius: 5px;
     background: var(--rule);
     color: var(--bg);
     display: flex;
@@ -122,8 +125,8 @@
     content: '';
     position: absolute;
     inset: -50%;
-    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
-    animation: shimmer 5s ease-in-out infinite;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%);
+    animation: shimmer 9s ease-in-out infinite;
   }
   @keyframes shimmer {
     0%, 100% { transform: translateX(-100%); }
@@ -135,6 +138,7 @@
     font-weight: 500;
     font-size: 1rem;
     color: var(--ink);
+    font-feature-settings: 'onum' 1;
   }
   .brand .name span {
     color: var(--faint);
@@ -162,11 +166,11 @@
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--green);
-    animation: pulse-dot 2s infinite;
+    animation: pulse-dot 4s infinite;
   }
   @keyframes pulse-dot {
     0%   { box-shadow: 0 0 0 0 rgba(44,90,58,0.55); }
-    70%  { box-shadow: 0 0 0 9px rgba(44,90,58,0); }
+    70%  { box-shadow: 0 0 0 10px rgba(44,90,58,0); }
     100% { box-shadow: 0 0 0 0 rgba(44,90,58,0); }
   }
 
@@ -181,7 +185,7 @@
   .progress .bar {
     height: 100%;
     background: linear-gradient(90deg, var(--sienna), var(--accent));
-    transition: width 600ms cubic-bezier(.22,.61,.36,1);
+    transition: width 700ms var(--ease);
   }
 
   /* ── Slide deck ─────────────────────────────── */
@@ -196,16 +200,18 @@
     overflow-y: auto;
     overflow-x: hidden;
     opacity: 0;
-    transform: translateX(40px);
+    transform: translateX(32px);
     pointer-events: none;
-    transition: opacity 500ms cubic-bezier(.22,.61,.36,1), transform 600ms cubic-bezier(.22,.61,.36,1);
+    filter: blur(2px);
+    transition: opacity 700ms var(--ease), transform 800ms var(--ease), filter 700ms var(--ease);
   }
   .slide.active {
     opacity: 1;
     transform: translateX(0);
     pointer-events: auto;
+    filter: blur(0);
   }
-  .slide.prev { transform: translateX(-40px); }
+  .slide.prev { transform: translateX(-32px); }
 
   .slide-inner {
     min-height: 100vh;
@@ -240,7 +246,7 @@
     transform: scaleX(0);
   }
   .slide.active .slide-head .eyebrow::before {
-    animation: line-grow 700ms cubic-bezier(.22,.61,.36,1) 0.15s both;
+    animation: line-grow 800ms var(--ease) 0.2s both;
   }
   @keyframes line-grow { to { transform: scaleX(1); } }
 
@@ -250,6 +256,7 @@
     font-size: 0.95rem;
     color: var(--faint);
     font-variation-settings: 'opsz' 48, 'SOFT' 100;
+    font-feature-settings: 'onum' 1, 'tnum' 1;
   }
   .slide-head .pageno .n {
     font-style: normal;
@@ -280,7 +287,7 @@
     transform: translateY(0.4em);
   }
   .slide.active .hero h1 .word {
-    animation: word-rise 800ms cubic-bezier(.22,.61,.36,1) both;
+    animation: word-rise 900ms var(--ease) both;
   }
   @keyframes word-rise {
     to { opacity: 1; transform: translateY(0); }
@@ -295,7 +302,7 @@
     transform: translateY(10px);
   }
   .slide.active .hero .lede {
-    animation: rise-in 700ms cubic-bezier(.22,.61,.36,1) 0.9s both;
+    animation: rise-in 800ms var(--ease) 1s both;
   }
   .hero .lede em {
     color: var(--ink);
@@ -310,30 +317,31 @@
   /* ── Generic build animation ────────────────── */
   .build {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(12px);
   }
   .slide.active .build {
-    animation: rise-in 700ms cubic-bezier(.22,.61,.36,1) both;
+    animation: rise-in 800ms var(--ease) both;
   }
-  .slide.active .build.d1  { animation-delay: 1.1s; }
-  .slide.active .build.d2  { animation-delay: 1.3s; }
-  .slide.active .build.d3  { animation-delay: 1.5s; }
-  .slide.active .build.d4  { animation-delay: 1.7s; }
-  .slide.active .build.d5  { animation-delay: 1.9s; }
-  .slide.active .build.d6  { animation-delay: 2.1s; }
-  .slide.active .build.d7  { animation-delay: 2.3s; }
-  .slide.active .build.d8  { animation-delay: 2.5s; }
-  .slide.active .build.d9  { animation-delay: 2.7s; }
-  .slide.active .build.d10 { animation-delay: 2.9s; }
-  .slide.active .build.d11 { animation-delay: 3.1s; }
-  .slide.active .build.d12 { animation-delay: 3.3s; }
+  /* Tighter, more musical stagger: 150ms gap, 60ms slow-in offset */
+  .slide.active .build.d1  { animation-delay: 1.10s; }
+  .slide.active .build.d2  { animation-delay: 1.25s; }
+  .slide.active .build.d3  { animation-delay: 1.40s; }
+  .slide.active .build.d4  { animation-delay: 1.55s; }
+  .slide.active .build.d5  { animation-delay: 1.70s; }
+  .slide.active .build.d6  { animation-delay: 1.85s; }
+  .slide.active .build.d7  { animation-delay: 2.00s; }
+  .slide.active .build.d8  { animation-delay: 2.15s; }
+  .slide.active .build.d9  { animation-delay: 2.30s; }
+  .slide.active .build.d10 { animation-delay: 2.45s; }
+  .slide.active .build.d11 { animation-delay: 2.60s; }
+  .slide.active .build.d12 { animation-delay: 2.75s; }
 
   /* ── Flow diagram block ─────────────────────── */
   .flow-wrap {
     margin-top: 2.4rem;
     background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 6px;
     padding: 1.6rem 1.8rem 1.4rem;
     position: relative;
     overflow: hidden;
@@ -345,6 +353,7 @@
     color: var(--faint);
     font-weight: 600;
     margin-bottom: 1rem;
+    font-feature-settings: 'tnum' 1;
   }
   svg.flow {
     width: 100%;
@@ -352,62 +361,98 @@
     display: block;
   }
 
-  /* SVG building blocks */
+  /* SVG building blocks — classical financial register */
   .dg-box rect {
     fill: var(--paper);
     stroke: var(--line-2);
     stroke-width: 1;
-    transition: stroke 250ms;
+    transition: stroke 280ms var(--ease), opacity 280ms var(--ease);
   }
-  .dg-box.accent rect { fill: var(--accent-soft); stroke: var(--accent-line); }
-  .dg-box.sienna rect { fill: var(--sienna-soft); stroke: #e3cdb2; }
-  .dg-box.green  rect { fill: var(--green-soft); stroke: #cad9c5; }
+  .dg-box.accent rect { fill: var(--paper-2); stroke: var(--accent-line); stroke-width: 1; }
+  .dg-box.sienna rect { fill: var(--paper-2); stroke: #d8c0a8; stroke-width: 1; }
+  .dg-box.green  rect { fill: var(--paper-2); stroke: #bdcdb5; stroke-width: 1; }
+
   .dg-box .ttl {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: 'opsz' 30;
     font-weight: 500;
     fill: var(--ink);
+    font-feature-settings: 'onum' 1;
+    transition: opacity 280ms var(--ease);
+  }
+  .dg-box .ttl-it {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    font-style: italic;
+    font-weight: 500;
+    fill: var(--ink);
+    transition: opacity 280ms var(--ease);
   }
   .dg-box .desc {
     font-family: 'Inter', sans-serif;
     font-size: 11px;
     fill: var(--muted);
+    font-feature-settings: 'onum' 1, 'tnum' 1, 'cv11' 1;
+    transition: opacity 280ms var(--ease);
   }
   .dg-box .tag {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
+    font-size: 8.5px;
     fill: var(--faint);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
+    transition: opacity 280ms var(--ease);
   }
+
+  /* Hover affordance: dim non-hovered boxes when one is hovered */
+  svg.flow:has(.dg-box:hover) .dg-box:not(:hover) rect,
+  svg.flow:has(.dg-box:hover) .dg-box:not(:hover) text {
+    opacity: 0.30;
+  }
+  svg.flow:has(.dg-box:hover) .dg-box:hover rect {
+    stroke: var(--accent);
+    stroke-width: 1.2;
+  }
+  svg.roles-svg:has(.role-box:hover) .role-box:not(:hover) rect,
+  svg.roles-svg:has(.role-box:hover) .role-box:not(:hover) text {
+    opacity: 0.32;
+  }
+  svg.roles-svg:has(.cap-box:hover) .cap-box:not(:hover) rect,
+  svg.roles-svg:has(.cap-box:hover) .cap-box:not(:hover) text,
+  svg.roles-svg:has(.cap-box:hover) .cap-box:not(:hover) circle {
+    opacity: 0.32;
+  }
+  svg.roles-svg:has(.role-box:hover) .role-box:hover rect,
+  svg.roles-svg:has(.cap-box:hover) .cap-box:hover rect {
+    stroke: var(--accent);
+    stroke-width: 1.2;
+  }
+
+  /* Connectors — hairline, slow ambient drift */
   .dg-path {
     stroke: var(--line-2);
-    stroke-width: 1.4;
+    stroke-width: 1;
     fill: none;
-    stroke-dasharray: 5 5;
+    stroke-dasharray: 3 7;
     stroke-linecap: round;
-    animation: dash 2.8s linear infinite;
-    opacity: 0.85;
+    animation: dash 4s linear infinite;
+    opacity: 0.75;
   }
   .dg-path.accent {
     stroke: var(--accent-2);
-    stroke-width: 1.6;
-    opacity: 0.9;
+    stroke-width: 1.1;
+    opacity: 0.75;
   }
   @keyframes dash { to { stroke-dashoffset: -40; } }
-  .particle {
-    filter: drop-shadow(0 0 4px rgba(31,59,107,0.45));
-  }
-  .particle.warm {
-    filter: drop-shadow(0 0 4px rgba(123,58,22,0.45));
-  }
+
+  .particle { /* glow now applied via SVG filter */ }
   .pulse-node {
-    animation: node-pulse 2.4s ease-in-out infinite;
+    animation: node-pulse 3.2s ease-in-out infinite;
     transform-origin: center;
   }
   @keyframes node-pulse {
     0%, 100% { opacity: 1; }
-    50%      { opacity: 0.55; }
+    50%      { opacity: 0.6; }
   }
 
   /* ── Module strip ───────────────────────────── */
@@ -420,40 +465,39 @@
   .module {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 5px;
     padding: 1rem 1.05rem 1.1rem;
     position: relative;
     overflow: hidden;
-    transition: transform 300ms cubic-bezier(.22,.61,.36,1), border-color 200ms, box-shadow 300ms;
+    transition: transform 450ms var(--ease), border-color 280ms, box-shadow 450ms var(--ease);
   }
   .module:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     border-color: var(--line-2);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 12px 24px -14px rgba(0,0,0,0.12);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 10px 22px -14px rgba(0,0,0,0.10);
   }
   .module::before {
     content: '';
     position: absolute;
     top: 0; left: 1rem;
     width: 2.4rem;
-    height: 3px;
+    height: 2px;
     background: var(--accent);
-    border-radius: 0 0 3px 3px;
     transform-origin: left;
     transform: scaleX(0.55);
-    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+    transition: transform 380ms var(--ease);
   }
   .module:hover::before { transform: scaleX(1); }
-  .module.go::before { background: var(--c-go); }
-  .module.cf::before { background: var(--c-cf); }
-  .module.tf::before { background: var(--c-tf); }
-  .module.cp::before { background: var(--c-cp); }
-  .module.rc::before { background: var(--c-rc); }
-  .module.fo::before { background: var(--c-fo); }
+  .module.go::before { background: var(--c-go-mute); }
+  .module.cf::before { background: var(--c-cf-mute); }
+  .module.tf::before { background: var(--c-tf-mute); }
+  .module.cp::before { background: var(--c-cp-mute); }
+  .module.rc::before { background: var(--c-rc-mute); }
+  .module.fo::before { background: var(--c-fo-mute); }
   .module .ico {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 7px;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 5px;
     background: var(--accent-soft);
     border: 1px solid var(--accent-line);
     display: flex;
@@ -463,18 +507,18 @@
     font-style: italic;
     font-weight: 500;
     font-variation-settings: 'opsz' 96, 'SOFT' 100;
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     color: var(--accent);
     margin-bottom: 0.6rem;
-    transition: transform 300ms;
+    transition: transform 380ms var(--ease);
   }
-  .module:hover .ico { transform: rotate(-4deg) scale(1.05); }
-  .module.go .ico { background: rgba(0,137,123,0.10); border-color: rgba(0,137,123,0.30); color: var(--c-go); }
-  .module.cf .ico { background: rgba(33,150,243,0.10); border-color: rgba(33,150,243,0.30); color: var(--c-cf); }
-  .module.tf .ico { background: rgba(156,39,176,0.10); border-color: rgba(156,39,176,0.30); color: var(--c-tf); }
-  .module.cp .ico { background: rgba(255,152,0,0.10); border-color: rgba(255,152,0,0.30); color: var(--c-cp); }
-  .module.rc .ico { background: rgba(244,67,54,0.10); border-color: rgba(244,67,54,0.30); color: var(--c-rc); }
-  .module.fo .ico { background: rgba(0,150,136,0.10); border-color: rgba(0,150,136,0.30); color: var(--c-fo); }
+  .module:hover .ico { transform: rotate(-3deg) scale(1.04); }
+  .module.go .ico { background: rgba(61,114,105,0.10); border-color: rgba(61,114,105,0.30); color: var(--c-go-mute); }
+  .module.cf .ico { background: rgba(79,122,163,0.10); border-color: rgba(79,122,163,0.30); color: var(--c-cf-mute); }
+  .module.tf .ico { background: rgba(108,77,117,0.10); border-color: rgba(108,77,117,0.30); color: var(--c-tf-mute); }
+  .module.cp .ico { background: rgba(168,114,56,0.10); border-color: rgba(168,114,56,0.30); color: var(--c-cp-mute); }
+  .module.rc .ico { background: rgba(152,84,84,0.10); border-color: rgba(152,84,84,0.30); color: var(--c-rc-mute); }
+  .module.fo .ico { background: rgba(70,124,117,0.10); border-color: rgba(70,124,117,0.30); color: var(--c-fo-mute); }
   .module h4 {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: 'opsz' 30;
@@ -483,6 +527,7 @@
     line-height: 1.15;
     color: var(--ink);
     margin-bottom: 0.3rem;
+    font-feature-settings: 'onum' 1;
   }
   .module p {
     font-size: 0.78rem;
@@ -500,7 +545,7 @@
   .ai-card {
     background: linear-gradient(135deg, var(--paper) 0%, var(--accent-soft) 220%);
     border: 1px solid var(--accent-line);
-    border-radius: 12px;
+    border-radius: 6px;
     padding: 1.4rem 1.5rem;
     position: relative;
     overflow: hidden;
@@ -510,8 +555,8 @@
     position: absolute;
     top: -40px; right: -40px;
     width: 220px; height: 220px;
-    background: radial-gradient(circle, rgba(31,59,107,0.14), transparent 70%);
-    animation: orbit 14s ease-in-out infinite;
+    background: radial-gradient(circle, rgba(31,59,107,0.12), transparent 70%);
+    animation: orbit 22s ease-in-out infinite;
     pointer-events: none;
   }
   @keyframes orbit {
@@ -537,11 +582,11 @@
     width: 6px; height: 6px;
     border-radius: 50%;
     background: #84d3a0;
-    animation: pulse-mini 1.8s infinite;
+    animation: pulse-mini 3s infinite;
   }
   @keyframes pulse-mini {
     0%   { box-shadow: 0 0 0 0 rgba(132,211,160,0.7); }
-    70%  { box-shadow: 0 0 0 8px rgba(132,211,160,0); }
+    70%  { box-shadow: 0 0 0 9px rgba(132,211,160,0); }
     100% { box-shadow: 0 0 0 0 rgba(132,211,160,0); }
   }
   .ai-card h3 {
@@ -589,7 +634,7 @@
   .ai-chat {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 6px;
     padding: 1.1rem 1.2rem 1.2rem;
     display: flex;
     flex-direction: column;
@@ -606,13 +651,13 @@
   .ai-q {
     background: var(--paper-2);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 0.55rem 0.8rem 0.55rem 2.1rem;
     font-size: 0.78rem;
     color: var(--ink-2);
     line-height: 1.45;
     position: relative;
-    transition: transform 250ms, border-color 250ms;
+    transition: transform 350ms var(--ease), border-color 280ms;
   }
   .ai-q:hover { transform: translateX(4px); border-color: var(--accent-line); }
   .ai-q::before {
@@ -622,7 +667,7 @@
     top: 0.7rem;
     width: 0.9rem;
     height: 0.9rem;
-    border: 1.4px solid var(--accent);
+    border: 1.2px solid var(--accent);
     border-radius: 50%;
     background: var(--paper);
   }
@@ -635,18 +680,18 @@
     height: 0.32rem;
     background: var(--accent);
     border-radius: 50%;
-    animation: dot-blink 2s ease-in-out infinite;
+    animation: dot-blink 3s ease-in-out infinite;
   }
-  .ai-q:nth-child(2)::after { animation-delay: 0.3s; }
-  .ai-q:nth-child(3)::after { animation-delay: 0.6s; }
-  .ai-q:nth-child(4)::after { animation-delay: 0.9s; }
-  .ai-q:nth-child(5)::after { animation-delay: 1.2s; }
+  .ai-q:nth-child(2)::after { animation-delay: 0.4s; }
+  .ai-q:nth-child(3)::after { animation-delay: 0.8s; }
+  .ai-q:nth-child(4)::after { animation-delay: 1.2s; }
+  .ai-q:nth-child(5)::after { animation-delay: 1.6s; }
   @keyframes dot-blink {
     0%, 100% { opacity: 1; transform: scale(1); }
     50%      { opacity: 0.4; transform: scale(0.7); }
   }
 
-  /* ── Footer strip (slide 1 closing) ─────────── */
+  /* ── Marquee strip (slide 1 closing) ─────────── */
   .strip {
     margin-top: 2rem;
     padding: 1rem 0;
@@ -659,7 +704,7 @@
   .strip-track {
     display: flex;
     width: max-content;
-    animation: marquee 50s linear infinite;
+    animation: marquee 80s linear infinite;
     gap: 3rem;
   }
   .strip-item {
@@ -672,30 +717,31 @@
     color: var(--ink);
     font-size: 1.1rem;
     white-space: nowrap;
+    font-feature-settings: 'onum' 1;
   }
   .strip-item em {
     font-style: italic;
     font-variation-settings: 'opsz' 24, 'SOFT' 100;
     color: var(--accent);
   }
-  .strip-item .sep {
-    color: var(--sienna);
-    font-style: italic;
-    font-family: 'Fraunces', Georgia, serif;
-    font-variation-settings: 'opsz' 96, 'SOFT' 100;
-    font-size: 1.4rem;
+  .strip-rule {
+    display: inline-block;
+    width: 1px;
+    height: 0.85em;
+    background: var(--line-2);
   }
   @keyframes marquee {
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }
   }
 
-  /* ── Section divider in slide ───────────────── */
+  /* ── Section divider — hanging numerals ─────── */
   .sec-divider {
-    display: flex;
+    display: grid;
+    grid-template-columns: 3rem 1fr;
     align-items: baseline;
-    gap: 1rem;
     margin: 2.4rem 0 1.2rem;
+    column-gap: 0.6rem;
   }
   .sec-divider .num {
     font-family: 'Fraunces', Georgia, serif;
@@ -705,6 +751,16 @@
     font-size: 2.4rem;
     color: var(--sienna);
     line-height: 1;
+    text-align: right;
+    padding-right: 0.4rem;
+    border-right: 1px solid var(--line);
+    align-self: stretch;
+    padding-top: 0.3rem;
+  }
+  .sec-divider .titles {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
   }
   .sec-divider h3 {
     font-family: 'Fraunces', Georgia, serif;
@@ -736,18 +792,19 @@
   .persona {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 6px;
     padding: 1.2rem 1.3rem 1.3rem;
     position: relative;
     overflow: hidden;
-    transition: transform 320ms cubic-bezier(.22,.61,.36,1), border-color 200ms;
+    transition: transform 450ms var(--ease), border-color 280ms, box-shadow 450ms var(--ease);
   }
   .persona:hover {
-    transform: translateY(-4px);
-    border-color: var(--accent-line);
+    transform: translateY(-2px);
+    border-color: var(--line-2);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 10px 22px -14px rgba(0,0,0,0.10);
   }
   .persona .avatar {
-    width: 3rem; height: 3rem;
+    width: 2.8rem; height: 2.8rem;
     border-radius: 50%;
     background: var(--plum-soft);
     border: 1px solid #d8c0d8;
@@ -758,12 +815,12 @@
     font-style: italic;
     font-variation-settings: 'opsz' 96, 'SOFT' 100;
     font-weight: 500;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     color: var(--plum);
     margin-bottom: 0.8rem;
-    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+    transition: transform 380ms var(--ease);
   }
-  .persona:hover .avatar { transform: scale(1.08) rotate(-4deg); }
+  .persona:hover .avatar { transform: scale(1.06) rotate(-3deg); }
   .persona .role-tag {
     font-size: 0.6rem;
     letter-spacing: 0.18em;
@@ -793,7 +850,7 @@
     flex-wrap: wrap;
     gap: 0.3rem;
     padding-top: 0.6rem;
-    border-top: 1px dashed var(--line);
+    border-top: 1px solid var(--line);
   }
   .persona .uses span {
     font-family: 'JetBrains Mono', monospace;
@@ -801,9 +858,10 @@
     padding: 0.13rem 0.45rem;
     background: var(--paper-2);
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: 3px;
     color: var(--ink-2);
     font-weight: 500;
+    font-feature-settings: 'tnum' 1;
   }
 
   /* ── Roles flow diagram ─────────────────────── */
@@ -811,7 +869,7 @@
     margin-top: 1rem;
     background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 6px;
     padding: 1.4rem 1.5rem 1.3rem;
     position: relative;
   }
@@ -832,50 +890,59 @@
   .role-box rect {
     fill: var(--paper);
     stroke: var(--line);
-    transition: stroke 250ms, fill 250ms;
+    stroke-width: 1;
+    transition: stroke 280ms var(--ease), fill 280ms var(--ease), opacity 280ms var(--ease);
   }
-  .role-box.admin rect { fill: var(--accent-soft); stroke: var(--accent-line); }
-  .role-box.owner rect { fill: var(--plum-soft); stroke: #d8c0d8; }
-  .role-box.analyst rect { fill: var(--green-soft); stroke: #cad9c5; }
-  .role-box.viewer rect { fill: var(--amber-soft); stroke: #e3cdb2; }
+  .role-box.admin rect { fill: var(--paper-2); stroke: var(--accent-line); }
+  .role-box.owner rect { fill: var(--paper-2); stroke: #d2bdd2; }
+  .role-box.analyst rect { fill: var(--paper-2); stroke: #c2d2bd; }
+  .role-box.viewer rect { fill: var(--paper-2); stroke: #dec8a8; }
   .role-box .nm {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: 'opsz' 30;
     font-weight: 500;
     fill: var(--ink);
+    transition: opacity 280ms var(--ease);
   }
   .role-box .role-meta {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
+    font-size: 8.5px;
     fill: var(--faint);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
+    transition: opacity 280ms var(--ease);
   }
   .cap-box rect {
     fill: var(--paper-2);
     stroke: var(--line);
+    stroke-width: 1;
+    transition: stroke 280ms var(--ease), opacity 280ms var(--ease);
   }
   .cap-box .nm {
     font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
     fill: var(--ink-2);
+    font-feature-settings: 'cv11' 1;
+    transition: opacity 280ms var(--ease);
   }
   .cap-box .icoshape circle {
     fill: var(--accent-soft);
     stroke: var(--accent-line);
+    stroke-width: 1;
+    transition: opacity 280ms var(--ease);
   }
   .role-path {
     stroke: var(--line-2);
-    stroke-width: 1.4;
+    stroke-width: 1;
     fill: none;
-    stroke-dasharray: 5 5;
+    stroke-dasharray: 3 7;
     stroke-linecap: round;
-    animation: dash 2.8s linear infinite;
-    opacity: 0.7;
+    animation: dash 4s linear infinite;
+    opacity: 0.65;
   }
-  .role-path.has { stroke: var(--accent-2); opacity: 0.9; }
-  .role-path.has-warm { stroke: var(--sienna); opacity: 0.9; }
+  .role-path.has { stroke: var(--accent-2); opacity: 0.7; stroke-width: 1.1; }
+  .role-path.has-warm { stroke: var(--sienna); opacity: 0.7; stroke-width: 1.1; }
 
   /* ── Control + benefit grids ───────────────── */
   .two-up {
@@ -900,20 +967,21 @@
   .card-mini {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 5px;
     padding: 0.85rem 0.95rem 0.9rem;
-    transition: transform 280ms cubic-bezier(.22,.61,.36,1), border-color 200ms;
+    transition: transform 450ms var(--ease), border-color 280ms, box-shadow 450ms var(--ease);
     position: relative;
     overflow: hidden;
   }
   .card-mini:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--line-2);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 8px 18px -12px rgba(0,0,0,0.10);
   }
   .card-mini .ico {
-    width: 1.8rem;
-    height: 1.8rem;
-    border-radius: 6px;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 4px;
     background: var(--accent-soft);
     border: 1px solid var(--accent-line);
     display: flex;
@@ -1005,7 +1073,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 150ms, color 150ms;
+    transition: background 180ms, color 180ms;
   }
   .chrome-bottom button:hover { background: var(--paper-2); color: var(--ink); }
   .chrome-bottom button:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -1085,12 +1153,12 @@
       <div class="hero">
         <h1>
           <span class="word" style="animation-delay:0.2s;">One</span>
-          <span class="word" style="animation-delay:0.3s;">workspace</span>
-          <span class="word" style="animation-delay:0.4s;">for</span>
-          <span class="word" style="animation-delay:0.5s;"><em>credit&nbsp;risk</em>,</span>
-          <span class="word" style="animation-delay:0.6s;">across</span>
-          <span class="word" style="animation-delay:0.7s;">every</span>
-          <span class="word" style="animation-delay:0.8s;">subsidiary.</span>
+          <span class="word" style="animation-delay:0.32s;">workspace</span>
+          <span class="word" style="animation-delay:0.44s;">for</span>
+          <span class="word" style="animation-delay:0.56s;"><em>credit&nbsp;risk</em>,</span>
+          <span class="word" style="animation-delay:0.68s;">across</span>
+          <span class="word" style="animation-delay:0.80s;">every</span>
+          <span class="word" style="animation-delay:0.92s;">subsidiary.</span>
         </h1>
         <p class="lede">Avalora replaces a stack of monthly portfolio workbooks with a live, scope-aware dashboard. It pairs <em>risk analytics</em>, an <em>AI assistant for custom analytics</em>, and configurable appetite and alert triggers across every KRI, with one-click export to PDF for executives and Excel for analysts.</p>
       </div>
@@ -1100,66 +1168,112 @@
         <div class="lbl">How data moves through the platform</div>
         <svg class="flow" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-              <polygon points="0 0, 9 4.5, 0 9" fill="#355e94" />
+            <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+              <path d="M 0 0 L 7 3.5 L 0 7 Z" fill="#355e94" />
             </marker>
             <radialGradient id="part-cool" cx="0.4" cy="0.4">
-              <stop offset="0%" stop-color="#5a82bb"/>
+              <stop offset="0%" stop-color="#7da1d2"/>
               <stop offset="100%" stop-color="#1f3b6b"/>
             </radialGradient>
+            <filter id="glow-cool" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.4" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <filter id="paper-shadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="1" stdDeviation="0.5" flood-opacity="0.08"/>
+              <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.05"/>
+            </filter>
           </defs>
 
-          <!-- Layer 1: connector lines (drawn first, sit behind everything) -->
-          <path class="dg-path" d="M 190 53  L 280 130"/>
-          <path class="dg-path" d="M 190 120 L 280 148"/>
-          <path class="dg-path" d="M 190 187 L 280 162"/>
-          <path class="dg-path" d="M 190 254 L 280 180"/>
+          <!-- Layer 1: connector lines (bezier curves) -->
+          <path class="dg-path" d="M 190 53  C 235 53  235 130 280 130"/>
+          <path class="dg-path" d="M 190 120 C 235 120 235 148 280 148"/>
+          <path class="dg-path" d="M 190 187 C 235 187 235 162 280 162"/>
+          <path class="dg-path" d="M 190 254 C 235 254 235 180 280 180"/>
           <path class="dg-path accent" d="M 460 155 L 535 155" marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 755 110 L 885 60"  marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 755 155 L 885 155" marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 755 200 L 885 250" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 110 C 820 110 820 60 885 60"   marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 155 L 885 155"                 marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 200 C 820 200 820 250 885 250" marker-end="url(#arrow)"/>
 
-          <!-- Layer 2: particles (sit between connector lines and boxes; boxes will cover them inside) -->
-          <circle class="particle" r="4" fill="url(#part-cool)">
-            <animateMotion dur="6.5s" repeatCount="indefinite"
-              path="M 190 53 L 280 130 L 460 155 L 535 155 L 755 110 L 885 60"/>
-            <animate attributeName="opacity" values="0;1;1;1;1;0" keyTimes="0;0.08;0.4;0.6;0.92;1" dur="6.5s" repeatCount="indefinite"/>
+          <!-- Layer 2: particles (comet trails) -->
+          <!-- Route 1: Source 1 → Dashboard -->
+          <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" repeatCount="indefinite"
+              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 110 C 820 110 820 60 885 60"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" repeatCount="indefinite"/>
           </circle>
-          <circle class="particle" r="4" fill="url(#part-cool)">
-            <animateMotion dur="6.5s" begin="2.2s" repeatCount="indefinite"
-              path="M 190 120 L 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
-            <animate attributeName="opacity" values="0;1;1;1;1;0" keyTimes="0;0.08;0.4;0.6;0.92;1" dur="6.5s" begin="2.2s" repeatCount="indefinite"/>
+          <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="0.25s" repeatCount="indefinite"
+              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 110 C 820 110 820 60 885 60"/>
+            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="0.25s" repeatCount="indefinite"/>
           </circle>
-          <circle class="particle" r="4" fill="url(#part-cool)">
-            <animateMotion dur="6.5s" begin="4.4s" repeatCount="indefinite"
-              path="M 190 254 L 280 180 L 460 155 L 535 155 L 755 200 L 885 250"/>
-            <animate attributeName="opacity" values="0;1;1;1;1;0" keyTimes="0;0.08;0.4;0.6;0.92;1" dur="6.5s" begin="4.4s" repeatCount="indefinite"/>
+          <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="0.5s" repeatCount="indefinite"
+              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 110 C 820 110 820 60 885 60"/>
+            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="0.5s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Route 2: Source 2 → AI Q&A -->
+          <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="2.7s" repeatCount="indefinite"
+              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2.7s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="2.95s" repeatCount="indefinite"
+              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
+            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2.95s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="3.2s" repeatCount="indefinite"
+              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
+            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="3.2s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Route 3: Source 3 → PDF/Excel deliverable -->
+          <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="5.4s" repeatCount="indefinite"
+              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 200 C 820 200 820 250 885 250"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="5.4s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="5.65s" repeatCount="indefinite"
+              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 200 C 820 200 820 250 885 250"/>
+            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="5.65s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="5.9s" repeatCount="indefinite"
+              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 200 C 820 200 820 250 885 250"/>
+            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="5.9s" repeatCount="indefinite"/>
           </circle>
 
           <!-- Layer 3: boxes (drawn last, on top of particles) -->
           <g class="dg-box sienna">
-            <rect x="20" y="25" width="170" height="56" rx="8"/>
+            <rect x="20" y="25" width="170" height="56" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="35" y="48">Source · Origination</text>
-            <text class="ttl" x="35" y="68" font-size="13">Applications &amp; bureau</text>
+            <text class="ttl-it" x="35" y="68" font-size="14">Applications &amp; bureau</text>
           </g>
           <g class="dg-box sienna">
-            <rect x="20" y="92" width="170" height="56" rx="8"/>
+            <rect x="20" y="92" width="170" height="56" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="35" y="115">Source · Management</text>
-            <text class="ttl" x="35" y="135" font-size="13">Accounts &amp; balances</text>
+            <text class="ttl-it" x="35" y="135" font-size="14">Accounts &amp; balances</text>
           </g>
           <g class="dg-box sienna">
-            <rect x="20" y="159" width="170" height="56" rx="8"/>
+            <rect x="20" y="159" width="170" height="56" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="35" y="182">Source · Collections</text>
-            <text class="ttl" x="35" y="202" font-size="13">Recovery &amp; outcomes</text>
+            <text class="ttl-it" x="35" y="202" font-size="14">Recovery &amp; outcomes</text>
           </g>
           <g class="dg-box sienna">
-            <rect x="20" y="226" width="170" height="56" rx="8"/>
+            <rect x="20" y="226" width="170" height="56" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="35" y="249">Source · Markets</text>
-            <text class="ttl" x="35" y="269" font-size="13">FX rates &amp; macro</text>
+            <text class="ttl-it" x="35" y="269" font-size="14">FX rates &amp; macro</text>
           </g>
 
           <g class="dg-box">
-            <rect x="280" y="105" width="180" height="100" rx="8"/>
+            <rect x="280" y="105" width="180" height="100" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="295" y="127">Validate · normalise</text>
             <text class="ttl" x="295" y="152" font-size="14">Ingest pipeline</text>
             <text class="desc" x="295" y="172">Schema checks</text>
@@ -1168,7 +1282,7 @@
           </g>
 
           <g class="dg-box accent">
-            <rect x="535" y="50" width="220" height="210" rx="8"/>
+            <rect x="535" y="50" width="220" height="210" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="550" y="73">Central data layer</text>
             <text class="ttl" x="550" y="98" font-size="15">Single source of truth</text>
             <text class="desc" x="550" y="123" font-weight="600" fill="#15140f">Aggregated metrics</text>
@@ -1182,19 +1296,19 @@
           </g>
 
           <g class="dg-box green">
-            <rect x="885" y="25" width="290" height="72" rx="8"/>
+            <rect x="885" y="25" width="290" height="72" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="900" y="48">Surface</text>
             <text class="ttl" x="900" y="69" font-size="14">Interactive dashboard</text>
             <text class="desc" x="900" y="85">Live charts, scope-aware roll-ups</text>
           </g>
           <g class="dg-box green">
-            <rect x="885" y="120" width="290" height="72" rx="8"/>
+            <rect x="885" y="120" width="290" height="72" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="900" y="143">Assistant</text>
             <text class="ttl" x="900" y="164" font-size="14">AI portfolio Q&amp;A</text>
             <text class="desc" x="900" y="180">Natural-language, scope-aware</text>
           </g>
           <g class="dg-box green">
-            <rect x="885" y="215" width="290" height="72" rx="8"/>
+            <rect x="885" y="215" width="290" height="72" rx="5" filter="url(#paper-shadow)"/>
             <text class="tag" x="900" y="238">Deliverables</text>
             <text class="ttl" x="900" y="259" font-size="14">PDF summary &amp; Excel detail</text>
             <text class="desc" x="900" y="275">Board-ready and analyst-ready exports</text>
@@ -1265,37 +1379,37 @@
       <div class="strip build d10">
         <div class="strip-track">
           <span class="strip-item">Live portfolio quality</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Scope-aware roll-ups</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item"><em>AI</em> portfolio queries</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">PDF &amp; Excel export</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">KRI appetite &amp; alert triggers</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item"><em>Custom analytics</em> via AI</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Vintage &amp; cohort analytics</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Audit trail end to end</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Live portfolio quality</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Scope-aware roll-ups</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item"><em>AI</em> portfolio queries</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">PDF &amp; Excel export</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">KRI appetite &amp; alert triggers</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item"><em>Custom analytics</em> via AI</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Vintage &amp; cohort analytics</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
           <span class="strip-item">Audit trail end to end</span>
-          <span class="strip-item sep">~</span>
+          <span class="strip-rule"></span>
         </div>
       </div>
 
@@ -1314,12 +1428,12 @@
       <div class="hero">
         <h1>
           <span class="word" style="animation-delay:0.2s;">Built</span>
-          <span class="word" style="animation-delay:0.3s;">for</span>
-          <span class="word" style="animation-delay:0.4s;">the</span>
-          <span class="word" style="animation-delay:0.5s;">way</span>
-          <span class="word" style="animation-delay:0.6s;"><em>risk teams</em></span>
-          <span class="word" style="animation-delay:0.7s;">actually</span>
-          <span class="word" style="animation-delay:0.8s;">work.</span>
+          <span class="word" style="animation-delay:0.32s;">for</span>
+          <span class="word" style="animation-delay:0.44s;">the</span>
+          <span class="word" style="animation-delay:0.56s;">way</span>
+          <span class="word" style="animation-delay:0.68s;"><em>risk teams</em></span>
+          <span class="word" style="animation-delay:0.80s;">actually</span>
+          <span class="word" style="animation-delay:0.92s;">work.</span>
         </h1>
         <p class="lede">Four roles, four landing patterns, one workspace. Read access is scoped per role. Administrators set KRI thresholds and alert triggers. Every figure exports as a PDF executive summary or a detailed Excel report, and traces back to the upload that produced it.</p>
       </div>
@@ -1327,8 +1441,10 @@
       <!-- PERSONAS -->
       <div class="sec-divider build d1">
         <span class="num">i</span>
-        <h3>Who works <em>in it</em>.</h3>
-        <span class="rule"></span>
+        <div class="titles">
+          <h3>Who works <em>in it</em>.</h3>
+          <span class="rule"></span>
+        </div>
       </div>
       <div class="persona-row">
         <div class="persona build d2">
@@ -1364,84 +1480,145 @@
       <!-- ROLES FLOW -->
       <div class="sec-divider build d6">
         <span class="num">ii</span>
-        <h3>Roles &amp; <em>access flow</em>.</h3>
-        <span class="rule"></span>
+        <div class="titles">
+          <h3>Roles &amp; <em>access flow</em>.</h3>
+          <span class="rule"></span>
+        </div>
       </div>
       <div class="roles-flow build d7">
         <div class="lbl">From role to capability</div>
         <div class="roles-svg-wrap">
           <svg class="roles-svg" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <marker id="arrow-r" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-                <polygon points="0 0, 9 4.5, 0 9" fill="#355e94" />
+              <marker id="arrow-r" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                <path d="M 0 0 L 7 3.5 L 0 7 Z" fill="#355e94" />
               </marker>
               <radialGradient id="part-r-cool" cx="0.4" cy="0.4">
-                <stop offset="0%" stop-color="#5a82bb"/>
+                <stop offset="0%" stop-color="#7da1d2"/>
                 <stop offset="100%" stop-color="#1f3b6b"/>
               </radialGradient>
               <radialGradient id="part-r-warm" cx="0.4" cy="0.4">
-                <stop offset="0%" stop-color="#b97a4c"/>
+                <stop offset="0%" stop-color="#c89a6b"/>
                 <stop offset="100%" stop-color="#7b3a16"/>
               </radialGradient>
+              <filter id="glow-r-cool" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.4" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="glow-r-warm" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.4" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="paper-shadow-r" x="-10%" y="-10%" width="120%" height="120%">
+                <feDropShadow dx="0" dy="1" stdDeviation="0.5" flood-opacity="0.08"/>
+                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.05"/>
+              </filter>
             </defs>
 
-            <!-- Layer 1: connector lines -->
-            <path class="role-path has" d="M 230 60  L 450 95"/>
-            <path class="role-path has" d="M 230 135 L 450 145"/>
-            <path class="role-path has" d="M 230 210 L 450 200"/>
-            <path class="role-path has-warm" d="M 230 285 L 450 245"/>
-            <path class="role-path has" d="M 740 100 L 900 45"  marker-end="url(#arrow-r)"/>
-            <path class="role-path has" d="M 740 140 L 900 105" marker-end="url(#arrow-r)"/>
-            <path class="role-path has" d="M 740 175 L 900 165" marker-end="url(#arrow-r)"/>
-            <path class="role-path has-warm" d="M 740 210 L 900 225" marker-end="url(#arrow-r)"/>
-            <path class="role-path has" d="M 740 245 L 900 285" marker-end="url(#arrow-r)"/>
+            <!-- Layer 1: connector lines (bezier curves) -->
+            <path class="role-path has" d="M 230 60  C 340 60  340 95  450 95"/>
+            <path class="role-path has" d="M 230 135 C 340 135 340 145 450 145"/>
+            <path class="role-path has" d="M 230 210 C 340 210 340 200 450 200"/>
+            <path class="role-path has-warm" d="M 230 285 C 340 285 340 245 450 245"/>
+            <path class="role-path has" d="M 740 100 C 820 100 820 45  900 45"  marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 140 C 820 140 820 105 900 105" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 175 C 820 175 820 165 900 165" marker-end="url(#arrow-r)"/>
+            <path class="role-path has-warm" d="M 740 210 C 820 210 820 225 900 225" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 245 C 820 245 820 285 900 285" marker-end="url(#arrow-r)"/>
 
-            <!-- Layer 2: particles (sit behind every box) -->
-            <circle class="particle" r="3.5" fill="url(#part-r-cool)">
-              <animateMotion dur="5s" repeatCount="indefinite"
-                path="M 230 60 L 450 95 L 740 100 L 900 45"/>
-              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" repeatCount="indefinite"/>
+            <!-- Layer 2: particles (comet trails per route) -->
+            <!-- Admin route -->
+            <circle class="particle" r="3" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" repeatCount="indefinite"
+                path="M 230 60 C 340 60 340 95 450 95 L 740 100 C 820 100 820 45 900 45"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.92;1" dur="6.5s" repeatCount="indefinite"/>
             </circle>
-            <circle class="particle" r="3.5" fill="url(#part-r-cool)">
-              <animateMotion dur="5s" begin="1.25s" repeatCount="indefinite"
-                path="M 230 135 L 450 145 L 740 140 L 900 105"/>
-              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" begin="1.25s" repeatCount="indefinite"/>
+            <circle class="particle" r="2.3" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="0.2s" repeatCount="indefinite"
+                path="M 230 60 C 340 60 340 95 450 95 L 740 100 C 820 100 820 45 900 45"/>
+              <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="0.2s" repeatCount="indefinite"/>
             </circle>
-            <circle class="particle" r="3.5" fill="url(#part-r-cool)">
-              <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite"
-                path="M 230 210 L 450 200 L 740 175 L 900 165"/>
-              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" begin="2.5s" repeatCount="indefinite"/>
+            <circle class="particle" r="1.7" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="0.4s" repeatCount="indefinite"
+                path="M 230 60 C 340 60 340 95 450 95 L 740 100 C 820 100 820 45 900 45"/>
+              <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="0.4s" repeatCount="indefinite"/>
             </circle>
-            <circle class="particle warm" r="3.5" fill="url(#part-r-warm)">
-              <animateMotion dur="5s" begin="3.75s" repeatCount="indefinite"
-                path="M 230 285 L 450 245 L 740 245 L 900 285"/>
-              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" begin="3.75s" repeatCount="indefinite"/>
+
+            <!-- Owner route -->
+            <circle class="particle" r="3" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="1.6s" repeatCount="indefinite"
+                path="M 230 135 C 340 135 340 145 450 145 L 740 140 C 820 140 820 105 900 105"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="1.6s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle" r="2.3" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="1.8s" repeatCount="indefinite"
+                path="M 230 135 C 340 135 340 145 450 145 L 740 140 C 820 140 820 105 900 105"/>
+              <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle" r="1.7" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="2s" repeatCount="indefinite"
+                path="M 230 135 C 340 135 340 145 450 145 L 740 140 C 820 140 820 105 900 105"/>
+              <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="2s" repeatCount="indefinite"/>
+            </circle>
+
+            <!-- Analyst route -->
+            <circle class="particle" r="3" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="3.2s" repeatCount="indefinite"
+                path="M 230 210 C 340 210 340 200 450 200 L 740 175 C 820 175 820 165 900 165"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="3.2s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle" r="2.3" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="3.4s" repeatCount="indefinite"
+                path="M 230 210 C 340 210 340 200 450 200 L 740 175 C 820 175 820 165 900 165"/>
+              <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="3.4s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle" r="1.7" fill="url(#part-r-cool)" filter="url(#glow-r-cool)">
+              <animateMotion dur="6.5s" begin="3.6s" repeatCount="indefinite"
+                path="M 230 210 C 340 210 340 200 450 200 L 740 175 C 820 175 820 165 900 165"/>
+              <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="3.6s" repeatCount="indefinite"/>
+            </circle>
+
+            <!-- Viewer route (warm — gated path) -->
+            <circle class="particle warm" r="3" fill="url(#part-r-warm)" filter="url(#glow-r-warm)">
+              <animateMotion dur="6.5s" begin="4.8s" repeatCount="indefinite"
+                path="M 230 285 C 340 285 340 245 450 245 L 740 210 C 820 210 820 225 900 225"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="4.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle warm" r="2.3" fill="url(#part-r-warm)" filter="url(#glow-r-warm)">
+              <animateMotion dur="6.5s" begin="5s" repeatCount="indefinite"
+                path="M 230 285 C 340 285 340 245 450 245 L 740 210 C 820 210 820 225 900 225"/>
+              <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="5s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle warm" r="1.7" fill="url(#part-r-warm)" filter="url(#glow-r-warm)">
+              <animateMotion dur="6.5s" begin="5.2s" repeatCount="indefinite"
+                path="M 230 285 C 340 285 340 245 450 245 L 740 210 C 820 210 820 225 900 225"/>
+              <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.1;0.92;1" dur="6.5s" begin="5.2s" repeatCount="indefinite"/>
             </circle>
 
             <!-- Layer 3: boxes (drawn last, overlay particles) -->
             <g class="role-box admin">
-              <rect x="30" y="30" width="200" height="60" rx="8"/>
+              <rect x="30" y="30" width="200" height="60" rx="5" filter="url(#paper-shadow-r)"/>
               <text class="role-meta" x="50" y="52">Tier 1 · Full control</text>
               <text class="nm" x="50" y="74" font-size="15">Administrator</text>
             </g>
             <g class="role-box owner">
-              <rect x="30" y="105" width="200" height="60" rx="8"/>
+              <rect x="30" y="105" width="200" height="60" rx="5" filter="url(#paper-shadow-r)"/>
               <text class="role-meta" x="50" y="127">Tier 2 · Senior risk</text>
               <text class="nm" x="50" y="149" font-size="15">Risk Owner</text>
             </g>
             <g class="role-box analyst">
-              <rect x="30" y="180" width="200" height="60" rx="8"/>
+              <rect x="30" y="180" width="200" height="60" rx="5" filter="url(#paper-shadow-r)"/>
               <text class="role-meta" x="50" y="202">Tier 3 · Day-to-day</text>
               <text class="nm" x="50" y="224" font-size="15">Analyst</text>
             </g>
             <g class="role-box viewer">
-              <rect x="30" y="255" width="200" height="60" rx="8"/>
+              <rect x="30" y="255" width="200" height="60" rx="5" filter="url(#paper-shadow-r)"/>
               <text class="role-meta" x="50" y="277">Tier 4 · Read-only</text>
               <text class="nm" x="50" y="299" font-size="15">Viewer &middot; Audit</text>
             </g>
 
             <g class="cap-box">
-              <rect x="900" y="20" width="270" height="50" rx="8"/>
+              <rect x="900" y="20" width="270" height="50" rx="5" filter="url(#paper-shadow-r)"/>
               <g class="icoshape" transform="translate(916, 35)">
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">⌘</text>
@@ -1449,7 +1626,7 @@
               <text class="nm" x="945" y="50">View dashboard &amp; modules</text>
             </g>
             <g class="cap-box">
-              <rect x="900" y="80" width="270" height="50" rx="8"/>
+              <rect x="900" y="80" width="270" height="50" rx="5" filter="url(#paper-shadow-r)"/>
               <g class="icoshape" transform="translate(916, 95)">
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">∗</text>
@@ -1457,7 +1634,7 @@
               <text class="nm" x="945" y="110">AI assistant &amp; custom analytics</text>
             </g>
             <g class="cap-box">
-              <rect x="900" y="140" width="270" height="50" rx="8"/>
+              <rect x="900" y="140" width="270" height="50" rx="5" filter="url(#paper-shadow-r)"/>
               <g class="icoshape" transform="translate(916, 155)">
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">↓</text>
@@ -1465,7 +1642,7 @@
               <text class="nm" x="945" y="170">Export PDF &amp; Excel reports</text>
             </g>
             <g class="cap-box">
-              <rect x="900" y="200" width="270" height="50" rx="8"/>
+              <rect x="900" y="200" width="270" height="50" rx="5" filter="url(#paper-shadow-r)"/>
               <g class="icoshape" transform="translate(916, 215)">
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#7b3a16">△</text>
@@ -1473,7 +1650,7 @@
               <text class="nm" x="945" y="230">Set thresholds &amp; alert triggers</text>
             </g>
             <g class="cap-box">
-              <rect x="900" y="260" width="270" height="50" rx="8"/>
+              <rect x="900" y="260" width="270" height="50" rx="5" filter="url(#paper-shadow-r)"/>
               <g class="icoshape" transform="translate(916, 275)">
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">⚐</text>
@@ -1482,8 +1659,8 @@
             </g>
 
             <g class="dg-box">
-              <rect x="450" y="65" width="290" height="200" rx="10" fill="#fbf8ee" stroke="#ddd6c0"/>
-              <text class="tag" x="475" y="93" font-family="JetBrains Mono" font-size="9" fill="#918b78" letter-spacing="0.1em">SIGN-IN PIPELINE</text>
+              <rect x="450" y="65" width="290" height="200" rx="5" fill="#fbf8ee" stroke="#ddd6c0" stroke-width="1" filter="url(#paper-shadow-r)"/>
+              <text class="tag" x="475" y="93" font-family="JetBrains Mono" font-size="8.5" fill="#918b78" letter-spacing="0.14em">SIGN-IN PIPELINE</text>
               <text class="ttl" x="475" y="120" font-family="Fraunces" font-variation-settings="'opsz' 30" font-weight="500" fill="#15140f" font-size="15">Trust pipeline</text>
               <text class="desc" x="475" y="146" font-family="Inter" font-size="11" fill="#58554a" font-weight="600">1 · Authenticate</text>
               <text class="desc" x="475" y="161" font-family="Inter" font-size="11" fill="#58554a">Signed, time-limited session</text>
@@ -1569,10 +1746,8 @@
       current.classList.remove('prev');
     }
     current.classList.remove('active');
-    // Reset animations so they replay if returning
     target.classList.remove('prev');
 
-    // Force reflow to restart CSS animations on .active classes
     void target.offsetHeight;
     target.classList.add('active');
 
@@ -1582,7 +1757,6 @@
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = idx === total - 1;
 
-    // Reset scroll on entered slide
     target.scrollTop = 0;
   }
 
