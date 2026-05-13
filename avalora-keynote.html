@@ -1194,60 +1194,78 @@
           <path class="dg-path" d="M 190 187 C 235 187 235 162 280 162"/>
           <path class="dg-path" d="M 190 254 C 235 254 235 180 280 180"/>
           <path class="dg-path accent" d="M 460 155 L 535 155" marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 755 110 C 820 110 820 60 885 60"   marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 755 155 L 885 155"                 marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 755 200 C 820 200 820 250 885 250" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 80  C 820 80  820 58  885 58"  marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 130 C 820 130 820 126 885 126" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 180 C 820 180 820 194 885 194" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 220 C 820 220 820 262 885 262" marker-end="url(#arrow)"/>
 
           <!-- Layer 2: particles (comet trails) -->
-          <!-- Route 1: Source 1 → Dashboard -->
+          <!-- Route 1: Source 1 → Interactive dashboard -->
           <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
             <animateMotion dur="8s" repeatCount="indefinite"
-              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 110 C 820 110 820 60 885 60"/>
+              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 80 C 820 80 820 58 885 58"/>
             <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" repeatCount="indefinite"/>
           </circle>
           <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
             <animateMotion dur="8s" begin="0.25s" repeatCount="indefinite"
-              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 110 C 820 110 820 60 885 60"/>
+              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 80 C 820 80 820 58 885 58"/>
             <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="0.25s" repeatCount="indefinite"/>
           </circle>
           <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
             <animateMotion dur="8s" begin="0.5s" repeatCount="indefinite"
-              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 110 C 820 110 820 60 885 60"/>
+              path="M 190 53 C 235 53 235 130 280 130 L 460 155 L 535 155 L 755 80 C 820 80 820 58 885 58"/>
             <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="0.5s" repeatCount="indefinite"/>
           </circle>
 
           <!-- Route 2: Source 2 → AI Q&A -->
           <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
-            <animateMotion dur="8s" begin="2.7s" repeatCount="indefinite"
-              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2.7s" repeatCount="indefinite"/>
+            <animateMotion dur="8s" begin="2s" repeatCount="indefinite"
+              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 130 C 820 130 820 126 885 126"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2s" repeatCount="indefinite"/>
           </circle>
           <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
-            <animateMotion dur="8s" begin="2.95s" repeatCount="indefinite"
-              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
-            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2.95s" repeatCount="indefinite"/>
+            <animateMotion dur="8s" begin="2.25s" repeatCount="indefinite"
+              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 130 C 820 130 820 126 885 126"/>
+            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2.25s" repeatCount="indefinite"/>
           </circle>
           <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
-            <animateMotion dur="8s" begin="3.2s" repeatCount="indefinite"
-              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
-            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="3.2s" repeatCount="indefinite"/>
+            <animateMotion dur="8s" begin="2.5s" repeatCount="indefinite"
+              path="M 190 120 C 235 120 235 148 280 148 L 460 155 L 535 155 L 755 130 C 820 130 820 126 885 126"/>
+            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="2.5s" repeatCount="indefinite"/>
           </circle>
 
           <!-- Route 3: Source 3 → PDF/Excel deliverable -->
           <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
-            <animateMotion dur="8s" begin="5.4s" repeatCount="indefinite"
-              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 200 C 820 200 820 250 885 250"/>
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="5.4s" repeatCount="indefinite"/>
+            <animateMotion dur="8s" begin="4s" repeatCount="indefinite"
+              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 180 C 820 180 820 194 885 194"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="4s" repeatCount="indefinite"/>
           </circle>
           <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
-            <animateMotion dur="8s" begin="5.65s" repeatCount="indefinite"
-              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 200 C 820 200 820 250 885 250"/>
-            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="5.65s" repeatCount="indefinite"/>
+            <animateMotion dur="8s" begin="4.25s" repeatCount="indefinite"
+              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 180 C 820 180 820 194 885 194"/>
+            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="4.25s" repeatCount="indefinite"/>
           </circle>
           <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
-            <animateMotion dur="8s" begin="5.9s" repeatCount="indefinite"
-              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 200 C 820 200 820 250 885 250"/>
-            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="5.9s" repeatCount="indefinite"/>
+            <animateMotion dur="8s" begin="4.5s" repeatCount="indefinite"
+              path="M 190 187 C 235 187 235 162 280 162 L 460 155 L 535 155 L 755 180 C 820 180 820 194 885 194"/>
+            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="4.5s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Route 4: Source 4 → Risk triggers & EWS -->
+          <circle class="particle" r="3" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="6s" repeatCount="indefinite"
+              path="M 190 254 C 235 254 235 180 280 180 L 460 155 L 535 155 L 755 220 C 820 220 820 262 885 262"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="6s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="2.4" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="6.25s" repeatCount="indefinite"
+              path="M 190 254 C 235 254 235 180 280 180 L 460 155 L 535 155 L 755 220 C 820 220 820 262 885 262"/>
+            <animate attributeName="opacity" values="0;0.6;0.6;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="6.25s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="1.8" fill="url(#part-cool)" filter="url(#glow-cool)">
+            <animateMotion dur="8s" begin="6.5s" repeatCount="indefinite"
+              path="M 190 254 C 235 254 235 180 280 180 L 460 155 L 535 155 L 755 220 C 820 220 820 262 885 262"/>
+            <animate attributeName="opacity" values="0;0.35;0.35;0" keyTimes="0;0.08;0.92;1" dur="8s" begin="6.5s" repeatCount="indefinite"/>
           </circle>
 
           <!-- Layer 3: boxes (drawn last, on top of particles) -->
@@ -1296,22 +1314,28 @@
           </g>
 
           <g class="dg-box green">
-            <rect x="885" y="25" width="290" height="72" rx="5" filter="url(#paper-shadow)"/>
-            <text class="tag" x="900" y="48">Surface</text>
-            <text class="ttl" x="900" y="69" font-size="14">Interactive dashboard</text>
-            <text class="desc" x="900" y="85">Live charts, scope-aware roll-ups</text>
+            <rect x="885" y="29" width="290" height="58" rx="5" filter="url(#paper-shadow)"/>
+            <text class="tag" x="900" y="47">Surface</text>
+            <text class="ttl" x="900" y="67" font-size="14">Interactive dashboard</text>
+            <text class="desc" x="900" y="82">Live charts, scope-aware roll-ups</text>
           </g>
           <g class="dg-box green">
-            <rect x="885" y="120" width="290" height="72" rx="5" filter="url(#paper-shadow)"/>
-            <text class="tag" x="900" y="143">Assistant</text>
-            <text class="ttl" x="900" y="164" font-size="14">AI portfolio Q&amp;A</text>
-            <text class="desc" x="900" y="180">Natural-language, scope-aware</text>
+            <rect x="885" y="97" width="290" height="58" rx="5" filter="url(#paper-shadow)"/>
+            <text class="tag" x="900" y="115">Assistant</text>
+            <text class="ttl" x="900" y="135" font-size="14">AI portfolio Q&amp;A</text>
+            <text class="desc" x="900" y="150">Natural-language, scope-aware</text>
           </g>
           <g class="dg-box green">
-            <rect x="885" y="215" width="290" height="72" rx="5" filter="url(#paper-shadow)"/>
-            <text class="tag" x="900" y="238">Deliverables</text>
-            <text class="ttl" x="900" y="259" font-size="14">PDF summary &amp; Excel detail</text>
-            <text class="desc" x="900" y="275">Board-ready and analyst-ready exports</text>
+            <rect x="885" y="165" width="290" height="58" rx="5" filter="url(#paper-shadow)"/>
+            <text class="tag" x="900" y="183">Deliverables</text>
+            <text class="ttl" x="900" y="203" font-size="14">PDF summary &amp; Excel detail</text>
+            <text class="desc" x="900" y="218">Board-ready and analyst-ready exports</text>
+          </g>
+          <g class="dg-box green">
+            <rect x="885" y="233" width="290" height="58" rx="5" filter="url(#paper-shadow)"/>
+            <text class="tag" x="900" y="251">Signals</text>
+            <text class="ttl" x="900" y="271" font-size="14">Risk triggers &amp; EWS</text>
+            <text class="desc" x="900" y="286">Threshold breaches &amp; early warnings</text>
           </g>
         </svg>
       </div>
