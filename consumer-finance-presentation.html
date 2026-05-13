@@ -6,36 +6,37 @@
 <title>Consumer Portfolio Quality Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #f6f3ec;
+    --bg: #f4efe2;
+    --bg-2: #efe9d8;
     --paper: #ffffff;
-    --paper-2: #faf8f1;
-    --paper-3: #f1ede2;
-    --ink: #161613;
-    --ink-2: #2b2b27;
-    --muted: #5a584f;
-    --faint: #8e8a7c;
-    --line: #e3ddca;
-    --line-2: #ccc4ab;
-    --accent: #213d6a;
-    --accent-2: #3a5d8f;
-    --accent-soft: #eaf0fa;
-    --accent-line: #c0d0e8;
-    --green: #2f5d3e;
-    --amber: #9a5d18;
-    --red: #903131;
-    --plum: #5f2f60;
-
-    --gap: 0.7rem;
-    --gap-sm: 0.5rem;
+    --paper-2: #fbf8ee;
+    --paper-3: #f0eadb;
+    --ink: #15140f;
+    --ink-2: #2c2a22;
+    --muted: #58554a;
+    --faint: #918b78;
+    --line: #ddd6c0;
+    --line-2: #c5bca0;
+    --rule: #312d22;
+    --accent: #1f3b6b;
+    --accent-2: #355e94;
+    --accent-soft: #e9eff8;
+    --accent-line: #b9c8e2;
+    --sienna: #7b3a16;
+    --sienna-soft: #f5ede4;
+    --green: #2c5a3a;
+    --amber: #93571a;
+    --red: #8a2e2e;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html {
-    font-size: clamp(13px, 0.92vw, 16.5px);
+    font-size: clamp(13px, 0.9vw, 16px);
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
   }
 
   body {
@@ -47,11 +48,59 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     background-image:
-      radial-gradient(1100px 700px at 10% -10%, rgba(33,61,106,0.05), transparent 60%),
-      radial-gradient(800px 600px at 100% 110%, rgba(154,93,24,0.04), transparent 60%);
+      radial-gradient(1200px 800px at 8% -10%, rgba(31,59,107,0.06), transparent 60%),
+      radial-gradient(900px 600px at 100% 110%, rgba(123,58,22,0.05), transparent 60%);
   }
 
-  /* ───────── Deck container ───────── */
+  /* ── Typography utilities ───────────────────── */
+  .display {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 50;
+    font-weight: 500;
+    letter-spacing: -0.022em;
+    line-height: 1;
+  }
+  .serif {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 72, 'SOFT' 50;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+  }
+  .serif-italic {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 72, 'SOFT' 100;
+    font-weight: 500;
+  }
+  .label, .crumb {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+  }
+  .body-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+  .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+    font-weight: 500;
+  }
+  .num-display {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
+    font-weight: 500;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+    letter-spacing: -0.025em;
+  }
+
+  /* ── Deck container ─────────────────────────── */
   .deck { position: relative; width: 100vw; height: 100vh; }
 
   .slide {
@@ -59,7 +108,7 @@
     inset: 0;
     display: flex;
     flex-direction: column;
-    padding: 3vh 4.5vw 2.6vh;
+    padding: 2.8vh 4.5vw 2.6vh;
     opacity: 0;
     transform: translateX(2rem);
     transition: opacity 360ms cubic-bezier(.22,.61,.36,1), transform 420ms cubic-bezier(.22,.61,.36,1);
@@ -69,66 +118,74 @@
   .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
   .slide.prev   { transform: translateX(-2rem); }
 
-  /* ───────── Header strip ───────── */
+  /* ── Slide header ───────────────────────────── */
   .head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
+    padding-bottom: 0.7rem;
+    margin-bottom: 0.9rem;
     border-bottom: 1px solid var(--line);
   }
-  .crumb {
+  .head .crumb {
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
+    gap: 0.55rem;
+  }
+  .head .sheet-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    background: var(--rule);
+    color: var(--bg);
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.1em;
     font-weight: 600;
   }
-  .crumb .sheet-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    background: var(--accent);
-    color: #fff;
-    padding: 0.16rem 0.5rem;
-    border-radius: 3px;
-    letter-spacing: 0.08em;
-  }
-  .pageno {
+  .head .pageno {
     font-family: 'Fraunces', Georgia, serif;
-    font-size: 0.9rem;
     font-style: italic;
+    font-size: 0.85rem;
     color: var(--faint);
+    font-variation-settings: 'opsz' 48;
   }
-  .pageno strong {
+  .head .pageno .n {
     font-style: normal;
     color: var(--ink);
     font-weight: 500;
   }
 
-  /* ───────── Titles ───────── */
-  h1.serif, h2.serif, h3.serif {
+  /* ── Slide-level titles ─────────────────────── */
+  h2.title {
     font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 72, 'SOFT' 50;
     font-weight: 500;
+    font-size: 2.1rem;
+    line-height: 1.04;
     letter-spacing: -0.018em;
     color: var(--ink);
-    line-height: 1.05;
+    margin-bottom: 0.3rem;
   }
-  h3.serif { font-size: 1.05rem; line-height: 1.2; }
-  h2.serif { font-size: 2.2rem; margin-bottom: 0.35rem; }
-  h1.serif { font-size: 4.4rem; }
-
-  .lede {
-    font-size: 0.95rem;
-    color: var(--muted);
+  h2.title em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 72, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .sub {
+    font-size: 0.94rem;
     line-height: 1.5;
-    max-width: 52rem;
+    color: var(--muted);
+    max-width: 50rem;
+    font-weight: 400;
+  }
+  .sub em {
+    color: var(--ink);
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
   }
 
-  /* ───────── Title slide ───────── */
+  /* ── Title slide ────────────────────────────── */
   .title-slide {
     justify-content: center;
     padding-left: 6vw;
@@ -138,7 +195,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--accent);
@@ -147,24 +204,31 @@
   }
   .kicker::before {
     content: '';
-    width: 2rem;
+    width: 2.2rem;
     height: 1px;
     background: var(--accent);
   }
   .title-slide h1 {
-    font-size: clamp(2.4rem, 5vw, 5.2rem);
-    margin-bottom: 1.1rem;
-    max-width: 56rem;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
+    font-weight: 500;
+    font-size: clamp(2.6rem, 5.4vw, 5.6rem);
+    line-height: 0.96;
+    letter-spacing: -0.028em;
+    margin-bottom: 1.2rem;
+    max-width: 58rem;
   }
   .title-slide h1 em {
     font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
     color: var(--accent);
   }
   .title-slide .deck-lede {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     line-height: 1.5;
     color: var(--muted);
     max-width: 42rem;
+    font-weight: 300;
   }
   .title-slide .meta {
     margin-top: 2.4rem;
@@ -172,155 +236,178 @@
     gap: 2.4rem;
     font-size: 0.78rem;
     color: var(--faint);
+    align-items: flex-start;
   }
   .title-slide .meta strong {
     display: block;
-    font-size: 0.62rem;
-    letter-spacing: 0.18em;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--ink);
     font-weight: 600;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
+  }
+  .title-slide .ornament {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    color: var(--sienna);
+    font-size: 1.3rem;
+    margin-bottom: 0.4rem;
   }
 
-  /* ───────── Body container ───────── */
+  /* ── Body ───────────────────────────────────── */
   .body {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--gap);
+    gap: 0.7rem;
   }
 
-  /* ───────── Grids ───────── */
-  .grid { display: grid; gap: var(--gap); }
+  /* ── Grids ──────────────────────────────────── */
+  .grid { display: grid; gap: 0.7rem; }
   .cols-2 { grid-template-columns: repeat(2, 1fr); }
   .cols-3 { grid-template-columns: repeat(3, 1fr); }
   .cols-4 { grid-template-columns: repeat(4, 1fr); }
   .cols-5 { grid-template-columns: repeat(5, 1fr); }
   .cols-6 { grid-template-columns: repeat(6, 1fr); }
 
-  /* ───────── Card ───────── */
+  /* ── Card ───────────────────────────────────── */
   .card {
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 0.85rem 1rem;
+    padding: 0.85rem 1rem 0.9rem;
     transition: border-color 180ms, box-shadow 180ms;
+    position: relative;
   }
   .card:hover {
     border-color: var(--line-2);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 6px 16px -10px rgba(0,0,0,0.07);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 8px 22px -14px rgba(0,0,0,0.08);
   }
   .card .label {
-    font-size: 0.62rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    margin-bottom: 0.35rem;
     color: var(--faint);
-    font-weight: 600;
-    margin-bottom: 0.4rem;
   }
   .card h4 {
     font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36;
     font-weight: 500;
-    font-size: 1.05rem;
+    font-size: 1.08rem;
     margin-bottom: 0.35rem;
-    color: var(--ink);
-    line-height: 1.15;
-  }
-  .card p {
-    font-size: 0.78rem;
-    line-height: 1.5;
-    color: var(--muted);
-  }
-
-  /* ───────── Feature card (icon version) ───────── */
-  .feat {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 0.9rem 1rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    position: relative;
-  }
-  .feat .n {
-    font-family: 'Fraunces', Georgia, serif;
-    font-style: italic;
-    font-size: 1.6rem;
-    color: var(--accent);
-    line-height: 1;
-    font-weight: 500;
-  }
-  .feat h4 {
-    font-family: 'Fraunces', Georgia, serif;
-    font-weight: 500;
-    font-size: 1.05rem;
     color: var(--ink);
     letter-spacing: -0.008em;
     line-height: 1.15;
   }
-  .feat p {
+  .card p {
     font-size: 0.78rem;
-    line-height: 1.5;
+    line-height: 1.52;
     color: var(--muted);
   }
-  .feat .meta-row {
-    margin-top: auto;
+
+  /* ── Capability tile (icon style) ───────────── */
+  .cap {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 0.9rem 1rem 1rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .cap .sym {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 0.1rem;
+  }
+  .cap h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36;
+    font-weight: 500;
+    font-size: 1.05rem;
+    color: var(--ink);
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+  }
+  .cap p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .cap .meta-row {
     display: flex;
     gap: 0.3rem;
     flex-wrap: wrap;
-    padding-top: 0.4rem;
+    padding-top: 0.3rem;
   }
+  .cap.featured {
+    background: linear-gradient(180deg, var(--paper) 0%, var(--accent-soft) 200%);
+    border-color: var(--accent-line);
+  }
+  .cap.featured .sym { color: var(--sienna); }
 
-  /* ───────── Tag ───────── */
+  /* ── Tag ───────────────────────────────────── */
   .tag {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem;
-    padding: 0.14rem 0.45rem;
+    padding: 0.13rem 0.45rem;
     background: var(--paper-3);
     border: 1px solid var(--line);
     border-radius: 4px;
     color: var(--muted);
     font-weight: 500;
+    font-feature-settings: 'tnum' 1;
   }
   .tag.accent {
     background: var(--accent-soft);
     border-color: var(--accent-line);
     color: var(--accent);
   }
+  .tag.sienna {
+    background: var(--sienna-soft);
+    border-color: #e3cdb2;
+    color: var(--sienna);
+  }
 
-  /* ───────── Stats row ───────── */
+  /* ── Stats ──────────────────────────────────── */
   .stats {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.6rem;
+    gap: 0.55rem;
   }
   .stat {
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 0.7rem 0.85rem;
+    padding: 0.7rem 0.9rem 0.75rem;
   }
   .stat .v {
     font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
     font-weight: 500;
-    font-size: 1.7rem;
-    letter-spacing: -0.02em;
+    font-size: 2rem;
+    letter-spacing: -0.025em;
     color: var(--accent);
     line-height: 1;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
   .stat .k {
     font-size: 0.62rem;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--faint);
     font-weight: 600;
-    margin-top: 0.4rem;
+    margin-top: 0.45rem;
   }
 
-  /* ───────── Table ───────── */
+  /* ── Table ──────────────────────────────────── */
   .tbl {
     width: 100%;
     border-collapse: collapse;
@@ -328,16 +415,16 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     overflow: hidden;
-    font-size: 0.77rem;
+    font-size: 0.78rem;
   }
   .tbl th, .tbl td {
     text-align: left;
-    padding: 0.42rem 0.7rem;
+    padding: 0.42rem 0.75rem;
     border-bottom: 1px solid var(--line);
   }
   .tbl th {
-    font-size: 0.62rem;
-    letter-spacing: 0.12em;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     font-weight: 600;
     color: var(--faint);
@@ -345,56 +432,75 @@
   }
   .tbl tr:last-child td { border-bottom: 0; }
   .tbl td.muted { color: var(--muted); font-size: 0.74rem; }
-  .tbl td strong { font-weight: 600; color: var(--ink); }
+  .tbl td strong {
+    font-weight: 600;
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 18;
+  }
   .tbl td.num {
     font-family: 'JetBrains Mono', monospace;
     text-align: right;
     color: var(--ink);
     font-size: 0.74rem;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
   .tbl tr:hover td { background: var(--paper-2); }
-  .tbl thead.compact th { padding: 0.35rem 0.7rem; }
+  .tbl thead.compact th { padding: 0.35rem 0.75rem; }
+  .tbl td.idx {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24;
+    color: var(--accent);
+    font-weight: 500;
+  }
 
-  /* ───────── Two-column sheet layout ───────── */
+  /* ── Sheet two-column layout ───────────────── */
   .sheet-layout {
     display: grid;
     grid-template-columns: 5fr 7fr;
-    gap: 1rem;
+    gap: 0.9rem;
     flex: 1;
     min-height: 0;
   }
   .sheet-meta {
-    background: var(--paper);
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 1.2rem 1.2rem 1rem;
+    padding: 1.1rem 1.2rem 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.7rem;
+    position: relative;
   }
-  .sheet-meta .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+  .sheet-meta::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 1.2rem;
+    height: 2px;
+    width: 2.4rem;
+    background: var(--sienna);
+  }
+  .sheet-meta .sheet-id {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.64rem;
-    color: var(--accent);
-    font-weight: 600;
-    letter-spacing: 0.06em;
-  }
-  .sheet-meta .badge .pill {
-    background: var(--accent);
-    color: #fff;
-    padding: 0.18rem 0.5rem;
-    border-radius: 3px;
     font-size: 0.62rem;
+    color: var(--faint);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: -0.1rem;
   }
   .sheet-meta h3 {
     font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 60, 'SOFT' 50;
     font-weight: 500;
-    font-size: 1.7rem;
+    font-size: 1.65rem;
     line-height: 1.08;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.017em;
+  }
+  .sheet-meta h3 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100;
+    color: var(--sienna);
   }
   .sheet-meta .purpose {
     font-size: 0.88rem;
@@ -404,44 +510,59 @@
   .sheet-meta dl {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 0.45rem 0.9rem;
+    gap: 0.4rem 0.9rem;
     font-size: 0.78rem;
-    margin-top: 0.2rem;
+    margin-top: 0.3rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--line);
   }
   .sheet-meta dt {
-    font-size: 0.62rem;
-    letter-spacing: 0.14em;
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--faint);
     font-weight: 600;
     align-self: center;
   }
-  .sheet-meta dd { color: var(--ink-2); font-weight: 500; }
+  .sheet-meta dd {
+    color: var(--ink-2);
+    font-weight: 500;
+    font-size: 0.8rem;
+  }
 
   .sheet-detail {
     display: flex;
     flex-direction: column;
-    gap: var(--gap-sm);
+    gap: 0.5rem;
     min-height: 0;
   }
-  .sheet-detail h5 {
-    font-size: 0.66rem;
-    letter-spacing: 0.16em;
+  .section-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--faint);
     font-weight: 600;
-    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
   }
 
-  /* ───────── Metric category card ───────── */
+  /* ── Metric category card ───────────────────── */
   .mc {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 0.7rem 0.85rem;
+    border-radius: 7px;
+    padding: 0.65rem 0.8rem 0.7rem;
   }
   .mc .title {
     font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
     font-weight: 500;
     font-size: 0.95rem;
     color: var(--accent);
@@ -452,22 +573,20 @@
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 0.45rem;
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.45;
+    gap: 0.22rem 0.4rem;
   }
   .mc ul li {
     background: var(--paper-2);
     border: 1px solid var(--line);
-    padding: 0.12rem 0.42rem;
+    padding: 0.1rem 0.4rem;
     border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.66rem;
+    font-size: 0.65rem;
     color: var(--ink-2);
+    font-feature-settings: 'tnum' 1;
   }
 
-  /* ───────── Code chip ───────── */
+  /* ── Inline code ───────────────────────────── */
   code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.74rem;
@@ -478,18 +597,59 @@
     color: var(--accent);
   }
 
-  /* ───────── Brand + Progress + Controls ───────── */
+  /* ── Need slide: before / after table ───────── */
+  .need-table {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .need-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--line);
+  }
+  .need-row:last-child { border-bottom: 0; }
+  .need-cell {
+    padding: 0.85rem 1rem 0.9rem;
+    border-right: 1px solid var(--line);
+  }
+  .need-cell:last-child { border-right: 0; }
+  .need-cell.before {
+    background: var(--paper-2);
+  }
+  .need-cell.after {
+    background: var(--accent-soft);
+  }
+  .need-cell .lbl {
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .need-cell.before .lbl { color: var(--sienna); }
+  .need-cell.after .lbl  { color: var(--accent); }
+  .need-cell p {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .need-cell p strong { font-weight: 600; color: var(--ink); }
+  .need-cell.before p { color: var(--muted); }
+
+  /* ── Brand + Progress + Controls ───────────── */
   .brand {
     position: fixed;
-    top: 1.2rem;
-    left: 1.6rem;
+    top: 1.1rem;
+    left: 1.4rem;
     z-index: 100;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.66rem;
+    gap: 0.55rem;
+    font-size: 0.64rem;
     font-weight: 600;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--muted);
   }
@@ -497,15 +657,16 @@
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 5px;
-    background: var(--ink);
+    background: var(--rule);
     color: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Fraunces', Georgia, serif;
     font-weight: 600;
-    font-size: 0.8rem;
     font-style: italic;
+    font-size: 0.85rem;
+    font-variation-settings: 'opsz' 96;
   }
   .progress {
     position: fixed;
@@ -522,7 +683,7 @@
   }
   .controls {
     position: fixed;
-    bottom: 1.1rem;
+    bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -531,7 +692,7 @@
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 0.4rem 0.9rem;
+    padding: 0.35rem 0.85rem;
     z-index: 100;
     box-shadow: 0 3px 14px -8px rgba(0,0,0,0.08);
   }
@@ -552,20 +713,21 @@
   .controls button:hover { background: var(--paper-2); color: var(--ink); }
   .counter {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--muted);
     padding: 0 0.3rem;
     min-width: 3rem;
     text-align: center;
+    font-feature-settings: 'tnum' 1;
   }
   .dots {
     position: fixed;
-    right: 1.3rem;
+    right: 1.2rem;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.38rem;
     z-index: 100;
   }
   .dot-btn {
@@ -584,25 +746,49 @@
   }
   .dot-btn:hover:not(.active) { background: rgba(0,0,0,0.28); }
 
-  /* ───────── Section divider ───────── */
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    margin: 0.3rem 0;
+  /* ── Reading note ───────────────────────────── */
+  .note {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.55;
+    padding: 0.5rem 0.9rem;
+    background: var(--paper-2);
+    border-left: 2px solid var(--sienna);
+    border-radius: 0 6px 6px 0;
   }
-  .divider h6 {
-    font-size: 0.66rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--faint);
-    font-weight: 600;
-    white-space: nowrap;
+  .note em {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    color: var(--ink);
+    font-variation-settings: 'opsz' 18;
   }
-  .divider .bar { flex: 1; height: 1px; background: var(--line); }
 
-  /* ───────── Closing slide ───────── */
-  .close h1 { font-size: 4rem; }
+  /* ── Glossary grid ─────────────────────────── */
+  .gloss {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.55rem;
+  }
+  .gloss .term {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 0.55rem 0.75rem 0.65rem;
+  }
+  .gloss .term .abbr {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36;
+    font-weight: 500;
+    color: var(--accent);
+    font-size: 0.95rem;
+    margin-bottom: 0.18rem;
+    letter-spacing: -0.005em;
+  }
+  .gloss .term .def {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
 </style>
 </head>
 <body>
@@ -619,122 +805,223 @@
   <!-- ───────── 1. TITLE ───────── -->
   <section class="slide title-slide active">
     <div class="kicker">Consumer Finance · Portfolio Quality Report</div>
-    <h1 class="serif">The Consumer <em>Portfolio Quality Report</em>.</h1>
-    <p class="deck-lede">A walkthrough of the Excel artefact that risk, finance, and audit work with offline. Eleven sheets, five metric categories, and the full DPD lifecycle in one workbook.</p>
+    <div class="ornament">~</div>
+    <h1>The Consumer <em>Portfolio Quality Report</em>.</h1>
+    <p class="deck-lede">The monthly Excel artefact that anchors consumer-credit risk reporting, and the dashboard that brings it forward.</p>
     <div class="meta">
-      <span><strong>Source</strong>data/Consumer PQR.xlsx</span>
-      <span><strong>Sheets</strong>11</span>
-      <span><strong>Scope</strong>Group, Region, Subsidiary</span>
+      <span><strong>Source</strong>data/Consumer&nbsp;PQR.xlsx</span>
+      <span><strong>Scope</strong>Group · Region · Subsidiary</span>
+      <span><strong>Audience</strong>CRO · Risk · Product · Audit</span>
     </div>
   </section>
 
-  <!-- ───────── 2. CORE FEATURES ───────── -->
+  <!-- ───────── 2. WHY ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">PQR</span> Core Features</div>
-      <div class="pageno"><strong>02</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">01</span> The need</div>
+      <div class="pageno"><span class="n">02</span> &thinsp;/&thinsp; 15</div>
     </div>
-    <h2 class="serif">What makes the PQR what it is.</h2>
-    <p class="lede">Six design choices that run through every sheet. Knowing them makes the rest of the workbook easy to read.</p>
+    <h2 class="title">Why a <em>PQR dashboard</em> at all.</h2>
+    <p class="sub">A monthly workbook traded by email is fragile. Risk decisions wait on whoever opens the right tab. The dashboard surfaces the same data live, scope-aware, and queryable by language.</p>
 
-    <div class="body" style="margin-top: 0.7rem;">
-      <div class="grid cols-3">
-        <div class="feat">
-          <div class="n">01</div>
-          <h4>Period columns</h4>
-          <p>Every sheet uses month-end periods as columns (Apr'25, May'25, Jun'25...). Read left to right to see how a metric is trending.</p>
-          <div class="meta-row"><span class="tag accent">5 months visible</span></div>
+    <div class="body" style="margin-top: 0.5rem;">
+      <div class="need-table">
+        <div class="need-row">
+          <div class="need-cell before">
+            <div class="lbl">The Excel-only era</div>
+            <p>A 30-tab workbook compiled once a month and circulated as an attachment. Reconciling across <strong>5 subsidiaries</strong> meant copy-paste, manual FX, broken formulas.</p>
+          </div>
+          <div class="need-cell after">
+            <div class="lbl">In the dashboard</div>
+            <p>Live data, <strong>auto FX conversion</strong> to USD, validated by Zod schemas at ingest, and exportable back to Excel with one click for offline use.</p>
+          </div>
         </div>
-        <div class="feat">
-          <div class="n">02</div>
-          <h4>Metric Type → Metric</h4>
-          <p>Rows are grouped by category (Book Size, Entry Rates, Portfolio Performance, Roll Rates, Process Efficiency) and then by the individual metric.</p>
-          <div class="meta-row"><span class="tag">5 categories</span><span class="tag">40+ metrics</span></div>
+        <div class="need-row">
+          <div class="need-cell before">
+            <div class="lbl">Then</div>
+            <p>One file, one scope. Looking at a single subsidiary required a fresh workbook, often days later.</p>
+          </div>
+          <div class="need-cell after">
+            <div class="lbl">Now</div>
+            <p>Group, Region, and Subsidiary <strong>toggle in place</strong>. Every metric, every chart updates against the chosen scope.</p>
+          </div>
         </div>
-        <div class="feat">
-          <div class="n">03</div>
-          <h4>Benchmarks inline</h4>
-          <p>A Bench-mark column sits next to the latest period so a reader can judge whether the current value is acceptable without leaving the sheet.</p>
-          <div class="meta-row"><span class="tag">e.g. 10-12%</span><span class="tag">&lt; 5%</span></div>
+        <div class="need-row">
+          <div class="need-cell before">
+            <div class="lbl">Then</div>
+            <p>"What's our 90+ DPD trend on unsecured by subsidiary?" meant ten minutes of tab-flipping.</p>
+          </div>
+          <div class="need-cell after">
+            <div class="lbl">Now</div>
+            <p>Ask the <strong>AI panel</strong> in natural language. Gemini reads live portfolio context and answers in markdown with the same numbers.</p>
+          </div>
         </div>
-        <div class="feat">
-          <div class="n">04</div>
-          <h4>Total + Cuts</h4>
-          <p>Most sheets show the total portfolio first, then repeat the same structure for Secured, Unsecured, and key products (Personal Loan, Housing, Auto).</p>
-          <div class="meta-row"><span class="tag">Total</span><span class="tag">Secured</span><span class="tag">Unsecured</span></div>
-        </div>
-        <div class="feat">
-          <div class="n">05</div>
-          <h4>Bucket granularity</h4>
-          <p>DPD is reported per bucket: Current, 1-30, 31-60, 61-90, 91-120, 121-150, 151-180, 180-210, 210+, plus FWOF (forward write-off).</p>
-          <div class="meta-row"><span class="tag accent">9 DPD buckets</span></div>
-        </div>
-        <div class="feat">
-          <div class="n">06</div>
-          <h4>Static pool / vintage</h4>
-          <p>Cohort tables track how each monthly origination cohort ages over MOB-1 through MOB-7, for both X+ and 30+ delinquency.</p>
-          <div class="meta-row"><span class="tag">X+ rate</span><span class="tag">30+ rate</span></div>
+        <div class="need-row">
+          <div class="need-cell before">
+            <div class="lbl">Then</div>
+            <p>Threshold breaches were spotted only by readers familiar with the benchmark conventions.</p>
+          </div>
+          <div class="need-cell after">
+            <div class="lbl">Now</div>
+            <p>The <strong>risk appetite registry</strong> flags RAG status against configurable thresholds at Group, Region, Subsidiary, and product levels.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ───────── 3. SHEET MAP ───────── -->
+  <!-- ───────── 3. CAPABILITIES (with AI) ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">PQR</span> Sheet Map</div>
-      <div class="pageno"><strong>03</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">02</span> Capabilities</div>
+      <div class="pageno"><span class="n">03</span> &thinsp;/&thinsp; 15</div>
     </div>
-    <h2 class="serif">The eleven sheets.</h2>
-    <p class="lede">A guide to what each tab contains, what shape its data takes, and how it relates to the others.</p>
+    <h2 class="title">What the dashboard <em>does</em>.</h2>
+    <p class="sub">Six capabilities sit on top of the same data the Excel PQR carries. The Excel report remains the deliverable; the dashboard is the workspace.</p>
 
-    <div class="body" style="margin-top: 0.7rem;">
-      <div class="stats" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 0.5rem;">
-        <div class="stat"><div class="v">11</div><div class="k">Sheets</div></div>
-        <div class="stat"><div class="v">40+</div><div class="k">Metrics</div></div>
+    <div class="body" style="margin-top: 0.5rem;">
+      <div class="grid cols-3">
+        <div class="cap featured">
+          <div class="sym">∗</div>
+          <h4>AI assistant</h4>
+          <p>Gemini-backed panel that takes natural-language questions. Reads consumer, trade, corporate, and risk queries in parallel to build context, then streams a markdown answer with copy-to-clipboard.</p>
+          <div class="meta-row"><span class="tag sienna">Gemini 1.5</span><span class="tag">/api/gemini</span></div>
+        </div>
+        <div class="cap">
+          <div class="sym">⌘</div>
+          <h4>Scope toggle</h4>
+          <p>One selector controls every chart, KPI, and export between Group, Region, and Subsidiary. Rate metrics are AUM-weighted; monetary metrics are summed.</p>
+          <div class="meta-row"><span class="tag accent">Group</span><span class="tag accent">Region</span><span class="tag accent">Subsidiary</span></div>
+        </div>
+        <div class="cap">
+          <div class="sym">◊</div>
+          <h4>Live DPD charts</h4>
+          <p>DPD bucket distribution, roll-rate heatmap, vintage curves, collection efficiency. All rebuild on scope change and product filter.</p>
+          <div class="meta-row"><span class="tag">D3.js</span><span class="tag">MUI v5</span></div>
+        </div>
+        <div class="cap">
+          <div class="sym">↓</div>
+          <h4>Excel export</h4>
+          <p>One click regenerates the PQR workbook from the current scope. Built in-browser via ExcelJS. Same tabs as the source file, with currency, percent, and number formatting baked in.</p>
+          <div class="meta-row"><span class="tag">ExcelJS</span><span class="tag">consumer-pqr.ts</span></div>
+        </div>
+        <div class="cap">
+          <div class="sym">△</div>
+          <h4>Risk appetite</h4>
+          <p>PIN-locked drawer with configurable thresholds per metric, resolved by scope. Drives the RAG indicators on the dashboard and breach alert panels.</p>
+          <div class="meta-row"><span class="tag">RAG status</span><span class="tag">Admin only</span></div>
+        </div>
+        <div class="cap">
+          <div class="sym">✓</div>
+          <h4>Validated ingest</h4>
+          <p>Twenty <code>/api/ingest/*</code> endpoints with API-key auth, Zod schemas, FX conversion, and batch upsert. Each upload is logged and replayable.</p>
+          <div class="meta-row"><span class="tag">Zod</span><span class="tag">API key</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── 4. CONVENTIONS ───────── -->
+  <section class="slide">
+    <div class="head">
+      <div class="crumb"><span class="sheet-tag">03</span> Conventions</div>
+      <div class="pageno"><span class="n">04</span> &thinsp;/&thinsp; 15</div>
+    </div>
+    <h2 class="title">How every sheet is <em>structured</em>.</h2>
+    <p class="sub">Six conventions used throughout the workbook. The same shape reappears in every tab, which is why a reader who learns one moves quickly through the rest.</p>
+
+    <div class="body" style="margin-top: 0.5rem;">
+      <div class="grid cols-3">
+        <div class="cap">
+          <div class="sym">i</div>
+          <h4>Period columns</h4>
+          <p>Month-end periods sit across the top (Apr'25, May'25, Jun'25, Jul'25, Aug'25). Reading left to right traces the trend.</p>
+        </div>
+        <div class="cap">
+          <div class="sym">ii</div>
+          <h4>Metric Type then Metric</h4>
+          <p>Rows are grouped first by category (Book Size, Entry Rates, Portfolio Performance, Roll Rates, Process Efficiency), then by individual metric.</p>
+        </div>
+        <div class="cap">
+          <div class="sym">iii</div>
+          <h4>Benchmarks inline</h4>
+          <p>A Bench-mark column appears next to the latest period. Reading "10-12%" or "&lt; 5%" beside the value tells you immediately whether the metric is in tolerance.</p>
+        </div>
+        <div class="cap">
+          <div class="sym">iv</div>
+          <h4>Total then cuts</h4>
+          <p>Most sheets carry a Total block first, then repeat the same structure for Secured, Unsecured, and key products.</p>
+        </div>
+        <div class="cap">
+          <div class="sym">v</div>
+          <h4>Nine DPD buckets</h4>
+          <p>Current, 1-30, 31-60, 61-90, 91-120, 121-150, 151-180, 180-210, 210+, plus FWOF (forward write-off). Consistent across Net Flow, Collection, Roll Rate sheets.</p>
+        </div>
+        <div class="cap">
+          <div class="sym">vi</div>
+          <h4>Vintage cohort tables</h4>
+          <p>Cohort rows by origination month, MOB columns (1 through 7). X+ and 30+ rates side by side.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── 5. CONTENTS ───────── -->
+  <section class="slide">
+    <div class="head">
+      <div class="crumb"><span class="sheet-tag">04</span> Contents</div>
+      <div class="pageno"><span class="n">05</span> &thinsp;/&thinsp; 15</div>
+    </div>
+    <h2 class="title">What each sheet <em>contains</em>.</h2>
+    <p class="sub">An index for the rest of the deck. Every sheet that follows is detailed in its own slide with structure and a sample of real values.</p>
+
+    <div class="body" style="margin-top: 0.5rem;">
+      <div class="stats">
+        <div class="stat"><div class="v">11</div><div class="k">Tabs</div></div>
+        <div class="stat"><div class="v">40<span style="font-size: 1.2rem;">+</span></div><div class="k">Metrics</div></div>
         <div class="stat"><div class="v">9</div><div class="k">DPD buckets</div></div>
-        <div class="stat"><div class="v">6</div><div class="k">Risk buckets B1-B6</div></div>
+        <div class="stat"><div class="v">6</div><div class="k">Risk buckets · B1-B6</div></div>
         <div class="stat"><div class="v">7</div><div class="k">MOB columns</div></div>
       </div>
 
       <table class="tbl">
         <thead class="compact">
           <tr>
-            <th style="width: 4%;">#</th>
-            <th style="width: 22%;">Sheet</th>
-            <th style="width: 40%;">What's in it</th>
+            <th style="width: 4%;"></th>
+            <th style="width: 22%;">Tab</th>
+            <th style="width: 42%;">What's in it</th>
             <th>Shape</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td class="num">01</td><td><strong>Over All Level</strong></td><td class="muted">Portfolio-wide KPIs by metric category over five months, plus AUM by risk segment.</td><td class="muted">Metric Type × Metric × Period</td></tr>
-          <tr><td class="num">02</td><td><strong>Product wise</strong></td><td class="muted">Same metric structure as Sheet 1, but broken down per product (Consumer Loan, Personal Loan, etc.).</td><td class="muted">Product × Metric × Period</td></tr>
-          <tr><td class="num">03</td><td><strong>PQR variable template</strong></td><td class="muted">The reference definitions for each metric. Source of truth for what every row means.</td><td class="muted">Definition list</td></tr>
-          <tr><td class="num">04</td><td><strong>Net Flow Rate</strong></td><td class="muted">AUM by DPD bucket, Bucket 1-6 Flow %, and POF%. Repeated for Total, Secured, Unsecured.</td><td class="muted">Bucket × Period</td></tr>
-          <tr><td class="num">05</td><td><strong>Collection Metrics</strong></td><td class="muted">The Was → Is bucket transition matrix. Where each rupee in each bucket moved to.</td><td class="muted">From-bucket × To-bucket</td></tr>
-          <tr><td class="num">06</td><td><strong>Roll Rate</strong></td><td class="muted">B1 to B6 Resolution, Norm, Rollback, Stab, and Roll Forward across periods.</td><td class="muted">Bucket × Sub-metric × Period</td></tr>
-          <tr><td class="num">07</td><td><strong>Non-Starter Analysis</strong></td><td class="muted">Loans that never made a payment, by product (Personal, Housing, Mortgage, Auto). Count and ENR.</td><td class="muted">Segment × Product × Period</td></tr>
-          <tr><td class="num">08</td><td><strong>Business Support / Risk Analytics</strong></td><td class="muted">Approved Base (LA × Off-Us Loan Band), Rejected Base (loan type), and On-Us × Off-Us delinquency.</td><td class="muted">Three nested matrices</td></tr>
-          <tr><td class="num">09</td><td><strong>TDD Pre Disbursal</strong></td><td class="muted">Applications turned in, processed, approvals, rejections, cancellations, bookings.</td><td class="muted">Metric × Period</td></tr>
-          <tr><td class="num">10</td><td><strong>TDD Post Disbursal</strong></td><td class="muted">30+ at 3 MOB by bureau bucket (NTC, 650-689, 690-750, 751-800, &gt;800) for Fresh and Renewal.</td><td class="muted">Bureau × Period</td></tr>
-          <tr><td class="num">11</td><td><strong>Static Pool</strong></td><td class="muted">Vintage cohort delinquency (X+ and 30+) by origination month and Months-On-Book 1 to 7.</td><td class="muted">Cohort × MOB</td></tr>
+          <tr><td class="idx">i</td><td><strong>Over All Level</strong></td><td class="muted">Portfolio-wide KPIs by category over five months, plus AUM by risk segment.</td><td class="muted">Metric Type × Metric × Period</td></tr>
+          <tr><td class="idx">ii</td><td><strong>Product wise</strong></td><td class="muted">The same metric structure, broken down per product (Consumer Loan, Personal, Auto, Housing).</td><td class="muted">Product × Metric × Period</td></tr>
+          <tr><td class="idx">iii</td><td><strong>PQR variable template</strong></td><td class="muted">Reference definitions for each metric. Source of truth for what every row means.</td><td class="muted">Definition list</td></tr>
+          <tr><td class="idx">iv</td><td><strong>Net Flow Rate</strong></td><td class="muted">AUM by DPD bucket, Bucket 1-6 Flow %, and POF%. Repeated for Total, Secured, Unsecured.</td><td class="muted">Bucket × Period</td></tr>
+          <tr><td class="idx">v</td><td><strong>Collection Metrics</strong></td><td class="muted">Was → Is bucket transition matrix. Where each rupee in each bucket moved to.</td><td class="muted">From-bucket × To-bucket</td></tr>
+          <tr><td class="idx">vi</td><td><strong>Roll Rate</strong></td><td class="muted">B1 to B6 Resolution, Norm, Rollback, Stab, Roll Forward across periods.</td><td class="muted">Bucket × Sub-metric × Period</td></tr>
+          <tr><td class="idx">vii</td><td><strong>Non-Starter Analysis</strong></td><td class="muted">Loans that never made a payment, by product. Count and ENR.</td><td class="muted">Segment × Product × Period</td></tr>
+          <tr><td class="idx">viii</td><td><strong>Business Support · Risk Analytics</strong></td><td class="muted">Approved Base (LA × Off-Us), Rejected Base (loan type), On-Us × Off-Us delinquency.</td><td class="muted">Three nested matrices</td></tr>
+          <tr><td class="idx">ix</td><td><strong>TDD Pre Disbursal</strong></td><td class="muted">Applications turned in, processed, approvals, rejections, cancellations, bookings.</td><td class="muted">Metric × Period</td></tr>
+          <tr><td class="idx">x</td><td><strong>TDD Post Disbursal</strong></td><td class="muted">30+ at 3 MOB by bureau bucket (NTC, 650-689, 690-750, 751-800, &gt;800), Fresh and Renewal.</td><td class="muted">Bureau × Period</td></tr>
+          <tr><td class="idx">xi</td><td><strong>Static Pool</strong></td><td class="muted">Vintage cohort delinquency (X+ and 30+) by origination month and MOB 1 to 7.</td><td class="muted">Cohort × MOB</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- ───────── 4. SHEET 1: OVER ALL LEVEL ───────── -->
+  <!-- ───────── 6. SHEET 1: OVER ALL LEVEL ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">01</span> Over All Level</div>
-      <div class="pageno"><strong>04</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">i</span> Over All Level</div>
+      <div class="pageno"><span class="n">06</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 01</span> Total Portfolio</div>
-        <h3>Portfolio-wide KPIs by metric category.</h3>
-        <p class="purpose">The headline page. Every key consumer metric is here, grouped into five categories and tracked over five months. The Bench-mark column sets the tolerance.</p>
+        <div class="sheet-id">Sheet i · Total Portfolio</div>
+        <h3>Portfolio-wide KPIs by <em>metric category</em>.</h3>
+        <p class="purpose">The headline page. Every key consumer metric grouped into five categories, tracked over five months, with a Bench-mark column setting the tolerance.</p>
         <dl>
           <dt>Shape</dt><dd>Metric Type × Metric × Period</dd>
           <dt>Periods</dt><dd>Apr'25 to Aug'25</dd>
@@ -744,15 +1031,15 @@
       </aside>
 
       <div class="sheet-detail">
-        <h5>Metric categories (rows)</h5>
-        <div class="grid cols-2" style="gap: 0.5rem;">
+        <div class="section-label">Five metric categories</div>
+        <div class="grid cols-2" style="gap: 0.45rem;">
           <div class="mc">
             <div class="title">Book Size and Growth</div>
             <ul><li>Total AUM</li><li>On Book AUM</li><li>Off Book AUM</li><li>New Bookings</li><li>Wt Avg ROI</li><li>Wt Avg Tenor</li><li>Avg Ticket Size</li></ul>
           </div>
           <div class="mc">
             <div class="title">Entry Rates</div>
-            <ul><li>Current BKT Bounce Rate</li><li>First Payment Default (FPD)</li><li>FPD to GCL Trend</li></ul>
+            <ul><li>Bounce Rate</li><li>FPD</li><li>FPD to GCL</li></ul>
           </div>
           <div class="mc">
             <div class="title">Portfolio Performance</div>
@@ -768,15 +1055,15 @@
           </div>
         </div>
 
-        <h5 style="margin-top: 0.4rem;">Sample values (Total AUM, M USD)</h5>
+        <div class="section-label">Sample values</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Metric</th><th>Apr'25</th><th>May'25</th><th>Jun'25</th><th>Jul'25</th><th>Aug'25</th><th>Benchmark</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Total AUM</strong></td><td class="num">141.5</td><td class="num">176.7</td><td class="num">215.0</td><td class="num">261.4</td><td class="num">304.7</td><td class="muted">—</td></tr>
+            <tr><td><strong>Total AUM (M USD)</strong></td><td class="num">141.5</td><td class="num">176.7</td><td class="num">215.0</td><td class="num">261.4</td><td class="num">304.7</td><td class="muted">·</td></tr>
             <tr><td><strong>Bounce Rate</strong></td><td class="num">12.3%</td><td class="num">10.7%</td><td class="num">10.9%</td><td class="num">9.6%</td><td class="num">9.7%</td><td class="muted">10-12%</td></tr>
-            <tr><td><strong>FPD</strong></td><td class="num">1.4%</td><td class="num">1.1%</td><td class="num">0.7%</td><td class="num">1.5%</td><td class="num">1.0%</td><td class="muted">—</td></tr>
+            <tr><td><strong>FPD</strong></td><td class="num">1.4%</td><td class="num">1.1%</td><td class="num">0.7%</td><td class="num">1.5%</td><td class="num">1.0%</td><td class="muted">·</td></tr>
             <tr><td><strong>Rejection Rate</strong></td><td class="num">7.7%</td><td class="num">8.1%</td><td class="num">9.1%</td><td class="num">9.8%</td><td class="num">10.0%</td><td class="muted">&lt; 5%</td></tr>
           </tbody>
         </table>
@@ -784,78 +1071,77 @@
     </div>
   </section>
 
-  <!-- ───────── 5. SHEET 2: PRODUCT WISE ───────── -->
+  <!-- ───────── 7. SHEET 2: PRODUCT WISE ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">02</span> Product wise</div>
-      <div class="pageno"><strong>05</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">ii</span> Product wise</div>
+      <div class="pageno"><span class="n">07</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 02</span> Per-Product</div>
-        <h3>Same metrics, split by product.</h3>
-        <p class="purpose">Identical structure to Sheet 1, but with a leading Product column. Useful for spotting which product is dragging quality and which is performing.</p>
+        <div class="sheet-id">Sheet ii · Per Product</div>
+        <h3>The same metrics, split by <em>product</em>.</h3>
+        <p class="purpose">Identical structure to Sheet i with a leading Product column. Useful for spotting which product is dragging quality and which is performing.</p>
         <dl>
           <dt>Shape</dt><dd>Product × Metric Type × Metric × Period</dd>
-          <dt>Products</dt><dd>Consumer Loan, Personal Loan, Auto, Housing, Mortgage, others</dd>
-          <dt>Filtering</dt><dd>Same five metric categories as Sheet 1</dd>
-          <dt>Use case</dt><dd>Compare 30+ Amt% across products to find the worst SKU</dd>
+          <dt>Products</dt><dd>Consumer, Personal, Auto, Housing, Mortgage</dd>
+          <dt>Use case</dt><dd>Compare 30+ Amt % across products</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>How the rows are laid out</h5>
+        <div class="section-label">Layout of rows</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Product</th><th>Metric Type</th><th>Metric</th><th>Apr'25</th><th>May'25</th><th>Jun'25</th><th>Bench</th></tr>
           </thead>
           <tbody>
-            <tr><td rowspan="3"><strong>Consumer Loan</strong></td><td class="muted">Book Size</td><td class="muted">AUM (M USD)</td><td class="num">141.5</td><td class="num">176.7</td><td class="num">215.0</td><td class="muted">—</td></tr>
+            <tr><td rowspan="3"><strong>Consumer Loan</strong></td><td class="muted">Book Size</td><td class="muted">AUM (M USD)</td><td class="num">141.5</td><td class="num">176.7</td><td class="num">215.0</td><td class="muted">·</td></tr>
             <tr><td class="muted">Entry Rates</td><td class="muted">Bounce Rate</td><td class="num">12.3%</td><td class="num">10.7%</td><td class="num">10.9%</td><td class="muted">10-12%</td></tr>
-            <tr><td class="muted">Portfolio Perf.</td><td class="muted">30+ Amt%</td><td class="num">1.1%</td><td class="num">1.4%</td><td class="num">1.1%</td><td class="muted">—</td></tr>
-            <tr><td rowspan="2"><strong>Personal Loan</strong></td><td class="muted">Book Size</td><td class="muted">AUM (M USD)</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="muted">—</td></tr>
-            <tr><td class="muted">Entry Rates</td><td class="muted">FPD</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="muted">—</td></tr>
-            <tr><td><strong>Auto / Housing</strong></td><td class="muted">…</td><td class="muted">repeats per product</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="muted">—</td></tr>
+            <tr><td class="muted">Portfolio Perf.</td><td class="muted">30+ Amt %</td><td class="num">1.1%</td><td class="num">1.4%</td><td class="num">1.1%</td><td class="muted">·</td></tr>
+            <tr><td rowspan="2"><strong>Personal Loan</strong></td><td class="muted">Book Size</td><td class="muted">AUM (M USD)</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="muted">·</td></tr>
+            <tr><td class="muted">Entry Rates</td><td class="muted">FPD</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="muted">·</td></tr>
+            <tr><td><strong>Auto / Housing</strong></td><td class="muted">…</td><td class="muted">repeats per product</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="muted">·</td></tr>
           </tbody>
         </table>
 
-        <h5 style="margin-top: 0.4rem;">Aggregation rules (in the generator)</h5>
+        <div class="section-label">Aggregation rules in the generator</div>
         <div class="grid cols-2" style="gap: 0.5rem;">
           <div class="card" style="padding: 0.7rem 0.85rem;">
             <div class="label" style="color: var(--green);">Monetary metrics</div>
-            <p style="font-size: 0.78rem;">Total AUM, New Bookings, Write-off, Recoveries. <strong>Summed</strong> across subsidiaries via <code>value_usd</code> after FX conversion.</p>
+            <p style="font-size: 0.78rem;">Total AUM, New Bookings, Write-off, Recoveries. <em>Summed</em> across subsidiaries via <code>value_usd</code> after FX conversion.</p>
           </div>
           <div class="card" style="padding: 0.7rem 0.85rem;">
             <div class="label" style="color: var(--amber);">Rate metrics</div>
-            <p style="font-size: 0.78rem;">ROI, Tenor, FPD%, 30+/60+/90+ Amt%, NCL%, Bounce Rate. <strong>AUM-weighted average</strong>, never simple average.</p>
+            <p style="font-size: 0.78rem;">ROI, Tenor, FPD %, 30+/60+/90+ Amt %, NCL %, Bounce Rate. <em>AUM-weighted average</em>, never simple average.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ───────── 6. SHEET 4: NET FLOW RATE ───────── -->
+  <!-- ───────── 8. SHEET 4: NET FLOW RATE ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">04</span> Net Flow Rate</div>
-      <div class="pageno"><strong>06</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">iv</span> Net Flow Rate</div>
+      <div class="pageno"><span class="n">08</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 04</span> DPD Composition</div>
-        <h3>AUM by DPD bucket, plus the flow rates between them.</h3>
-        <p class="purpose">First nine rows show how much money is sitting in each bucket. The flow rows below show what percent of yesterday's bucket rolled forward today.</p>
+        <div class="sheet-id">Sheet iv · DPD Composition</div>
+        <h3>AUM by DPD bucket, with the <em>flow</em> between them.</h3>
+        <p class="purpose">First nine rows show how much money is sitting in each bucket. The flow rows below show what percent of last month's bucket rolled forward.</p>
         <dl>
-          <dt>Buckets</dt><dd>Current, 1-30, 31-60, 61-90, 91-120, 121-150, 151-180, 180-210, 210+, FWOF</dd>
-          <dt>Flow rows</dt><dd>B1 Flow, B2 Flow, ... B6 Flow, POF%</dd>
+          <dt>Buckets</dt><dd>Current, 1-30, ..., 210+, FWOF</dd>
+          <dt>Flow rows</dt><dd>B1 Flow, B2 Flow, ..., B6 Flow, POF%</dd>
           <dt>Repeats for</dt><dd>Total, Secured, Unsecured</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>AUM by bucket — sample row (M USD)</h5>
+        <div class="section-label">AUM by bucket · sample row (M USD)</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Bucket</th><th>Mar 1</th><th>Apr 1</th><th>May 1</th><th>Jun 1</th><th>Jul 1</th></tr>
@@ -870,7 +1156,7 @@
           </tbody>
         </table>
 
-        <h5 style="margin-top: 0.4rem;">Flow rates — percent of the bucket that rolled forward</h5>
+        <div class="section-label">Flow rates · percent that rolled forward</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Flow</th><th>Apr 1</th><th>May 1</th><th>Jun 1</th><th>Jul 1</th><th>Aug 1</th></tr>
@@ -880,35 +1166,34 @@
             <tr><td><strong>B2 Flow</strong></td><td class="num">18.6%</td><td class="num">16.8%</td><td class="num">24.5%</td><td class="num">20.5%</td><td class="num">18.5%</td></tr>
             <tr><td><strong>B3 Flow</strong></td><td class="num">39.3%</td><td class="num">42.7%</td><td class="num">45.0%</td><td class="num">44.2%</td><td class="num">44.0%</td></tr>
             <tr><td><strong>B6 Flow</strong></td><td class="num">82.5%</td><td class="num">90.7%</td><td class="num">79.8%</td><td class="num">81.7%</td><td class="num">85.0%</td></tr>
-            <tr><td><strong>POF%</strong></td><td class="num">0.18%</td><td class="num">0.14%</td><td class="num">0.41%</td><td class="num">0.24%</td><td class="num">0.17%</td></tr>
+            <tr><td><strong>POF %</strong></td><td class="num">0.18%</td><td class="num">0.14%</td><td class="num">0.41%</td><td class="num">0.24%</td><td class="num">0.17%</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <!-- ───────── 7. SHEET 5: COLLECTION METRICS ───────── -->
+  <!-- ───────── 9. SHEET 5: COLLECTION METRICS ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">05</span> Collection Metrics</div>
-      <div class="pageno"><strong>07</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">v</span> Collection Metrics</div>
+      <div class="pageno"><span class="n">09</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 05</span> Was vs Is</div>
-        <h3>The bucket transition matrix.</h3>
-        <p class="purpose">Where each rupee in each bucket moved to in the following month. The diagonal stays, off-diagonals roll forward or cure backward.</p>
+        <div class="sheet-id">Sheet v · Was vs Is</div>
+        <h3>The bucket <em>transition</em> matrix.</h3>
+        <p class="purpose">Where each rupee in each bucket moved to the following month. The diagonal stays put. Off-diagonals roll forward or cure backward.</p>
         <dl>
-          <dt>Rows</dt><dd>"Was" bucket including New Booking</dd>
+          <dt>Rows</dt><dd>"Was" bucket, including New Booking</dd>
           <dt>Columns</dt><dd>"Is" bucket plus Total</dd>
-          <dt>Repeats for</dt><dd>Total Portfolio, Secured Book, Unsecured Book</dd>
-          <dt>Insight</dt><dd>How much of 1-30 became 31-60 (forward), how much returned to Current (cure)</dd>
+          <dt>Repeats for</dt><dd>Total, Secured, Unsecured</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>Sample "Was → Is" matrix (Total Portfolio, M USD)</h5>
+        <div class="section-label">Was → Is matrix · Total Portfolio (M USD)</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Was / Is</th><th>Current</th><th>1-30</th><th>31-60</th><th>61-90</th><th>91-120</th><th>121-150</th><th>151-180</th></tr>
@@ -923,44 +1208,43 @@
             <tr><td><strong>151-180 Days</strong></td><td class="num">0.1</td><td class="num">0.0</td><td class="num">0.0</td><td class="num">0.0</td><td class="num">0.3</td><td class="num">1.7</td><td class="num">7.0</td></tr>
           </tbody>
         </table>
-        <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; line-height: 1.55;">
-          Read row by row. Of the 1,162 M USD that was 1-30 days delinquent, 530 cured back to Current, 465 stayed in 1-30, 148 rolled to 31-60, 19 rolled all the way to 61-90.
-        </p>
+        <div class="note">
+          <em>Worked example.</em> Of the 1,162 M USD that was 1-30 days delinquent, 530 cured back to Current, 465 stayed in 1-30, 148 rolled to 31-60, and 19 rolled all the way to 61-90.
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ───────── 8. SHEET 6: ROLL RATE ───────── -->
+  <!-- ───────── 10. SHEET 6: ROLL RATE ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">06</span> Roll Rate</div>
-      <div class="pageno"><strong>08</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">vi</span> Roll Rate</div>
+      <div class="pageno"><span class="n">10</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 06</span> Bucket Health</div>
-        <h3>Resolution, Norm, Rollback, Stab, Roll Forward.</h3>
-        <p class="purpose">For each of the six risk buckets (B1 to B6), five sub-metrics describe where the money goes next. The same structure repeats per bucket.</p>
+        <div class="sheet-id">Sheet vi · Bucket Health</div>
+        <h3>Resolution, Norm, Rollback, Stab, <em>Roll Forward</em>.</h3>
+        <p class="purpose">For each of the six risk buckets (B1 to B6), five sub-metrics describe where the money goes next. The same five rows repeat per bucket.</p>
         <dl>
-          <dt>Buckets</dt><dd>B1 (current/early) through B6 (deep)</dd>
+          <dt>Buckets</dt><dd>B1 (early) to B6 (deep)</dd>
           <dt>Sub-metrics</dt><dd>Resolution, Norm, Rollback, Stab, Roll Forward</dd>
-          <dt>Columns</dt><dd>Monthly periods (serial dates)</dd>
-          <dt>Used in</dt><dd>RollRateHeatmap chart on the dashboard</dd>
+          <dt>Used in</dt><dd>Dashboard RollRateHeatmap</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>Five sub-metrics, repeated per bucket</h5>
-        <div class="grid cols-5" style="gap: 0.4rem;">
-          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label" style="color: var(--green);">Resolution</div><p style="font-size: 0.74rem;">Share that left the bucket entirely (cured or written off).</p></div>
-          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label">Norm</div><p style="font-size: 0.74rem;">Returned to a normal bucket (cure path).</p></div>
-          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label">Rollback</div><p style="font-size: 0.74rem;">Moved backward to a lower DPD.</p></div>
-          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label">Stab</div><p style="font-size: 0.74rem;">Stayed in the same bucket.</p></div>
-          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label" style="color: var(--red);">Roll Forward</div><p style="font-size: 0.74rem;">Got worse, moved to a higher DPD.</p></div>
+        <div class="section-label">Five sub-metrics, repeated per bucket</div>
+        <div class="grid cols-5" style="gap: 0.35rem;">
+          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label" style="color: var(--green);">Resolution</div><p style="font-size: 0.73rem;">Share that left the bucket entirely (cured or written off).</p></div>
+          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label">Norm</div><p style="font-size: 0.73rem;">Returned to a normal bucket (cure path).</p></div>
+          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label">Rollback</div><p style="font-size: 0.73rem;">Moved backward to a lower DPD.</p></div>
+          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label">Stab</div><p style="font-size: 0.73rem;">Stayed in the same bucket.</p></div>
+          <div class="card" style="padding: 0.55rem 0.7rem;"><div class="label" style="color: var(--red);">Roll Forward</div><p style="font-size: 0.73rem;">Got worse, moved to a higher DPD.</p></div>
         </div>
 
-        <h5 style="margin-top: 0.4rem;">Sample rows for B2</h5>
+        <div class="section-label">Sample rows for B2</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Metric</th><th>Apr'25</th><th>May'25</th><th>Jun'25</th><th>Jul'25</th><th>Aug'25</th></tr>
@@ -975,28 +1259,27 @@
     </div>
   </section>
 
-  <!-- ───────── 9. SHEET 7: NON-STARTER ───────── -->
+  <!-- ───────── 11. SHEET 7: NON-STARTER ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">07</span> Non-Starter Analysis</div>
-      <div class="pageno"><strong>09</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">vii</span> Non-Starter Analysis</div>
+      <div class="pageno"><span class="n">11</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 07</span> First-Payment Default</div>
-        <h3>Loans that never made a payment.</h3>
-        <p class="purpose">For each product, the count of facilities still in force and their ENR (exposure). The cheapest signal that underwriting let through the wrong applicant.</p>
+        <div class="sheet-id">Sheet vii · First-Payment Default</div>
+        <h3>Loans that <em>never made</em> a payment.</h3>
+        <p class="purpose">Per product, the count of facilities still in force and their ENR. The earliest signal that underwriting let through the wrong applicant.</p>
         <dl>
           <dt>Segments</dt><dd>Total, Unsecured, Secured</dd>
-          <dt>Products</dt><dd>Personal Loans, Consumer Loan, Housing Loan, Auto Loan, Mortgage Loans</dd>
+          <dt>Products</dt><dd>Personal, Consumer, Housing, Auto, Mortgage</dd>
           <dt>Metrics</dt><dd>Facility in Force (#), ENR (EGP Mio)</dd>
-          <dt>Columns</dt><dd>Monthly periods</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>How the section repeats</h5>
+        <div class="section-label">How the section repeats</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Segment</th><th>Product</th><th>Metric</th><th>Month 1</th><th>Month 2</th><th>Month 3</th><th>Month 4</th></tr>
@@ -1010,34 +1293,34 @@
             <tr><td class="muted">Housing Loan</td><td class="muted">ENR (EGP Mio)</td><td class="num">…</td><td class="num">…</td><td class="num">…</td><td class="num">…</td></tr>
           </tbody>
         </table>
-        <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; line-height: 1.55;">
-          Definitions are spelled out at the bottom of the sheet: <em>"Represents all the facilities that became non-starter"</em> and <em>"Represents all the balance of the facilities that became non-starter."</em>
-        </p>
+        <div class="note">
+          Definitions are spelled out at the bottom of the sheet. <em>"Represents all the facilities that became non-starter"</em> for the count, and <em>"Represents all the balance of the facilities that became non-starter"</em> for ENR.
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ───────── 10. SHEET 8: BUSINESS SUPPORT / RISK ANALYTICS ───────── -->
+  <!-- ───────── 12. SHEET 8: BUSINESS SUPPORT / RISK ANALYTICS ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">08</span> Business Support · Risk Analytics</div>
-      <div class="pageno"><strong>10</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">viii</span> Business Support · Risk Analytics</div>
+      <div class="pageno"><span class="n">12</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 08</span> Three Matrices</div>
-        <h3>Approved, rejected, and overlap.</h3>
-        <p class="purpose">Three nested matrices on one sheet. Left side shows the approved population, right side the rejected one, plus an on-us versus off-us delinquency matrix.</p>
+        <div class="sheet-id">Sheet viii · Three Matrices</div>
+        <h3>Approved, rejected, and <em>overlap</em>.</h3>
+        <p class="purpose">Three nested matrices on one sheet. Left side is the approved population, right side is rejected, and at the bottom an on-us versus off-us delinquency matrix.</p>
         <dl>
-          <dt>Approved Base</dt><dd>LA (On-Us) × Off-Us Loan Band</dd>
-          <dt>Rejected Base</dt><dd>Loan Type × Amount Band</dd>
-          <dt>Delinquency</dt><dd>On-Us bucket × Off-Us bucket</dd>
+          <dt>Approved</dt><dd>LA (On-Us) × Off-Us Loan Band</dd>
+          <dt>Rejected</dt><dd>Loan Type × Amount Band</dd>
+          <dt>Overlap</dt><dd>On-Us bucket × Off-Us bucket</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>Approved Base — LA (On-Us) by Off-Us Loan Band (% share)</h5>
+        <div class="section-label">Approved Base · share by band</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>On-Us LA</th><th>10K</th><th>10K-50K</th><th>50K-1L</th><th>1L-2L</th><th>&gt; 2L</th><th>Total</th></tr>
@@ -1052,7 +1335,7 @@
           </tbody>
         </table>
 
-        <h5 style="margin-top: 0.4rem;">Rejected Base — Loan Type by Amount Band</h5>
+        <div class="section-label">Rejected Base · loan type by amount band</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Loan Type</th><th>Up to 10K</th><th>10K-50K</th><th>Total</th></tr>
@@ -1068,22 +1351,22 @@
     </div>
   </section>
 
-  <!-- ───────── 11. TDD PRE + POST DISBURSAL ───────── -->
+  <!-- ───────── 13. TDD PRE + POST ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">09 · 10</span> TDD Pre &amp; Post Disbursal</div>
-      <div class="pageno"><strong>11</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">ix · x</span> TDD Pre &amp; Post Disbursal</div>
+      <div class="pageno"><span class="n">13</span> &thinsp;/&thinsp; 15</div>
     </div>
-    <h2 class="serif">Through-The-Door, before and after.</h2>
-    <p class="lede">Two sheets that bookend the application journey. Pre-disbursal counts the applications and decisions. Post-disbursal scores the booked book by bureau bucket.</p>
+    <h2 class="title">Application funnel, then <em>bureau performance</em>.</h2>
+    <p class="sub">Two sheets that sit on either side of disbursal. The first counts applications and decisions. The second scores the booked book by bureau bucket.</p>
 
-    <div class="body" style="margin-top: 0.6rem;">
+    <div class="body" style="margin-top: 0.55rem;">
       <div class="grid cols-2" style="flex: 1; min-height: 0;">
 
-        <div class="card" style="padding: 1rem; display: flex; flex-direction: column;">
-          <div class="badge" style="font-family: 'JetBrains Mono', monospace; font-size: 0.64rem; color: var(--accent); font-weight: 600; margin-bottom: 0.4rem;"><span style="background: var(--accent); color: #fff; padding: 0.18rem 0.5rem; border-radius: 3px; font-size: 0.62rem; margin-right: 0.4rem;">SHEET 09</span> TDD Pre Disbursal</div>
+        <div class="card" style="padding: 0.9rem 1rem; display: flex; flex-direction: column;">
+          <div class="sheet-id" style="font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--faint); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.4rem;">Sheet ix · Pre Disbursal</div>
           <h3 class="serif" style="font-size: 1.3rem; margin-bottom: 0.3rem;">Application funnel.</h3>
-          <p style="font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.6rem;">Counts and amounts at each step. Approval and rejection rates fall out naturally.</p>
+          <p style="font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.55rem;">Counts and amounts at each step. Approval and rejection rates fall out naturally.</p>
           <table class="tbl">
             <thead class="compact">
               <tr><th>Metric</th><th>Period 1</th><th>Period 2</th></tr>
@@ -1102,10 +1385,10 @@
           </table>
         </div>
 
-        <div class="card" style="padding: 1rem; display: flex; flex-direction: column;">
-          <div class="badge" style="font-family: 'JetBrains Mono', monospace; font-size: 0.64rem; color: var(--accent); font-weight: 600; margin-bottom: 0.4rem;"><span style="background: var(--accent); color: #fff; padding: 0.18rem 0.5rem; border-radius: 3px; font-size: 0.62rem; margin-right: 0.4rem;">SHEET 10</span> TDD Post Disbursal</div>
+        <div class="card" style="padding: 0.9rem 1rem; display: flex; flex-direction: column;">
+          <div class="sheet-id" style="font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--faint); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.4rem;">Sheet x · Post Disbursal</div>
           <h3 class="serif" style="font-size: 1.3rem; margin-bottom: 0.3rem;">Bureau bucket performance.</h3>
-          <p style="font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.6rem;">30+ at 3 MOB by bureau bucket, for Fresh and Renewal customers. Below it: business distribution by bucket.</p>
+          <p style="font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.55rem;">30+ at 3 MOB by bureau bucket for Fresh and Renewal customers, followed by the business distribution.</p>
           <table class="tbl">
             <thead class="compact">
               <tr><th>Bureau Bucket</th><th>Jul'22</th><th>Aug'22</th><th>Sep'22</th><th>Oct'22</th><th>Dist'n</th></tr>
@@ -1125,28 +1408,28 @@
     </div>
   </section>
 
-  <!-- ───────── 12. SHEET 11: STATIC POOL ───────── -->
+  <!-- ───────── 14. SHEET 11: STATIC POOL ───────── -->
   <section class="slide">
     <div class="head">
-      <div class="crumb"><span class="sheet-tag">11</span> Static Pool · Vintage</div>
-      <div class="pageno"><strong>12</strong> of 13</div>
+      <div class="crumb"><span class="sheet-tag">xi</span> Static Pool · Vintage</div>
+      <div class="pageno"><span class="n">14</span> &thinsp;/&thinsp; 15</div>
     </div>
 
     <div class="sheet-layout">
       <aside class="sheet-meta">
-        <div class="badge"><span class="pill">SHEET 11</span> Vintage Cohort</div>
-        <h3>How each origination cohort ages.</h3>
-        <p class="purpose">One row per origination month. Columns track delinquency rate by Month-On-Book. Read down a column to compare cohorts at the same age.</p>
+        <div class="sheet-id">Sheet xi · Vintage Cohort</div>
+        <h3>How each origination <em>cohort</em> ages.</h3>
+        <p class="purpose">One row per origination month. Columns track delinquency rate by Month-On-Book. Read down a single MOB column to compare cohorts at the same age.</p>
         <dl>
-          <dt>Sections</dt><dd>Total Portfolio, Secured, Unsecured</dd>
+          <dt>Sections</dt><dd>Total, Secured, Unsecured</dd>
           <dt>Metrics</dt><dd>X+ rate, 30+ rate</dd>
           <dt>Rows</dt><dd>Origination month (Jan'22 onward)</dd>
-          <dt>Columns</dt><dd>LA (loan amount) + MOB 1, 2, 3, 4, 5, 6, 7</dd>
+          <dt>Columns</dt><dd>LA + MOB 1 to 7</dd>
         </dl>
       </aside>
 
       <div class="sheet-detail">
-        <h5>X+ delinquency by cohort and MOB (Total Portfolio)</h5>
+        <div class="section-label">X+ delinquency by cohort and MOB · Total Portfolio</div>
         <table class="tbl">
           <thead class="compact">
             <tr><th>Cohort</th><th>LA</th><th>MOB 1</th><th>MOB 2</th><th>MOB 3</th><th>MOB 4</th><th>MOB 5</th><th>MOB 6</th><th>MOB 7</th></tr>
@@ -1163,22 +1446,47 @@
             <tr><td><strong>Sep'22</strong></td><td class="num">51.8</td><td class="num">0.9%</td><td class="num">2.5%</td><td class="num">3.6%</td><td class="num">4.7%</td><td class="num">5.0%</td><td class="muted">·</td><td class="muted">·</td></tr>
           </tbody>
         </table>
-        <p style="font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; line-height: 1.55;">
-          The diagonal is the latest data point. To compare cohorts fairly, read down a single MOB column. The same table repeats for Secured and Unsecured below.
-        </p>
+        <div class="note">
+          The diagonal is the latest data point for each cohort. To compare cohorts fairly, read down a single MOB column. The same table repeats below for Secured and Unsecured.
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ───────── 13. CLOSING ───────── -->
-  <section class="slide title-slide close">
-    <div class="kicker">In Summary</div>
-    <h1 class="serif">Eleven sheets, <em>one consistent grammar</em>.</h1>
-    <p class="deck-lede">Metric Type and Metric in the rows, periods across the top, benchmarks at the right, and the same structure repeated for Total, Secured, and Unsecured. Learn that once and every sheet reads quickly.</p>
-    <div class="meta">
-      <span><strong>Workbook</strong>data/Consumer PQR.xlsx</span>
-      <span><strong>Generator</strong>src/lib/excel/consumer-pqr.ts</span>
-      <span><strong>Queries</strong>src/lib/queries/consumer.ts</span>
+  <!-- ───────── 15. REFERENCE / GLOSSARY ───────── -->
+  <section class="slide">
+    <div class="head">
+      <div class="crumb"><span class="sheet-tag">15</span> Quick reference</div>
+      <div class="pageno"><span class="n">15</span> &thinsp;/&thinsp; 15</div>
+    </div>
+    <h2 class="title">Abbreviations and <em>file paths</em>.</h2>
+    <p class="sub">The terms that recur across every sheet, with the source files for code review.</p>
+
+    <div class="body" style="margin-top: 0.55rem;">
+      <div class="gloss">
+        <div class="term"><div class="abbr">AUM</div><div class="def">Assets Under Management. Total outstanding loan balance.</div></div>
+        <div class="term"><div class="abbr">DPD</div><div class="def">Days Past Due. Number of days an account is delinquent.</div></div>
+        <div class="term"><div class="abbr">MOB</div><div class="def">Months On Book. Age of the loan since origination.</div></div>
+        <div class="term"><div class="abbr">FPD</div><div class="def">First Payment Default. Loan that missed the first payment.</div></div>
+        <div class="term"><div class="abbr">NCL</div><div class="def">Net Credit Loss. Write-offs minus recoveries, over AUM.</div></div>
+        <div class="term"><div class="abbr">ENR</div><div class="def">Exposure at Risk. Outstanding balance on flagged facilities.</div></div>
+        <div class="term"><div class="abbr">FWOF</div><div class="def">Forward Write-Off. Amount expected to be written off.</div></div>
+        <div class="term"><div class="abbr">ROI</div><div class="def">Return on Investment. Interest yield, weighted by AUM.</div></div>
+        <div class="term"><div class="abbr">LA</div><div class="def">Loan Amount. Original disbursed amount of the loan.</div></div>
+        <div class="term"><div class="abbr">NTC</div><div class="def">New To Credit. Customer with no prior bureau record.</div></div>
+        <div class="term"><div class="abbr">POF</div><div class="def">Portfolio Outflow. Percent of balance leaving the book.</div></div>
+        <div class="term"><div class="abbr">TDD</div><div class="def">Through The Door. Application and bureau metrics at entry.</div></div>
+      </div>
+
+      <div class="section-label" style="margin-top: 0.35rem;">Source files in the repo</div>
+      <div class="grid cols-3">
+        <div class="card" style="padding: 0.6rem 0.85rem;"><div class="label">Source workbook</div><p style="font-size: 0.77rem;"><code>data/Consumer PQR.xlsx</code></p></div>
+        <div class="card" style="padding: 0.6rem 0.85rem;"><div class="label">Generator</div><p style="font-size: 0.77rem;"><code>src/lib/excel/consumer-pqr.ts</code></p></div>
+        <div class="card" style="padding: 0.6rem 0.85rem;"><div class="label">Query layer</div><p style="font-size: 0.77rem;"><code>src/lib/queries/consumer.ts</code></p></div>
+        <div class="card" style="padding: 0.6rem 0.85rem;"><div class="label">Dashboard views</div><p style="font-size: 0.77rem;"><code>src/components/views/consumer/</code></p></div>
+        <div class="card" style="padding: 0.6rem 0.85rem;"><div class="label">AI route</div><p style="font-size: 0.77rem;"><code>src/app/api/gemini/route.ts</code></p></div>
+        <div class="card" style="padding: 0.6rem 0.85rem;"><div class="label">Schemas</div><p style="font-size: 0.77rem;"><code>supabase/schema-v*.sql</code></p></div>
+      </div>
     </div>
   </section>
 
@@ -1187,7 +1495,7 @@
 <div class="dots" id="dots"></div>
 <div class="controls">
   <button id="prev" aria-label="Previous">‹</button>
-  <span class="counter" id="counter">01 / 13</span>
+  <span class="counter" id="counter">01 / 15</span>
   <button id="next" aria-label="Next">›</button>
 </div>
 
