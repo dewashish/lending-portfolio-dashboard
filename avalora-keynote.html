@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Avalora Portfolio Monitor · Keynote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4efe2;
+    --paper: #ffffff;
+    --paper-2: #fbf8ee;
+    --paper-3: #f0eadb;
+    --ink: #15140f;
+    --ink-2: #2c2a22;
+    --muted: #58554a;
+    --faint: #918b78;
+    --line: #ddd6c0;
+    --line-2: #c5bca0;
+    --rule: #312d22;
+    --accent: #1f3b6b;
+    --accent-2: #355e94;
+    --accent-soft: #e9eff8;
+    --accent-line: #b9c8e2;
+    --sienna: #7b3a16;
+    --sienna-soft: #f5ede4;
+    --green: #2c5a3a;
+    --green-soft: #ecf2eb;
+    --amber: #93571a;
+    --amber-soft: #f3eadb;
+    --plum: #5f2f60;
+    --plum-soft: #f0e9f0;
+    --teal: #155e6b;
+    --red: #8a2e2e;
+
+    --c-go: #00897b;
+    --c-cf: #2196f3;
+    --c-tf: #9c27b0;
+    --c-cp: #ff9800;
+    --c-rc: #f44336;
+    --c-fo: #009688;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+    line-height: 1.45;
+    overflow: hidden;
+  }
+
+  /* ── Background ─────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image:
+      radial-gradient(1500px 1000px at -10% -5%, rgba(31,59,107,0.08), transparent 60%),
+      radial-gradient(1200px 800px at 110% 30%, rgba(123,58,22,0.06), transparent 60%),
+      radial-gradient(1100px 900px at 50% 110%, rgba(45,90,58,0.05), transparent 60%);
+    animation: bg-drift 30s ease-in-out infinite alternate;
+  }
+  @keyframes bg-drift {
+    0%, 100% { background-position: 0% 0%, 100% 30%, 50% 100%; }
+    50%      { background-position: 6% -4%, 94% 36%, 56% 96%; }
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(31,59,107,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.5;
+  }
+
+  /* ── Top chrome ─────────────────────────────── */
+  .chrome-top {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 2rem 0.9rem;
+    z-index: 50;
+    background: linear-gradient(180deg, var(--bg) 70%, transparent);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .brand .mark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 7px;
+    background: var(--rule);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 1.2rem;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    position: relative;
+    overflow: hidden;
+  }
+  .brand .mark::after {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
+    animation: shimmer 5s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { transform: translateX(-100%); }
+    50%      { transform: translateX(100%); }
+  }
+  .brand .name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+  .brand .name span {
+    color: var(--faint);
+    font-weight: 400;
+    margin-left: 0.4rem;
+    font-size: 0.78rem;
+  }
+  .chrome-top .right {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .chrome-top .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--green);
+  }
+  .chrome-top .live .pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%   { box-shadow: 0 0 0 0 rgba(44,90,58,0.55); }
+    70%  { box-shadow: 0 0 0 9px rgba(44,90,58,0); }
+    100% { box-shadow: 0 0 0 0 rgba(44,90,58,0); }
+  }
+
+  /* ── Progress + page indicator ──────────────── */
+  .progress {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(0,0,0,0.04);
+    z-index: 51;
+  }
+  .progress .bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sienna), var(--accent));
+    transition: width 600ms cubic-bezier(.22,.61,.36,1);
+  }
+
+  /* ── Slide deck ─────────────────────────────── */
+  .deck {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    opacity: 0;
+    transform: translateX(40px);
+    pointer-events: none;
+    transition: opacity 500ms cubic-bezier(.22,.61,.36,1), transform 600ms cubic-bezier(.22,.61,.36,1);
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .slide.prev { transform: translateX(-40px); }
+
+  .slide-inner {
+    min-height: 100vh;
+    padding: 5rem 4rem 5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Slide header ───────────────────────────── */
+  .slide-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.6rem;
+  }
+  .slide-head .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .slide-head .eyebrow::before {
+    content: '';
+    width: 2rem;
+    height: 1px;
+    background: var(--accent);
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .slide.active .slide-head .eyebrow::before {
+    animation: line-grow 700ms cubic-bezier(.22,.61,.36,1) 0.15s both;
+  }
+  @keyframes line-grow { to { transform: scaleX(1); } }
+
+  .slide-head .pageno {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--faint);
+    font-variation-settings: 'opsz' 48, 'SOFT' 100;
+  }
+  .slide-head .pageno .n {
+    font-style: normal;
+    color: var(--ink);
+    font-weight: 500;
+    margin-right: 0.3rem;
+  }
+
+  /* ── Hero block ─────────────────────────────── */
+  .hero h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
+    font-weight: 500;
+    font-size: clamp(2.6rem, 4.6vw, 5rem);
+    line-height: 0.96;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.1rem;
+    max-width: 22ch;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .hero h1 .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+  .slide.active .hero h1 .word {
+    animation: word-rise 800ms cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes word-rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero .lede {
+    font-size: 1.2rem;
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: 48rem;
+    font-weight: 300;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  .slide.active .hero .lede {
+    animation: rise-in 700ms cubic-bezier(.22,.61,.36,1) 0.9s both;
+  }
+  .hero .lede em {
+    color: var(--ink);
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+  }
+  @keyframes rise-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Generic build animation ────────────────── */
+  .build {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  .slide.active .build {
+    animation: rise-in 700ms cubic-bezier(.22,.61,.36,1) both;
+  }
+  .slide.active .build.d1  { animation-delay: 1.1s; }
+  .slide.active .build.d2  { animation-delay: 1.3s; }
+  .slide.active .build.d3  { animation-delay: 1.5s; }
+  .slide.active .build.d4  { animation-delay: 1.7s; }
+  .slide.active .build.d5  { animation-delay: 1.9s; }
+  .slide.active .build.d6  { animation-delay: 2.1s; }
+  .slide.active .build.d7  { animation-delay: 2.3s; }
+  .slide.active .build.d8  { animation-delay: 2.5s; }
+  .slide.active .build.d9  { animation-delay: 2.7s; }
+  .slide.active .build.d10 { animation-delay: 2.9s; }
+  .slide.active .build.d11 { animation-delay: 3.1s; }
+  .slide.active .build.d12 { animation-delay: 3.3s; }
+
+  /* ── Flow diagram block ─────────────────────── */
+  .flow-wrap {
+    margin-top: 2.4rem;
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.6rem 1.8rem 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .flow-wrap .lbl {
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  svg.flow {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* SVG building blocks */
+  .dg-box rect {
+    fill: var(--paper);
+    stroke: var(--line-2);
+    stroke-width: 1;
+    transition: stroke 250ms;
+  }
+  .dg-box.accent rect { fill: var(--accent-soft); stroke: var(--accent-line); }
+  .dg-box.sienna rect { fill: var(--sienna-soft); stroke: #e3cdb2; }
+  .dg-box.green  rect { fill: var(--green-soft); stroke: #cad9c5; }
+  .dg-box .ttl {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 500;
+    fill: var(--ink);
+  }
+  .dg-box .desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    fill: var(--muted);
+  }
+  .dg-box .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    fill: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .dg-path {
+    stroke: var(--line-2);
+    stroke-width: 1.6;
+    fill: none;
+    stroke-dasharray: 8 6;
+    animation: dash 1.6s linear infinite;
+  }
+  .dg-path.accent { stroke: var(--accent-2); stroke-width: 2; }
+  @keyframes dash { to { stroke-dashoffset: -28; } }
+  .pulse-node {
+    animation: node-pulse 2.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes node-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+  }
+
+  /* ── Module strip ───────────────────────────── */
+  .modules {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.85rem;
+    margin-top: 2rem;
+  }
+  .module {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1rem 1.05rem 1.1rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 300ms cubic-bezier(.22,.61,.36,1), border-color 200ms, box-shadow 300ms;
+  }
+  .module:hover {
+    transform: translateY(-4px);
+    border-color: var(--line-2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 12px 24px -14px rgba(0,0,0,0.12);
+  }
+  .module::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 1rem;
+    width: 2.4rem;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 0 0 3px 3px;
+    transform-origin: left;
+    transform: scaleX(0.55);
+    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+  }
+  .module:hover::before { transform: scaleX(1); }
+  .module.go::before { background: var(--c-go); }
+  .module.cf::before { background: var(--c-cf); }
+  .module.tf::before { background: var(--c-tf); }
+  .module.cp::before { background: var(--c-cp); }
+  .module.rc::before { background: var(--c-rc); }
+  .module.fo::before { background: var(--c-fo); }
+  .module .ico {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-size: 1.15rem;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+    transition: transform 300ms;
+  }
+  .module:hover .ico { transform: rotate(-4deg) scale(1.05); }
+  .module.go .ico { background: rgba(0,137,123,0.10); border-color: rgba(0,137,123,0.30); color: var(--c-go); }
+  .module.cf .ico { background: rgba(33,150,243,0.10); border-color: rgba(33,150,243,0.30); color: var(--c-cf); }
+  .module.tf .ico { background: rgba(156,39,176,0.10); border-color: rgba(156,39,176,0.30); color: var(--c-tf); }
+  .module.cp .ico { background: rgba(255,152,0,0.10); border-color: rgba(255,152,0,0.30); color: var(--c-cp); }
+  .module.rc .ico { background: rgba(244,67,54,0.10); border-color: rgba(244,67,54,0.30); color: var(--c-rc); }
+  .module.fo .ico { background: rgba(0,150,136,0.10); border-color: rgba(0,150,136,0.30); color: var(--c-fo); }
+  .module h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 500;
+    font-size: 1.05rem;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .module p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  /* ── AI feature row ─────────────────────────── */
+  .ai-row {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .ai-card {
+    background: linear-gradient(135deg, var(--paper) 0%, var(--accent-soft) 220%);
+    border: 1px solid var(--accent-line);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .ai-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(31,59,107,0.14), transparent 70%);
+    animation: orbit 14s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes orbit {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(-15px, 15px); }
+  }
+  .ai-card .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.7rem;
+  }
+  .ai-card .pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #84d3a0;
+    animation: pulse-mini 1.8s infinite;
+  }
+  @keyframes pulse-mini {
+    0%   { box-shadow: 0 0 0 0 rgba(132,211,160,0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(132,211,160,0); }
+    100% { box-shadow: 0 0 0 0 rgba(132,211,160,0); }
+  }
+  .ai-card h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 60, 'SOFT' 50;
+    font-weight: 500;
+    font-size: 1.7rem;
+    line-height: 1.05;
+    margin-bottom: 0.55rem;
+    letter-spacing: -0.015em;
+  }
+  .ai-card h3 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .ai-card p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 0.9rem;
+    max-width: 38ch;
+  }
+  .ai-card .feats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 0.5rem;
+  }
+  .ai-card .feats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .ai-card .feats span::before {
+    content: '';
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .ai-chat {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .ai-chat .lbl {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .ai-q {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.55rem 0.8rem 0.55rem 2.1rem;
+    font-size: 0.78rem;
+    color: var(--ink-2);
+    line-height: 1.45;
+    position: relative;
+    transition: transform 250ms, border-color 250ms;
+  }
+  .ai-q:hover { transform: translateX(4px); border-color: var(--accent-line); }
+  .ai-q::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0.7rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 1.4px solid var(--accent);
+    border-radius: 50%;
+    background: var(--paper);
+  }
+  .ai-q::after {
+    content: '';
+    position: absolute;
+    left: 1.04rem;
+    top: 0.99rem;
+    width: 0.32rem;
+    height: 0.32rem;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: dot-blink 2s ease-in-out infinite;
+  }
+  .ai-q:nth-child(2)::after { animation-delay: 0.3s; }
+  .ai-q:nth-child(3)::after { animation-delay: 0.6s; }
+  .ai-q:nth-child(4)::after { animation-delay: 0.9s; }
+  .ai-q:nth-child(5)::after { animation-delay: 1.2s; }
+  @keyframes dot-blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ── Footer strip (slide 1 closing) ─────────── */
+  .strip {
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+  }
+  .strip-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 50s linear infinite;
+    gap: 3rem;
+  }
+  .strip-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+    font-weight: 500;
+    color: var(--ink);
+    font-size: 1.1rem;
+    white-space: nowrap;
+  }
+  .strip-item em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .strip-item .sep {
+    color: var(--sienna);
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-size: 1.4rem;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ── Section divider in slide ───────────────── */
+  .sec-divider {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin: 2.4rem 0 1.2rem;
+  }
+  .sec-divider .num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 2.4rem;
+    color: var(--sienna);
+    line-height: 1;
+  }
+  .sec-divider h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 60, 'SOFT' 50;
+    font-weight: 500;
+    font-size: 1.9rem;
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+  }
+  .sec-divider h3 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .sec-divider .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    margin-bottom: 0.55rem;
+  }
+
+  /* ── Persona row ────────────────────────────── */
+  .persona-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  .persona {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.2rem 1.3rem 1.3rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 320ms cubic-bezier(.22,.61,.36,1), border-color 200ms;
+  }
+  .persona:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-line);
+  }
+  .persona .avatar {
+    width: 3rem; height: 3rem;
+    border-radius: 50%;
+    background: var(--plum-soft);
+    border: 1px solid #d8c0d8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 1.6rem;
+    color: var(--plum);
+    margin-bottom: 0.8rem;
+    transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+  }
+  .persona:hover .avatar { transform: scale(1.08) rotate(-4deg); }
+  .persona .role-tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--plum);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .persona h5 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 36;
+    font-weight: 500;
+    font-size: 1.2rem;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.008em;
+  }
+  .persona p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 0.6rem;
+  }
+  .persona .uses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--line);
+  }
+  .persona .uses span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    padding: 0.13rem 0.45rem;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  /* ── Roles flow diagram ─────────────────────── */
+  .roles-flow {
+    margin-top: 1rem;
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem 1.3rem;
+    position: relative;
+  }
+  .roles-flow .lbl {
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .roles-svg-wrap { width: 100%; }
+  svg.roles-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .role-box rect {
+    fill: var(--paper);
+    stroke: var(--line);
+    transition: stroke 250ms, fill 250ms;
+  }
+  .role-box.admin rect { fill: var(--accent-soft); stroke: var(--accent-line); }
+  .role-box.owner rect { fill: var(--plum-soft); stroke: #d8c0d8; }
+  .role-box.analyst rect { fill: var(--green-soft); stroke: #cad9c5; }
+  .role-box.viewer rect { fill: var(--amber-soft); stroke: #e3cdb2; }
+  .role-box .nm {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 500;
+    fill: var(--ink);
+  }
+  .role-box .role-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    fill: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .cap-box rect {
+    fill: var(--paper-2);
+    stroke: var(--line);
+  }
+  .cap-box .nm {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    fill: var(--ink-2);
+  }
+  .cap-box .icoshape circle {
+    fill: var(--accent-soft);
+    stroke: var(--accent-line);
+  }
+  .role-path {
+    stroke: var(--line-2);
+    stroke-width: 1.4;
+    fill: none;
+    stroke-dasharray: 6 4;
+    animation: dash 1.4s linear infinite;
+    opacity: 0.7;
+  }
+  .role-path.has { stroke: var(--accent-2); opacity: 1; }
+  .role-path.has-warm { stroke: var(--sienna); opacity: 1; }
+
+  /* ── Control + benefit grids ───────────────── */
+  .two-up {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+    margin-top: 2.2rem;
+  }
+  .two-up h6 {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 0.7rem;
+  }
+  .two-up .grp {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .card-mini {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem 0.9rem;
+    transition: transform 280ms cubic-bezier(.22,.61,.36,1), border-color 200ms;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-mini:hover {
+    transform: translateY(-3px);
+    border-color: var(--line-2);
+  }
+  .card-mini .ico {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+  .card-mini.ctrl .ico { background: var(--sienna-soft); border-color: #e3cdb2; color: var(--sienna); }
+  .card-mini.bene .ico { background: var(--green-soft); border-color: #cad9c5; color: var(--green); }
+  .card-mini h5 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 500;
+    font-size: 0.98rem;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+  }
+  .card-mini p {
+    font-size: 0.74rem;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  /* ── Closing moment ─────────────────────────── */
+  .closer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .closer .quote {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 96, 'SOFT' 80;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.7rem;
+    line-height: 1.15;
+    color: var(--ink);
+    letter-spacing: -0.018em;
+    max-width: 32ch;
+  }
+  .closer .quote em {
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .closer .signoff {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-size: 0.95rem;
+    color: var(--sienna);
+    font-weight: 500;
+  }
+
+  /* ── Bottom chrome (nav controls) ───────────── */
+  .chrome-bottom {
+    position: fixed;
+    bottom: 1.4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.45rem 1.1rem;
+    z-index: 60;
+    box-shadow: 0 3px 14px -8px rgba(0,0,0,0.08);
+  }
+  .chrome-bottom button {
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 150ms, color 150ms;
+  }
+  .chrome-bottom button:hover { background: var(--paper-2); color: var(--ink); }
+  .chrome-bottom button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .chrome-bottom .ind {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    padding: 0 0.4rem;
+    min-width: 3rem;
+    text-align: center;
+    font-feature-settings: 'tnum' 1;
+  }
+  .chrome-bottom .hint {
+    margin-left: 0.4rem;
+    padding-left: 0.7rem;
+    border-left: 1px solid var(--line);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+  }
+  .chrome-bottom .hint .k {
+    display: inline-block;
+    padding: 0.05rem 0.35rem;
+    border: 1px solid var(--line-2);
+    border-radius: 3px;
+    background: var(--paper-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0;
+    color: var(--ink-2);
+  }
+
+  /* ── Reduce motion ──────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  /* ── Scrollbar styling ──────────────────────── */
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- ── Progress + chrome ────────────────────── -->
+<div class="progress"><div class="bar" id="progressBar" style="width: 50%;"></div></div>
+
+<div class="chrome-top">
+  <div class="brand">
+    <span class="mark">A</span>
+    <div class="name">Avalora Portfolio Monitor <span>Keynote</span></div>
+  </div>
+  <div class="right">
+    <span class="live"><span class="pulse"></span> Live</span>
+  </div>
+</div>
+
+<!-- ── Deck ─────────────────────────────────── -->
+<div class="deck">
+
+  <!-- ═══════ SLIDE 1 ═══════ -->
+  <section class="slide active" data-slide="1">
+    <div class="slide-inner">
+
+      <div class="slide-head">
+        <div class="eyebrow">Lending Portfolio Intelligence</div>
+        <div class="pageno"><span class="n">01</span> &thinsp;/&thinsp; 02</div>
+      </div>
+
+      <!-- HERO -->
+      <div class="hero">
+        <h1>
+          <span class="word" style="animation-delay:0.2s;">One</span>
+          <span class="word" style="animation-delay:0.3s;">workspace</span>
+          <span class="word" style="animation-delay:0.4s;">for</span>
+          <span class="word" style="animation-delay:0.5s;"><em>credit&nbsp;risk</em>,</span>
+          <span class="word" style="animation-delay:0.6s;">across</span>
+          <span class="word" style="animation-delay:0.7s;">every</span>
+          <span class="word" style="animation-delay:0.8s;">subsidiary.</span>
+        </h1>
+        <p class="lede">Avalora replaces a stack of monthly portfolio workbooks with a live, scope-aware dashboard. It pairs <em>risk analytics</em>, an <em>AI assistant</em>, and configurable risk-appetite thresholds, with one-click export back to Excel for offline work.</p>
+      </div>
+
+      <!-- DATA FLOW DIAGRAM -->
+      <div class="flow-wrap build d1">
+        <div class="lbl">How data moves through the platform</div>
+        <svg class="flow" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+              <polygon points="0 0, 9 4.5, 0 9" fill="#355e94" />
+            </marker>
+            <linearGradient id="grad-particle" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#7b3a16"/>
+              <stop offset="50%" stop-color="#355e94"/>
+              <stop offset="100%" stop-color="#2c5a3a"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Sources column -->
+          <g class="dg-box sienna">
+            <rect x="20" y="25" width="170" height="56" rx="8"/>
+            <text class="tag" x="35" y="48">Source · Origination</text>
+            <text class="ttl" x="35" y="68" font-size="13">Applications &amp; bureau</text>
+          </g>
+          <g class="dg-box sienna">
+            <rect x="20" y="92" width="170" height="56" rx="8"/>
+            <text class="tag" x="35" y="115">Source · Management</text>
+            <text class="ttl" x="35" y="135" font-size="13">Accounts &amp; balances</text>
+          </g>
+          <g class="dg-box sienna">
+            <rect x="20" y="159" width="170" height="56" rx="8"/>
+            <text class="tag" x="35" y="182">Source · Collections</text>
+            <text class="ttl" x="35" y="202" font-size="13">Recovery &amp; outcomes</text>
+          </g>
+          <g class="dg-box sienna">
+            <rect x="20" y="226" width="170" height="56" rx="8"/>
+            <text class="tag" x="35" y="249">Source · Markets</text>
+            <text class="ttl" x="35" y="269" font-size="13">FX rates &amp; macro</text>
+          </g>
+
+          <!-- Source → Ingest -->
+          <path class="dg-path" d="M 190 53 Q 240 53 250 145 L 280 145"/>
+          <path class="dg-path" d="M 190 120 L 280 155"/>
+          <path class="dg-path" d="M 190 187 L 280 175"/>
+          <path class="dg-path" d="M 190 254 Q 240 254 250 195 L 280 185"/>
+
+          <!-- Ingest -->
+          <g class="dg-box">
+            <rect x="280" y="105" width="180" height="100" rx="8"/>
+            <text class="tag" x="295" y="127">Validate · normalise</text>
+            <text class="ttl" x="295" y="152" font-size="14">Ingest pipeline</text>
+            <text class="desc" x="295" y="172">Schema checks</text>
+            <text class="desc" x="295" y="188">FX conversion</text>
+            <text class="desc" x="295" y="204">Audit logged</text>
+          </g>
+
+          <!-- Ingest → Store -->
+          <path class="dg-path accent" d="M 465 155 L 530 155" marker-end="url(#arrow)"/>
+
+          <!-- Central store -->
+          <g class="dg-box accent">
+            <rect x="535" y="50" width="220" height="210" rx="8"/>
+            <text class="tag" x="550" y="73">Central data layer</text>
+            <text class="ttl" x="550" y="98" font-size="15">Single source of truth</text>
+            <text class="desc" x="550" y="123" font-weight="600" fill="#15140f">Aggregated metrics</text>
+            <text class="desc" x="550" y="139">Portfolio quality, vintage,</text>
+            <text class="desc" x="550" y="154">collections, non-starters</text>
+            <text class="desc" x="550" y="178" font-weight="600" fill="#15140f">Operational records</text>
+            <text class="desc" x="550" y="194">Accounts, payments, DPD,</text>
+            <text class="desc" x="550" y="210">decisions, recoveries</text>
+            <text class="desc" x="550" y="234" font-weight="600" fill="#15140f">Reference</text>
+            <text class="desc" x="550" y="250">Subsidiaries, products, FX</text>
+          </g>
+
+          <!-- Store → consumers -->
+          <path class="dg-path accent" d="M 760 90 Q 830 90 880 60" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 760 155 L 880 155" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 760 220 Q 830 220 880 250" marker-end="url(#arrow)"/>
+
+          <!-- Consumers -->
+          <g class="dg-box green">
+            <rect x="885" y="25" width="290" height="72" rx="8"/>
+            <text class="tag" x="900" y="48">Surface</text>
+            <text class="ttl" x="900" y="69" font-size="14">Interactive dashboard</text>
+            <text class="desc" x="900" y="85">Live charts, scope-aware roll-ups</text>
+          </g>
+          <g class="dg-box green">
+            <rect x="885" y="120" width="290" height="72" rx="8"/>
+            <text class="tag" x="900" y="143">Assistant</text>
+            <text class="ttl" x="900" y="164" font-size="14">AI portfolio Q&amp;A</text>
+            <text class="desc" x="900" y="180">Natural-language, scope-aware</text>
+          </g>
+          <g class="dg-box green">
+            <rect x="885" y="215" width="290" height="72" rx="8"/>
+            <text class="tag" x="900" y="238">Deliverable</text>
+            <text class="ttl" x="900" y="259" font-size="14">Excel report export</text>
+            <text class="desc" x="900" y="275">Identical structure, offline ready</text>
+          </g>
+
+          <!-- Animated particles -->
+          <circle r="3.5" fill="url(#grad-particle)">
+            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto"
+              path="M 190 53 Q 240 53 280 145 L 460 155 L 535 155 L 760 90 L 885 60"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="6s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="3.5" fill="url(#grad-particle)">
+            <animateMotion dur="6s" begin="2s" repeatCount="indefinite" rotate="auto"
+              path="M 190 155 L 280 155 L 460 155 L 535 155 L 760 155 L 885 155"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="6s" begin="2s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="3.5" fill="url(#grad-particle)">
+            <animateMotion dur="6s" begin="4s" repeatCount="indefinite" rotate="auto"
+              path="M 190 220 L 280 175 L 460 155 L 535 155 L 760 220 L 885 250"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="6s" begin="4s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+
+      <!-- MODULES -->
+      <div class="modules">
+        <div class="module go build d2">
+          <div class="ico">⌂</div>
+          <h4>Group overview</h4>
+          <p>Consolidated KPIs, breach panel, subsidiary heatmap, scorecard.</p>
+        </div>
+        <div class="module cf build d3">
+          <div class="ico">⊙</div>
+          <h4>Consumer lending</h4>
+          <p>Retail loans, bucket flows, vintage, origination, bureau.</p>
+        </div>
+        <div class="module tf build d4">
+          <div class="ico">⌖</div>
+          <h4>Trade finance</h4>
+          <p>Facility monitoring, concentrations, watchlist, macro overlay.</p>
+        </div>
+        <div class="module cp build d5">
+          <div class="ico">▣</div>
+          <h4>Corporate credit</h4>
+          <p>Limits, collateral, covenants, ratings, industry exposure.</p>
+        </div>
+        <div class="module rc build d6">
+          <div class="ico">◬</div>
+          <h4>Risk &amp; concentrations</h4>
+          <p>Early warning, single-name, sector, currency, country.</p>
+        </div>
+        <div class="module fo build d7">
+          <div class="ico">↗</div>
+          <h4>Forward outlook</h4>
+          <p>Loss forecast, scenarios, stress, management playbooks.</p>
+        </div>
+      </div>
+
+      <!-- AI ROW -->
+      <div class="ai-row">
+        <div class="ai-card build d8">
+          <span class="pill">AI Model · Always on</span>
+          <h3>Ask the portfolio <em>in plain language</em>.</h3>
+          <p>The assistant pulls live data from every domain in parallel, assembles a structured context, and answers in markdown using the same numbers the dashboard surfaces visually.</p>
+          <div class="feats">
+            <span>Scope-aware reasoning</span>
+            <span>Multi-domain context</span>
+            <span>Streaming output</span>
+            <span>Copy-ready markdown</span>
+            <span>Live data, no stale cache</span>
+            <span>Same numbers as the UI</span>
+          </div>
+        </div>
+        <div class="ai-chat build d9">
+          <div class="lbl">Questions the team actually asks</div>
+          <div class="ai-q">What is the current non-performing ratio and how has it moved this quarter?</div>
+          <div class="ai-q">Which subsidiary has the highest deep-delinquency on unsecured consumer?</div>
+          <div class="ai-q">Show me the top obligors by exposure with their early-warning scores.</div>
+          <div class="ai-q">How did the most recent vintage age compared with the prior three cohorts?</div>
+          <div class="ai-q">Which sectors are above the appetite line on concentration?</div>
+        </div>
+      </div>
+
+      <!-- Marquee strip closing slide 1 -->
+      <div class="strip build d10">
+        <div class="strip-track">
+          <span class="strip-item">Live portfolio quality</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Scope-aware roll-ups</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item"><em>AI</em> portfolio queries</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">One-click report export</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Risk-appetite tracking</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Breach alerts</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Vintage analytics</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Audit trail end to end</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Live portfolio quality</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Scope-aware roll-ups</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item"><em>AI</em> portfolio queries</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">One-click report export</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Risk-appetite tracking</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Breach alerts</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Vintage analytics</span>
+          <span class="strip-item sep">~</span>
+          <span class="strip-item">Audit trail end to end</span>
+          <span class="strip-item sep">~</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 2 ═══════ -->
+  <section class="slide" data-slide="2">
+    <div class="slide-inner">
+
+      <div class="slide-head">
+        <div class="eyebrow">Who it serves &amp; how it stays trustworthy</div>
+        <div class="pageno"><span class="n">02</span> &thinsp;/&thinsp; 02</div>
+      </div>
+
+      <div class="hero">
+        <h1>
+          <span class="word" style="animation-delay:0.2s;">Built</span>
+          <span class="word" style="animation-delay:0.3s;">for</span>
+          <span class="word" style="animation-delay:0.4s;">the</span>
+          <span class="word" style="animation-delay:0.5s;">way</span>
+          <span class="word" style="animation-delay:0.6s;"><em>risk teams</em></span>
+          <span class="word" style="animation-delay:0.7s;">actually</span>
+          <span class="word" style="animation-delay:0.8s;">work.</span>
+        </h1>
+        <p class="lede">Four roles, four landing patterns, one workspace. Read access is scoped per role. Administrative actions are gated. Every number can be traced back to the upload that produced it.</p>
+      </div>
+
+      <!-- PERSONAS -->
+      <div class="sec-divider build d1">
+        <span class="num">i</span>
+        <h3>Who works <em>in it</em>.</h3>
+        <span class="rule"></span>
+      </div>
+      <div class="persona-row">
+        <div class="persona build d2">
+          <div class="avatar">α</div>
+          <div class="role-tag">Strategic</div>
+          <h5>Chief Risk Officer</h5>
+          <p>Lands on the consolidated overview, scans headline metrics, breach signals, and the subsidiary heatmap. Drills into delinquency when a number deserves a second look.</p>
+          <div class="uses"><span>Overview</span><span>Heatmap</span><span>Export pack</span></div>
+        </div>
+        <div class="persona build d3">
+          <div class="avatar">β</div>
+          <div class="role-tag">Investigative</div>
+          <h5>Risk Analyst</h5>
+          <p>Lives in delinquency, collections, and vintage. Uses heatmaps to find the bucket or cohort that's slipping, then pulls the underlying detail for the write-up.</p>
+          <div class="uses"><span>Roll-rate</span><span>Vintage</span><span>AI assistant</span></div>
+        </div>
+        <div class="persona build d4">
+          <div class="avatar">γ</div>
+          <div class="role-tag">Operational</div>
+          <h5>Product Analyst</h5>
+          <p>Starts on products and origination. Watches conversion, ticket size, and which product carries the worst early-default rate. Drives the next policy or campaign.</p>
+          <div class="uses"><span>Funnel</span><span>Products</span><span>Non-starters</span></div>
+        </div>
+        <div class="persona build d5">
+          <div class="avatar">δ</div>
+          <div class="role-tag">Governance</div>
+          <h5>Credit Policy Owner</h5>
+          <p>Reviews bureau analytics, approved and rejected populations, rejection reasons. Confirms the accepted book matches the policy band and tolerance.</p>
+          <div class="uses"><span>Bureau</span><span>Approved base</span><span>Rejection</span></div>
+        </div>
+      </div>
+
+      <!-- ROLES FLOW -->
+      <div class="sec-divider build d6">
+        <span class="num">ii</span>
+        <h3>Roles &amp; <em>access flow</em>.</h3>
+        <span class="rule"></span>
+      </div>
+      <div class="roles-flow build d7">
+        <div class="lbl">From role to capability</div>
+        <div class="roles-svg-wrap">
+          <svg class="roles-svg" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-r" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+                <polygon points="0 0, 9 4.5, 0 9" fill="#355e94" />
+              </marker>
+            </defs>
+
+            <!-- Roles on the left -->
+            <g class="role-box admin">
+              <rect x="30" y="30" width="200" height="60" rx="8"/>
+              <text class="role-meta" x="50" y="52">Tier 1 · Full control</text>
+              <text class="nm" x="50" y="74" font-size="15">Administrator</text>
+            </g>
+            <g class="role-box owner">
+              <rect x="30" y="105" width="200" height="60" rx="8"/>
+              <text class="role-meta" x="50" y="127">Tier 2 · Senior risk</text>
+              <text class="nm" x="50" y="149" font-size="15">Risk Owner</text>
+            </g>
+            <g class="role-box analyst">
+              <rect x="30" y="180" width="200" height="60" rx="8"/>
+              <text class="role-meta" x="50" y="202">Tier 3 · Day-to-day</text>
+              <text class="nm" x="50" y="224" font-size="15">Analyst</text>
+            </g>
+            <g class="role-box viewer">
+              <rect x="30" y="255" width="200" height="60" rx="8"/>
+              <text class="role-meta" x="50" y="277">Tier 4 · Read-only</text>
+              <text class="nm" x="50" y="299" font-size="15">Viewer &middot; Audit</text>
+            </g>
+
+            <!-- Capabilities on the right -->
+            <g class="cap-box">
+              <rect x="900" y="20" width="270" height="50" rx="8"/>
+              <g class="icoshape" transform="translate(916, 35)">
+                <circle r="11"/>
+                <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">⌘</text>
+              </g>
+              <text class="nm" x="945" y="50">View dashboard &amp; modules</text>
+            </g>
+            <g class="cap-box">
+              <rect x="900" y="80" width="270" height="50" rx="8"/>
+              <g class="icoshape" transform="translate(916, 95)">
+                <circle r="11"/>
+                <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">∗</text>
+              </g>
+              <text class="nm" x="945" y="110">Use AI assistant</text>
+            </g>
+            <g class="cap-box">
+              <rect x="900" y="140" width="270" height="50" rx="8"/>
+              <g class="icoshape" transform="translate(916, 155)">
+                <circle r="11"/>
+                <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">↓</text>
+              </g>
+              <text class="nm" x="945" y="170">Export portfolio reports</text>
+            </g>
+            <g class="cap-box">
+              <rect x="900" y="200" width="270" height="50" rx="8"/>
+              <g class="icoshape" transform="translate(916, 215)">
+                <circle r="11"/>
+                <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#7b3a16">△</text>
+              </g>
+              <text class="nm" x="945" y="230">Edit risk-appetite thresholds</text>
+            </g>
+            <g class="cap-box">
+              <rect x="900" y="260" width="270" height="50" rx="8"/>
+              <g class="icoshape" transform="translate(916, 275)">
+                <circle r="11"/>
+                <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">⚐</text>
+              </g>
+              <text class="nm" x="945" y="290">Read audit trail</text>
+            </g>
+
+            <!-- Pipeline center column -->
+            <g class="dg-box">
+              <rect x="450" y="65" width="290" height="200" rx="10" fill="#fbf8ee" stroke="#ddd6c0"/>
+              <text class="tag" x="475" y="93" font-family="JetBrains Mono" font-size="9" fill="#918b78" letter-spacing="0.1em">SIGN-IN PIPELINE</text>
+              <text class="ttl" x="475" y="120" font-family="Fraunces" font-variation-settings="'opsz' 30" font-weight="500" fill="#15140f" font-size="15">Trust pipeline</text>
+              <text class="desc" x="475" y="146" font-family="Inter" font-size="11" fill="#58554a" font-weight="600">1 · Authenticate</text>
+              <text class="desc" x="475" y="161" font-family="Inter" font-size="11" fill="#58554a">Signed, time-limited session</text>
+              <text class="desc" x="475" y="184" font-family="Inter" font-size="11" fill="#58554a" font-weight="600">2 · Resolve role &amp; scope</text>
+              <text class="desc" x="475" y="199" font-family="Inter" font-size="11" fill="#58554a">Region, subsidiary, product</text>
+              <text class="desc" x="475" y="222" font-family="Inter" font-size="11" fill="#58554a" font-weight="600">3 · Apply policies</text>
+              <text class="desc" x="475" y="237" font-family="Inter" font-size="11" fill="#58554a">Row-level security at the store</text>
+              <text class="desc" x="475" y="254" font-family="Inter" font-size="11" fill="#58554a">Grant capabilities below</text>
+            </g>
+
+            <!-- Lines from roles to pipeline -->
+            <path class="role-path has" d="M 230 60 L 450 95"/>
+            <path class="role-path has" d="M 230 135 L 450 145"/>
+            <path class="role-path has" d="M 230 210 L 450 200"/>
+            <path class="role-path has-warm" d="M 230 285 L 450 245"/>
+
+            <!-- Lines from pipeline to capabilities -->
+            <path class="role-path has" d="M 740 100 L 900 45" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 140 L 900 105" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 175 L 900 165" marker-end="url(#arrow-r)"/>
+            <path class="role-path has-warm" d="M 740 210 L 900 225" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 245 L 900 285" marker-end="url(#arrow-r)"/>
+
+            <!-- Particles on the role lines -->
+            <circle r="3" fill="#355e94">
+              <animateMotion dur="4s" repeatCount="indefinite"
+                path="M 230 60 L 450 95 L 740 100 L 900 45"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" repeatCount="indefinite"/>
+            </circle>
+            <circle r="3" fill="#355e94">
+              <animateMotion dur="4s" begin="1s" repeatCount="indefinite"
+                path="M 230 135 L 450 145 L 740 140 L 900 105"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin="1s" repeatCount="indefinite"/>
+            </circle>
+            <circle r="3" fill="#355e94">
+              <animateMotion dur="4s" begin="2s" repeatCount="indefinite"
+                path="M 230 210 L 450 200 L 740 175 L 900 165"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle r="3" fill="#7b3a16">
+              <animateMotion dur="4s" begin="3s" repeatCount="indefinite"
+                path="M 230 285 L 450 245 L 740 245 L 900 285"/>
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin="3s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+      </div>
+
+      <!-- CONTROLS + BENEFITS -->
+      <div class="two-up">
+        <div class="ctrl-col build d8">
+          <h6>Oversight &amp; controls</h6>
+          <div class="grp">
+            <div class="card-mini ctrl"><div class="ico">◇</div><h5>Role-based access</h5><p>Per-role visibility, gated administrative actions.</p></div>
+            <div class="card-mini ctrl"><div class="ico">⌬</div><h5>Secure session</h5><p>Signed, time-limited tokens with constant-time checks.</p></div>
+            <div class="card-mini ctrl"><div class="ico">△</div><h5>Appetite registry</h5><p>Configurable thresholds, scope-aware resolution.</p></div>
+            <div class="card-mini ctrl"><div class="ico">✓</div><h5>Validated ingest</h5><p>Schema-checked, currency-normalised, audit-logged.</p></div>
+            <div class="card-mini ctrl"><div class="ico">∑</div><h5>Correct roll-ups</h5><p>Weighted for rates, summed for cash. One rule.</p></div>
+            <div class="card-mini ctrl"><div class="ico">⌽</div><h5>Health monitoring</h5><p>Freshness per source, error capture, status surface.</p></div>
+          </div>
+        </div>
+        <div class="bene-col build d9">
+          <h6>Benefits &amp; efficiency</h6>
+          <div class="grp">
+            <div class="card-mini bene"><div class="ico">↻</div><h5>Month-end speed</h5><p>Days of assembly replaced by a one-click export.</p></div>
+            <div class="card-mini bene"><div class="ico">⇆</div><h5>Scope switch</h5><p>One control swaps the whole view between scopes.</p></div>
+            <div class="card-mini bene"><div class="ico">?</div><h5>Ask, don't dig</h5><p>Type a question, get the same answer the dashboard shows.</p></div>
+            <div class="card-mini bene"><div class="ico">!</div><h5>Earlier signals</h5><p>RAG indicators surface breaches as they happen.</p></div>
+            <div class="card-mini bene"><div class="ico">⚐</div><h5>Audit any number</h5><p>Trace every figure back to its originating upload.</p></div>
+            <div class="card-mini bene"><div class="ico">↓</div><h5>Excel parity</h5><p>The offline workbook is still one click away.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLOSING MOMENT -->
+      <div class="closer build d10">
+        <div class="quote">Decide <em>sooner</em>, with the <em>same data</em>.</div>
+        <div class="signoff">Avalora Portfolio Monitor</div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<!-- ── Bottom chrome ────────────────────────── -->
+<div class="chrome-bottom">
+  <button id="prev" aria-label="Previous">‹</button>
+  <span class="ind" id="ind">01 / 02</span>
+  <button id="next" aria-label="Next">›</button>
+  <span class="hint">Arrows <span class="k">←</span> <span class="k">→</span></span>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let idx = 0;
+
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  const ind = document.getElementById('ind');
+  const bar = document.getElementById('progressBar');
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function go(n) {
+    if (n < 0 || n >= total || n === idx) return;
+    const current = slides[idx];
+    const target  = slides[n];
+
+    if (n > idx) {
+      current.classList.add('prev');
+    } else {
+      current.classList.remove('prev');
+    }
+    current.classList.remove('active');
+    // Reset animations so they replay if returning
+    target.classList.remove('prev');
+
+    // Force reflow to restart CSS animations on .active classes
+    void target.offsetHeight;
+    target.classList.add('active');
+
+    idx = n;
+    ind.textContent = `${pad(idx + 1)} / ${pad(total)}`;
+    bar.style.width = `${((idx + 1) / total) * 100}%`;
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === total - 1;
+
+    // Reset scroll on entered slide
+    target.scrollTop = 0;
+  }
+
+  prevBtn.addEventListener('click', () => go(idx - 1));
+  nextBtn.addEventListener('click', () => go(idx + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      go(idx + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') {
+      e.preventDefault();
+      go(idx - 1);
+    } else if (e.key === 'Home') {
+      go(0);
+    } else if (e.key === 'End') {
+      go(total - 1);
+    }
+  });
+
+  // Init
+  bar.style.width = `${((idx + 1) / total) * 100}%`;
+  prevBtn.disabled = true;
+</script>
+
+</body>
+</html>
