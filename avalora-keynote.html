@@ -382,13 +382,25 @@
   }
   .dg-path {
     stroke: var(--line-2);
-    stroke-width: 1.6;
+    stroke-width: 1.4;
     fill: none;
-    stroke-dasharray: 8 6;
-    animation: dash 1.6s linear infinite;
+    stroke-dasharray: 5 5;
+    stroke-linecap: round;
+    animation: dash 2.8s linear infinite;
+    opacity: 0.85;
   }
-  .dg-path.accent { stroke: var(--accent-2); stroke-width: 2; }
-  @keyframes dash { to { stroke-dashoffset: -28; } }
+  .dg-path.accent {
+    stroke: var(--accent-2);
+    stroke-width: 1.6;
+    opacity: 0.9;
+  }
+  @keyframes dash { to { stroke-dashoffset: -40; } }
+  .particle {
+    filter: drop-shadow(0 0 4px rgba(31,59,107,0.45));
+  }
+  .particle.warm {
+    filter: drop-shadow(0 0 4px rgba(123,58,22,0.45));
+  }
   .pulse-node {
     animation: node-pulse 2.4s ease-in-out infinite;
     transform-origin: center;
@@ -857,12 +869,13 @@
     stroke: var(--line-2);
     stroke-width: 1.4;
     fill: none;
-    stroke-dasharray: 6 4;
-    animation: dash 1.4s linear infinite;
+    stroke-dasharray: 5 5;
+    stroke-linecap: round;
+    animation: dash 2.8s linear infinite;
     opacity: 0.7;
   }
-  .role-path.has { stroke: var(--accent-2); opacity: 1; }
-  .role-path.has-warm { stroke: var(--sienna); opacity: 1; }
+  .role-path.has { stroke: var(--accent-2); opacity: 0.9; }
+  .role-path.has-warm { stroke: var(--sienna); opacity: 0.9; }
 
   /* ── Control + benefit grids ───────────────── */
   .two-up {
@@ -1079,7 +1092,7 @@
           <span class="word" style="animation-delay:0.7s;">every</span>
           <span class="word" style="animation-delay:0.8s;">subsidiary.</span>
         </h1>
-        <p class="lede">Avalora replaces a stack of monthly portfolio workbooks with a live, scope-aware dashboard. It pairs <em>risk analytics</em>, an <em>AI assistant</em>, and configurable risk-appetite thresholds, with one-click export back to Excel for offline work.</p>
+        <p class="lede">Avalora replaces a stack of monthly portfolio workbooks with a live, scope-aware dashboard. It pairs <em>risk analytics</em>, an <em>AI assistant for custom analytics</em>, and configurable appetite and alert triggers across every KRI, with one-click export to PDF for executives and Excel for analysts.</p>
       </div>
 
       <!-- DATA FLOW DIAGRAM -->
@@ -1090,14 +1103,40 @@
             <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
               <polygon points="0 0, 9 4.5, 0 9" fill="#355e94" />
             </marker>
-            <linearGradient id="grad-particle" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#7b3a16"/>
-              <stop offset="50%" stop-color="#355e94"/>
-              <stop offset="100%" stop-color="#2c5a3a"/>
-            </linearGradient>
+            <radialGradient id="part-cool" cx="0.4" cy="0.4">
+              <stop offset="0%" stop-color="#5a82bb"/>
+              <stop offset="100%" stop-color="#1f3b6b"/>
+            </radialGradient>
           </defs>
 
-          <!-- Sources column -->
+          <!-- Layer 1: connector lines (drawn first, sit behind everything) -->
+          <path class="dg-path" d="M 190 53  L 280 130"/>
+          <path class="dg-path" d="M 190 120 L 280 148"/>
+          <path class="dg-path" d="M 190 187 L 280 162"/>
+          <path class="dg-path" d="M 190 254 L 280 180"/>
+          <path class="dg-path accent" d="M 460 155 L 535 155" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 110 L 885 60"  marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 155 L 885 155" marker-end="url(#arrow)"/>
+          <path class="dg-path accent" d="M 755 200 L 885 250" marker-end="url(#arrow)"/>
+
+          <!-- Layer 2: particles (sit between connector lines and boxes; boxes will cover them inside) -->
+          <circle class="particle" r="4" fill="url(#part-cool)">
+            <animateMotion dur="6.5s" repeatCount="indefinite"
+              path="M 190 53 L 280 130 L 460 155 L 535 155 L 755 110 L 885 60"/>
+            <animate attributeName="opacity" values="0;1;1;1;1;0" keyTimes="0;0.08;0.4;0.6;0.92;1" dur="6.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="4" fill="url(#part-cool)">
+            <animateMotion dur="6.5s" begin="2.2s" repeatCount="indefinite"
+              path="M 190 120 L 280 148 L 460 155 L 535 155 L 755 155 L 885 155"/>
+            <animate attributeName="opacity" values="0;1;1;1;1;0" keyTimes="0;0.08;0.4;0.6;0.92;1" dur="6.5s" begin="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="particle" r="4" fill="url(#part-cool)">
+            <animateMotion dur="6.5s" begin="4.4s" repeatCount="indefinite"
+              path="M 190 254 L 280 180 L 460 155 L 535 155 L 755 200 L 885 250"/>
+            <animate attributeName="opacity" values="0;1;1;1;1;0" keyTimes="0;0.08;0.4;0.6;0.92;1" dur="6.5s" begin="4.4s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Layer 3: boxes (drawn last, on top of particles) -->
           <g class="dg-box sienna">
             <rect x="20" y="25" width="170" height="56" rx="8"/>
             <text class="tag" x="35" y="48">Source · Origination</text>
@@ -1119,13 +1158,6 @@
             <text class="ttl" x="35" y="269" font-size="13">FX rates &amp; macro</text>
           </g>
 
-          <!-- Source → Ingest -->
-          <path class="dg-path" d="M 190 53 Q 240 53 250 145 L 280 145"/>
-          <path class="dg-path" d="M 190 120 L 280 155"/>
-          <path class="dg-path" d="M 190 187 L 280 175"/>
-          <path class="dg-path" d="M 190 254 Q 240 254 250 195 L 280 185"/>
-
-          <!-- Ingest -->
           <g class="dg-box">
             <rect x="280" y="105" width="180" height="100" rx="8"/>
             <text class="tag" x="295" y="127">Validate · normalise</text>
@@ -1135,10 +1167,6 @@
             <text class="desc" x="295" y="204">Audit logged</text>
           </g>
 
-          <!-- Ingest → Store -->
-          <path class="dg-path accent" d="M 465 155 L 530 155" marker-end="url(#arrow)"/>
-
-          <!-- Central store -->
           <g class="dg-box accent">
             <rect x="535" y="50" width="220" height="210" rx="8"/>
             <text class="tag" x="550" y="73">Central data layer</text>
@@ -1153,12 +1181,6 @@
             <text class="desc" x="550" y="250">Subsidiaries, products, FX</text>
           </g>
 
-          <!-- Store → consumers -->
-          <path class="dg-path accent" d="M 760 90 Q 830 90 880 60" marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 760 155 L 880 155" marker-end="url(#arrow)"/>
-          <path class="dg-path accent" d="M 760 220 Q 830 220 880 250" marker-end="url(#arrow)"/>
-
-          <!-- Consumers -->
           <g class="dg-box green">
             <rect x="885" y="25" width="290" height="72" rx="8"/>
             <text class="tag" x="900" y="48">Surface</text>
@@ -1173,27 +1195,10 @@
           </g>
           <g class="dg-box green">
             <rect x="885" y="215" width="290" height="72" rx="8"/>
-            <text class="tag" x="900" y="238">Deliverable</text>
-            <text class="ttl" x="900" y="259" font-size="14">Excel report export</text>
-            <text class="desc" x="900" y="275">Identical structure, offline ready</text>
+            <text class="tag" x="900" y="238">Deliverables</text>
+            <text class="ttl" x="900" y="259" font-size="14">PDF summary &amp; Excel detail</text>
+            <text class="desc" x="900" y="275">Board-ready and analyst-ready exports</text>
           </g>
-
-          <!-- Animated particles -->
-          <circle r="3.5" fill="url(#grad-particle)">
-            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto"
-              path="M 190 53 Q 240 53 280 145 L 460 155 L 535 155 L 760 90 L 885 60"/>
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="6s" repeatCount="indefinite"/>
-          </circle>
-          <circle r="3.5" fill="url(#grad-particle)">
-            <animateMotion dur="6s" begin="2s" repeatCount="indefinite" rotate="auto"
-              path="M 190 155 L 280 155 L 460 155 L 535 155 L 760 155 L 885 155"/>
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="6s" begin="2s" repeatCount="indefinite"/>
-          </circle>
-          <circle r="3.5" fill="url(#grad-particle)">
-            <animateMotion dur="6s" begin="4s" repeatCount="indefinite" rotate="auto"
-              path="M 190 220 L 280 175 L 460 155 L 535 155 L 760 220 L 885 250"/>
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="6s" begin="4s" repeatCount="indefinite"/>
-          </circle>
         </svg>
       </div>
 
@@ -1236,12 +1241,12 @@
         <div class="ai-card build d8">
           <span class="pill">AI Model · Always on</span>
           <h3>Ask the portfolio <em>in plain language</em>.</h3>
-          <p>The assistant pulls live data from every domain in parallel, assembles a structured context, and answers in markdown using the same numbers the dashboard surfaces visually.</p>
+          <p>An assistant for ad-hoc and custom analytics. Pulls live data from every domain in parallel, assembles a structured context, and answers in markdown using the same numbers the dashboard surfaces visually.</p>
           <div class="feats">
+            <span>Custom analytics on demand</span>
             <span>Scope-aware reasoning</span>
             <span>Multi-domain context</span>
-            <span>Streaming output</span>
-            <span>Copy-ready markdown</span>
+            <span>Streaming markdown output</span>
             <span>Live data, no stale cache</span>
             <span>Same numbers as the UI</span>
           </div>
@@ -1265,13 +1270,13 @@
           <span class="strip-item sep">~</span>
           <span class="strip-item"><em>AI</em> portfolio queries</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">One-click report export</span>
+          <span class="strip-item">PDF &amp; Excel export</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">Risk-appetite tracking</span>
+          <span class="strip-item">KRI appetite &amp; alert triggers</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">Breach alerts</span>
+          <span class="strip-item"><em>Custom analytics</em> via AI</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">Vintage analytics</span>
+          <span class="strip-item">Vintage &amp; cohort analytics</span>
           <span class="strip-item sep">~</span>
           <span class="strip-item">Audit trail end to end</span>
           <span class="strip-item sep">~</span>
@@ -1281,13 +1286,13 @@
           <span class="strip-item sep">~</span>
           <span class="strip-item"><em>AI</em> portfolio queries</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">One-click report export</span>
+          <span class="strip-item">PDF &amp; Excel export</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">Risk-appetite tracking</span>
+          <span class="strip-item">KRI appetite &amp; alert triggers</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">Breach alerts</span>
+          <span class="strip-item"><em>Custom analytics</em> via AI</span>
           <span class="strip-item sep">~</span>
-          <span class="strip-item">Vintage analytics</span>
+          <span class="strip-item">Vintage &amp; cohort analytics</span>
           <span class="strip-item sep">~</span>
           <span class="strip-item">Audit trail end to end</span>
           <span class="strip-item sep">~</span>
@@ -1316,7 +1321,7 @@
           <span class="word" style="animation-delay:0.7s;">actually</span>
           <span class="word" style="animation-delay:0.8s;">work.</span>
         </h1>
-        <p class="lede">Four roles, four landing patterns, one workspace. Read access is scoped per role. Administrative actions are gated. Every number can be traced back to the upload that produced it.</p>
+        <p class="lede">Four roles, four landing patterns, one workspace. Read access is scoped per role. Administrators set KRI thresholds and alert triggers. Every figure exports as a PDF executive summary or a detailed Excel report, and traces back to the upload that produced it.</p>
       </div>
 
       <!-- PERSONAS -->
@@ -1370,9 +1375,50 @@
               <marker id="arrow-r" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
                 <polygon points="0 0, 9 4.5, 0 9" fill="#355e94" />
               </marker>
+              <radialGradient id="part-r-cool" cx="0.4" cy="0.4">
+                <stop offset="0%" stop-color="#5a82bb"/>
+                <stop offset="100%" stop-color="#1f3b6b"/>
+              </radialGradient>
+              <radialGradient id="part-r-warm" cx="0.4" cy="0.4">
+                <stop offset="0%" stop-color="#b97a4c"/>
+                <stop offset="100%" stop-color="#7b3a16"/>
+              </radialGradient>
             </defs>
 
-            <!-- Roles on the left -->
+            <!-- Layer 1: connector lines -->
+            <path class="role-path has" d="M 230 60  L 450 95"/>
+            <path class="role-path has" d="M 230 135 L 450 145"/>
+            <path class="role-path has" d="M 230 210 L 450 200"/>
+            <path class="role-path has-warm" d="M 230 285 L 450 245"/>
+            <path class="role-path has" d="M 740 100 L 900 45"  marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 140 L 900 105" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 175 L 900 165" marker-end="url(#arrow-r)"/>
+            <path class="role-path has-warm" d="M 740 210 L 900 225" marker-end="url(#arrow-r)"/>
+            <path class="role-path has" d="M 740 245 L 900 285" marker-end="url(#arrow-r)"/>
+
+            <!-- Layer 2: particles (sit behind every box) -->
+            <circle class="particle" r="3.5" fill="url(#part-r-cool)">
+              <animateMotion dur="5s" repeatCount="indefinite"
+                path="M 230 60 L 450 95 L 740 100 L 900 45"/>
+              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle" r="3.5" fill="url(#part-r-cool)">
+              <animateMotion dur="5s" begin="1.25s" repeatCount="indefinite"
+                path="M 230 135 L 450 145 L 740 140 L 900 105"/>
+              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" begin="1.25s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle" r="3.5" fill="url(#part-r-cool)">
+              <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite"
+                path="M 230 210 L 450 200 L 740 175 L 900 165"/>
+              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" begin="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle class="particle warm" r="3.5" fill="url(#part-r-warm)">
+              <animateMotion dur="5s" begin="3.75s" repeatCount="indefinite"
+                path="M 230 285 L 450 245 L 740 245 L 900 285"/>
+              <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.1;0.4;0.92;1" dur="5s" begin="3.75s" repeatCount="indefinite"/>
+            </circle>
+
+            <!-- Layer 3: boxes (drawn last, overlay particles) -->
             <g class="role-box admin">
               <rect x="30" y="30" width="200" height="60" rx="8"/>
               <text class="role-meta" x="50" y="52">Tier 1 · Full control</text>
@@ -1394,7 +1440,6 @@
               <text class="nm" x="50" y="299" font-size="15">Viewer &middot; Audit</text>
             </g>
 
-            <!-- Capabilities on the right -->
             <g class="cap-box">
               <rect x="900" y="20" width="270" height="50" rx="8"/>
               <g class="icoshape" transform="translate(916, 35)">
@@ -1409,7 +1454,7 @@
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">∗</text>
               </g>
-              <text class="nm" x="945" y="110">Use AI assistant</text>
+              <text class="nm" x="945" y="110">AI assistant &amp; custom analytics</text>
             </g>
             <g class="cap-box">
               <rect x="900" y="140" width="270" height="50" rx="8"/>
@@ -1417,7 +1462,7 @@
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#1f3b6b">↓</text>
               </g>
-              <text class="nm" x="945" y="170">Export portfolio reports</text>
+              <text class="nm" x="945" y="170">Export PDF &amp; Excel reports</text>
             </g>
             <g class="cap-box">
               <rect x="900" y="200" width="270" height="50" rx="8"/>
@@ -1425,7 +1470,7 @@
                 <circle r="11"/>
                 <text x="0" y="4" text-anchor="middle" font-family="Fraunces" font-size="13" font-style="italic" fill="#7b3a16">△</text>
               </g>
-              <text class="nm" x="945" y="230">Edit risk-appetite thresholds</text>
+              <text class="nm" x="945" y="230">Set thresholds &amp; alert triggers</text>
             </g>
             <g class="cap-box">
               <rect x="900" y="260" width="270" height="50" rx="8"/>
@@ -1436,7 +1481,6 @@
               <text class="nm" x="945" y="290">Read audit trail</text>
             </g>
 
-            <!-- Pipeline center column -->
             <g class="dg-box">
               <rect x="450" y="65" width="290" height="200" rx="10" fill="#fbf8ee" stroke="#ddd6c0"/>
               <text class="tag" x="475" y="93" font-family="JetBrains Mono" font-size="9" fill="#918b78" letter-spacing="0.1em">SIGN-IN PIPELINE</text>
@@ -1449,41 +1493,6 @@
               <text class="desc" x="475" y="237" font-family="Inter" font-size="11" fill="#58554a">Row-level security at the store</text>
               <text class="desc" x="475" y="254" font-family="Inter" font-size="11" fill="#58554a">Grant capabilities below</text>
             </g>
-
-            <!-- Lines from roles to pipeline -->
-            <path class="role-path has" d="M 230 60 L 450 95"/>
-            <path class="role-path has" d="M 230 135 L 450 145"/>
-            <path class="role-path has" d="M 230 210 L 450 200"/>
-            <path class="role-path has-warm" d="M 230 285 L 450 245"/>
-
-            <!-- Lines from pipeline to capabilities -->
-            <path class="role-path has" d="M 740 100 L 900 45" marker-end="url(#arrow-r)"/>
-            <path class="role-path has" d="M 740 140 L 900 105" marker-end="url(#arrow-r)"/>
-            <path class="role-path has" d="M 740 175 L 900 165" marker-end="url(#arrow-r)"/>
-            <path class="role-path has-warm" d="M 740 210 L 900 225" marker-end="url(#arrow-r)"/>
-            <path class="role-path has" d="M 740 245 L 900 285" marker-end="url(#arrow-r)"/>
-
-            <!-- Particles on the role lines -->
-            <circle r="3" fill="#355e94">
-              <animateMotion dur="4s" repeatCount="indefinite"
-                path="M 230 60 L 450 95 L 740 100 L 900 45"/>
-              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" repeatCount="indefinite"/>
-            </circle>
-            <circle r="3" fill="#355e94">
-              <animateMotion dur="4s" begin="1s" repeatCount="indefinite"
-                path="M 230 135 L 450 145 L 740 140 L 900 105"/>
-              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin="1s" repeatCount="indefinite"/>
-            </circle>
-            <circle r="3" fill="#355e94">
-              <animateMotion dur="4s" begin="2s" repeatCount="indefinite"
-                path="M 230 210 L 450 200 L 740 175 L 900 165"/>
-              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin="2s" repeatCount="indefinite"/>
-            </circle>
-            <circle r="3" fill="#7b3a16">
-              <animateMotion dur="4s" begin="3s" repeatCount="indefinite"
-                path="M 230 285 L 450 245 L 740 245 L 900 285"/>
-              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin="3s" repeatCount="indefinite"/>
-            </circle>
           </svg>
         </div>
       </div>
@@ -1495,10 +1504,12 @@
           <div class="grp">
             <div class="card-mini ctrl"><div class="ico">◇</div><h5>Role-based access</h5><p>Per-role visibility, gated administrative actions.</p></div>
             <div class="card-mini ctrl"><div class="ico">⌬</div><h5>Secure session</h5><p>Signed, time-limited tokens with constant-time checks.</p></div>
-            <div class="card-mini ctrl"><div class="ico">△</div><h5>Appetite registry</h5><p>Configurable thresholds, scope-aware resolution.</p></div>
+            <div class="card-mini ctrl"><div class="ico">△</div><h5>KRI appetite registry</h5><p>Per-KRI tolerance and appetite thresholds, scope-aware.</p></div>
+            <div class="card-mini ctrl"><div class="ico">!</div><h5>Alert triggers</h5><p>Configurable breach alerts on every threshold band.</p></div>
             <div class="card-mini ctrl"><div class="ico">✓</div><h5>Validated ingest</h5><p>Schema-checked, currency-normalised, audit-logged.</p></div>
             <div class="card-mini ctrl"><div class="ico">∑</div><h5>Correct roll-ups</h5><p>Weighted for rates, summed for cash. One rule.</p></div>
             <div class="card-mini ctrl"><div class="ico">⌽</div><h5>Health monitoring</h5><p>Freshness per source, error capture, status surface.</p></div>
+            <div class="card-mini ctrl"><div class="ico">⚐</div><h5>Audit trail</h5><p>Every figure traceable to its originating upload.</p></div>
           </div>
         </div>
         <div class="bene-col build d9">
@@ -1507,9 +1518,11 @@
             <div class="card-mini bene"><div class="ico">↻</div><h5>Month-end speed</h5><p>Days of assembly replaced by a one-click export.</p></div>
             <div class="card-mini bene"><div class="ico">⇆</div><h5>Scope switch</h5><p>One control swaps the whole view between scopes.</p></div>
             <div class="card-mini bene"><div class="ico">?</div><h5>Ask, don't dig</h5><p>Type a question, get the same answer the dashboard shows.</p></div>
-            <div class="card-mini bene"><div class="ico">!</div><h5>Earlier signals</h5><p>RAG indicators surface breaches as they happen.</p></div>
-            <div class="card-mini bene"><div class="ico">⚐</div><h5>Audit any number</h5><p>Trace every figure back to its originating upload.</p></div>
-            <div class="card-mini bene"><div class="ico">↓</div><h5>Excel parity</h5><p>The offline workbook is still one click away.</p></div>
+            <div class="card-mini bene"><div class="ico">∗</div><h5>Custom analytics</h5><p>AI-driven cuts, comparisons, and explanations on demand.</p></div>
+            <div class="card-mini bene"><div class="ico">!</div><h5>Earlier signals</h5><p>Alert triggers surface KRI breaches as they happen.</p></div>
+            <div class="card-mini bene"><div class="ico">↓</div><h5>PDF &amp; Excel export</h5><p>Executive summary in PDF, detailed report in Excel.</p></div>
+            <div class="card-mini bene"><div class="ico">∑</div><h5>Correct totals</h5><p>Group roll-ups computed the same way every time.</p></div>
+            <div class="card-mini bene"><div class="ico">⚐</div><h5>End-to-end audit</h5><p>Trace any figure back through the data trail.</p></div>
           </div>
         </div>
       </div>
