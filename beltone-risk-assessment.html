@@ -66,6 +66,12 @@
     page-break-inside: avoid;
     overflow: hidden;
   }
+  /* Page 2 (the full action-plan table) is denser — scale slightly so all 10 rows fit */
+  .page:nth-of-type(2) {
+    width: calc(210mm / 0.88);
+    height: calc(297mm / 0.88);
+    zoom: 0.88;
+  }
   .page:last-child { page-break-after: auto; }
 
   @page { size: A4 portrait; margin: 0; }
@@ -667,7 +673,7 @@
     <div class="meta">
       <strong>Group Risk Assessment</strong><br/>
       Cairo · May 2026<br/>
-      Page 1 of 2
+      Page 1 of 3
     </div>
   </div>
 
@@ -698,10 +704,112 @@
     <div class="heat-cell oos"> <div class="bar"></div><div class="cat">Cyber Risk</div><span class="lvl">Out of scope</span></div>
   </div>
 
-  <!-- DETAILED ACTION TABLE (starts on page 1) -->
+  <!-- TOP FINDINGS -->
   <div class="sec-h">
     <span class="n">ii</span>
-    <h2>Detailed assessment &amp; <em>action plan</em>.</h2>
+    <h2>Top <em>findings</em>.</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="findings">
+
+    <div class="finding">
+      <div class="ord">01</div>
+      <div class="body">
+        <h4>Scalability &amp; Data Integrity <span class="pill high">High</span></h4>
+        The current technology landscape is not conducive to growth. Over-reliance on manual processes poses a direct risk to data accuracy and operational resilience. Factoring &amp; Leasing is the only organised stack. A clear, actionable technology upgrade plan is required.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">02</div>
+      <div class="body">
+        <h4>Fraud Risk <span class="pill high">High</span></h4>
+        Identified incidents require immediate attention. Lack of automation and weak controls increase exposure. Root-cause analysis, corrective action plan, and formal incident documentation must be prioritised without delay.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">03</div>
+      <div class="body">
+        <h4>PQR Standardisation <span class="pill high">High</span></h4>
+        PQRs are submitted in multiple formats across entities, fragmenting group-level monitoring. Group prototype PQR dashboard has been presented to Beltone Risk &amp; IT. Execution plan with IT required; follow-up call to be scheduled on forward-looking scenarios.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">04</div>
+      <div class="body">
+        <h4>Performance Risk (Risk-team HR) <span class="pill high">High</span></h4>
+        Risk function lacks defined objectives, structured KPIs, formal documentation, and clearly articulated roles &amp; responsibilities. Needs a formal HR governance framework with measurable risk outcomes.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">05</div>
+      <div class="body">
+        <h4>Operational Risk &amp; RCSA <span class="pill high">High</span></h4>
+        RCSA process has been kicked off but risk-mitigation and control plans are not yet in place. Segregation of duties shows material weaknesses. Maker-checker absent in core teams.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">06</div>
+      <div class="body">
+        <h4>Governance &amp; Compliance <span class="pill high">High</span></h4>
+        Non-compliance with policies; risk control over subsidiaries is weak. Lack of standardised reporting and trend visibility limits oversight. Group frameworks shared; alignment review pending.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-rule">
+    <span>Beltone Risk Readiness Assessment</span>
+    <span></span>
+    <span>Page 01 / 03</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- TOP STRIP (continuation) -->
+  <div class="top-strip">
+    <div class="left">
+      <span class="wordmark beltone">
+        <span class="mark">B</span>
+        <span class="name">Beltone <span class="sub">Egypt</span></span>
+      </span>
+      <span class="divider"></span>
+      <span class="wordmark avaloura">
+        <span class="mark">A</span>
+        <span class="name">Avalora <span class="sub">Group Risk</span></span>
+      </span>
+    </div>
+    <div></div>
+    <div class="right">
+      <div class="conf">Confidential &middot; Group Risk</div>
+      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <h1>Detailed assessment &amp; <em>action plan</em>.</h1>
+    <div class="meta">
+      <strong>Findings, risk levels &amp; actions</strong><br/>
+      Cairo · May 2026<br/>
+      Page 2 of 3
+    </div>
+  </div>
+
+  <!-- DETAILED ACTION TABLE -->
+  <div class="sec-h">
+    <span class="n">iii</span>
+    <h2>Detailed <em>findings &amp; actions</em>.</h2>
     <span class="rule"></span>
   </div>
 
@@ -792,61 +900,6 @@
         </td>
         <td class="owner"></td>
       </tr>
-    </tbody>
-  </table>
-
-  <div class="page-rule">
-    <span>Beltone Risk Readiness Assessment</span>
-    <span></span>
-    <span>Page 01 / 02</span>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- PAGE 2                                                              -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<div class="page">
-
-  <!-- TOP STRIP (continuation) -->
-  <div class="top-strip">
-    <div class="left">
-      <span class="wordmark beltone">
-        <span class="mark">B</span>
-        <span class="name">Beltone <span class="sub">Egypt</span></span>
-      </span>
-      <span class="divider"></span>
-      <span class="wordmark avaloura">
-        <span class="mark">A</span>
-        <span class="name">Avalora <span class="sub">Group Risk</span></span>
-      </span>
-    </div>
-    <div></div>
-    <div class="right">
-      <div class="conf">Confidential &middot; Group Risk</div>
-      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
-    </div>
-  </div>
-
-  <!-- CONTINUED FROM PAGE 1 -->
-  <div class="sec-h">
-    <span class="n">ii</span>
-    <h2>Detailed assessment &amp; action plan <em>continued</em>.</h2>
-    <span class="rule"></span>
-  </div>
-
-  <table class="tbl">
-    <thead>
-      <tr>
-        <th class="num">#</th>
-        <th>Category</th>
-        <th>Finding</th>
-        <th>Risk</th>
-        <th>Action Items</th>
-        <th>Owner</th>
-      </tr>
-    </thead>
-    <tbody>
       <tr>
         <td class="num">06</td>
         <td class="cat">Microfinance &middot; Black Box &amp; Key-man</td>
@@ -920,6 +973,50 @@
       </tr>
     </tbody>
   </table>
+
+  <div class="page-rule">
+    <span>Beltone Risk Readiness Assessment</span>
+    <span></span>
+    <span>Page 02 / 03</span>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 3                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- TOP STRIP -->
+  <div class="top-strip">
+    <div class="left">
+      <span class="wordmark beltone">
+        <span class="mark">B</span>
+        <span class="name">Beltone <span class="sub">Egypt</span></span>
+      </span>
+      <span class="divider"></span>
+      <span class="wordmark avaloura">
+        <span class="mark">A</span>
+        <span class="name">Avalora <span class="sub">Group Risk</span></span>
+      </span>
+    </div>
+    <div></div>
+    <div class="right">
+      <div class="conf">Confidential &middot; Group Risk</div>
+      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <h1>Observations &amp; <em>recommended next steps</em>.</h1>
+    <div class="meta">
+      <strong>Company-level &amp; programme</strong><br/>
+      Cairo · May 2026<br/>
+      Page 3 of 3
+    </div>
+  </div>
 
   <!-- COMPANY-LEVEL OBSERVATIONS + NEXT STEPS -->
   <div class="two-col">
