@@ -217,11 +217,8 @@
     background: var(--line);
   }
 
-  /* ── Two-column intro ───────────────────────── */
+  /* ── Intro (full width) ─────────────────────── */
   .intro {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 5mm;
     margin-bottom: 3mm;
   }
   .intro-block {
@@ -462,17 +459,8 @@
   .tbl td.owner {
     font-size: 7.5pt;
     color: var(--muted);
-    width: 24mm;
+    width: 28mm;
     font-feature-settings: 'cv11' 1;
-  }
-  .tbl td.target {
-    width: 15mm;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 7.5pt;
-    font-feature-settings: 'tnum' 1;
-    color: var(--accent);
-    font-weight: 500;
-    text-align: center;
   }
 
   /* ── Observations & next steps ──────────────── */
@@ -647,7 +635,7 @@
       <span class="divider"></span>
       <span class="wordmark avaloura">
         <span class="mark">A</span>
-        <span class="name">Avaloura <span class="sub">Group Risk</span></span>
+        <span class="name">Avalora <span class="sub">Group Risk</span></span>
       </span>
     </div>
     <div></div>
@@ -659,9 +647,9 @@
 
   <!-- TITLE -->
   <div class="title-block">
-    <h1>Beltone (Egypt) — <em>CRO Visit</em><br/>Risk Readiness Assessment.</h1>
+    <h1>Beltone <em>Risk Readiness</em><br/>Assessment.</h1>
     <div class="meta">
-      <strong>Group CRO Field Visit</strong><br/>
+      <strong>Group Risk Assessment</strong><br/>
       Cairo · May 2026<br/>
       Page 1 of 2
     </div>
@@ -670,19 +658,8 @@
   <!-- INTRO BLOCKS -->
   <div class="intro">
     <div class="intro-block">
-      <h3>Visit Purpose</h3>
-      <p>Field assessment of <strong>Beltone (Egypt)</strong> risk readiness across the subsidiary stack — including <strong>Factoring &amp; Leasing</strong>, <strong>Microfinance</strong>, and <strong>Seven</strong>. Objectives: validate operational risk maturity, identify control gaps, evaluate alignment with Avaloura Group risk frameworks, and define a prioritised remediation plan.</p>
-    </div>
-    <div class="intro-block">
-      <h3>Visit Context</h3>
-      <dl>
-        <dt>Entity</dt><dd>Beltone &middot; Egypt</dd>
-        <dt>Owner</dt><dd>Avaloura Holding</dd>
-        <dt>Scope</dt><dd>Risk readiness &amp; controls</dd>
-        <dt>Date</dt><dd>May 2026</dd>
-        <dt>Attendees</dt><dd>Beltone Risk, IT, HR &middot; Group Risk</dd>
-        <dt>Out of scope</dt><dd>Cyber risk (with CTO)</dd>
-      </dl>
+      <h3>Assessment Purpose</h3>
+      <p>Assessment of <strong>Beltone (Egypt)</strong> risk readiness across the subsidiary stack. Objectives: validate operational risk maturity, identify control gaps, evaluate alignment with Avalora Group risk frameworks, and define a prioritised remediation plan.</p>
     </div>
   </div>
 
@@ -726,7 +703,7 @@
       <div class="ord">02</div>
       <div class="body">
         <h4>Fraud Risk <span class="pill high">High</span></h4>
-        Identified incidents discussed during the visit require immediate attention. Lack of automation and weak controls increase exposure. Root-cause analysis, corrective action plan, and formal incident documentation must be prioritised without delay.
+        Identified incidents require immediate attention. Lack of automation and weak controls increase exposure. Root-cause analysis, corrective action plan, and formal incident documentation must be prioritised without delay.
       </div>
     </div>
 
@@ -734,7 +711,7 @@
       <div class="ord">03</div>
       <div class="body">
         <h4>PQR Standardisation <span class="pill med">Medium</span></h4>
-        PQRs are submitted in multiple formats across entities — fragmenting group-level monitoring. Group prototype PQR dashboard has been presented to Beltone Risk &amp; IT. Execution plan with IT required; follow-up call to be scheduled on forward-looking scenarios.
+        PQRs are submitted in multiple formats across entities, fragmenting group-level monitoring. Group prototype PQR dashboard has been presented to Beltone Risk &amp; IT. Execution plan with IT required; follow-up call to be scheduled on forward-looking scenarios.
       </div>
     </div>
 
@@ -758,14 +735,14 @@
       <div class="ord">06</div>
       <div class="body">
         <h4>Governance &amp; Compliance <span class="pill high">High</span></h4>
-        Non-compliance with policies; risk control over subsidiaries is weak. Lack of standardised reporting and trend visibility limits oversight. Group frameworks shared — alignment review pending.
+        Non-compliance with policies; risk control over subsidiaries is weak. Lack of standardised reporting and trend visibility limits oversight. Group frameworks shared; alignment review pending.
       </div>
     </div>
 
   </div>
 
   <div class="page-rule">
-    <span>Beltone CRO Visit · Risk Readiness</span>
+    <span>Beltone Risk Readiness Assessment</span>
     <em>Continued overleaf</em>
     <span>Page 01 / 02</span>
   </div>
@@ -787,7 +764,7 @@
       <span class="divider"></span>
       <span class="wordmark avaloura">
         <span class="mark">A</span>
-        <span class="name">Avaloura <span class="sub">Group Risk</span></span>
+        <span class="name">Avalora <span class="sub">Group Risk</span></span>
       </span>
     </div>
     <div></div>
@@ -801,7 +778,7 @@
   <div class="title-block">
     <h1>Detailed assessment &amp; <em>action plan</em>.</h1>
     <div class="meta">
-      <strong>Owners, risk levels &amp; targets</strong><br/>
+      <strong>Findings, risk levels &amp; actions</strong><br/>
       Cairo · May 2026<br/>
       Page 2 of 2
     </div>
@@ -823,7 +800,6 @@
         <th>Risk</th>
         <th>Action Items</th>
         <th>Owner</th>
-        <th>Target</th>
       </tr>
     </thead>
     <tbody>
@@ -840,8 +816,7 @@
             <li>Define interim manual-control compensating measures</li>
           </ul>
         </td>
-        <td class="owner">Beltone CIO &middot; Beltone Risk &middot; Group Risk</td>
-        <td class="target">Q3 2026</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">02</td>
@@ -856,8 +831,7 @@
             <li>Refresh KYC / AML controls and monitoring</li>
           </ul>
         </td>
-        <td class="owner">Beltone Risk &middot; Compliance &middot; Group Risk</td>
-        <td class="target">60 days</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">03</td>
@@ -872,8 +846,7 @@
             <li>Set monthly cadence with Group Risk review</li>
           </ul>
         </td>
-        <td class="owner">Beltone Risk &amp; IT &middot; Group Risk</td>
-        <td class="target">Q2 2026</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">04</td>
@@ -888,8 +861,7 @@
             <li>Set quarterly performance review cycle</li>
           </ul>
         </td>
-        <td class="owner">Beltone HR &middot; Risk Lead &middot; Group CHRO</td>
-        <td class="target">90 days</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">05</td>
@@ -904,8 +876,7 @@
             <li>Schedule control-testing and KCI tracking</li>
           </ul>
         </td>
-        <td class="owner">Beltone Risk Lead &middot; Internal Audit</td>
-        <td class="target">Q3 2026</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">06</td>
@@ -920,8 +891,7 @@
             <li>Embed a Group Risk officer for 90-day handhold</li>
           </ul>
         </td>
-        <td class="owner">Group CRO &middot; MF CEO &middot; HR</td>
-        <td class="target">Q2 2026</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">07</td>
@@ -935,8 +905,7 @@
             <li>Phase out outdated practices on quarterly review</li>
           </ul>
         </td>
-        <td class="owner">Seven MD &middot; Beltone Risk &middot; CIO</td>
-        <td class="target">Q4 2026</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">08</td>
@@ -951,13 +920,12 @@
             <li>Define escalation matrix to Group Risk</li>
           </ul>
         </td>
-        <td class="owner">Group Risk &middot; Beltone Board</td>
-        <td class="target">Q3 2026</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">09</td>
         <td class="cat">Framework Alignment</td>
-        <td class="finding-cell">Avaloura risk frameworks &amp; policies have been shared with Beltone. Beltone's frameworks pending submission for group review &amp; alignment.</td>
+        <td class="finding-cell">Avalora risk frameworks &amp; policies have been shared with Beltone. Beltone's frameworks pending submission for group review &amp; alignment.</td>
         <td class="risk"><span class="pill med">Medium</span></td>
         <td class="actions">
           <ul>
@@ -966,13 +934,12 @@
             <li>Sign off aligned framework with Beltone CRO</li>
           </ul>
         </td>
-        <td class="owner">Beltone Risk &middot; Group Risk</td>
-        <td class="target">45 days</td>
+        <td class="owner"></td>
       </tr>
       <tr>
         <td class="num">10</td>
         <td class="cat">Cyber Risk</td>
-        <td class="finding-cell">Not reviewed during this visit. Sits within the CTO's purview.</td>
+        <td class="finding-cell">Not reviewed in this assessment. Sits within the CTO's purview.</td>
         <td class="risk"><span class="pill oos">OOS</span></td>
         <td class="actions">
           <ul>
@@ -980,8 +947,7 @@
             <li>Track resolution via the group cyber forum</li>
           </ul>
         </td>
-        <td class="owner">CTO (Saket) &middot; Group Cyber</td>
-        <td class="target">Ongoing</td>
+        <td class="owner"></td>
       </tr>
     </tbody>
   </table>
@@ -1020,20 +986,20 @@
   <div class="footer-band">
     <div class="oos-note">
       <span class="lbl">Out of scope</span>
-      Cyber risk was not reviewed during this visit. It sits within the CTO's purview. Relevant observations will be routed to Saket's team for resolution and tracked separately under the group cyber forum.
+      Cyber risk was not reviewed in this assessment. It sits within the CTO's purview. Relevant observations will be routed to Saket's team for resolution and tracked separately under the group cyber forum.
       <br/><br/>
       <span class="lbl">Classification</span>
-      Confidential — for distribution to Avaloura Group Executive Committee, Beltone Board, and named recipients only. Not for external release.
+      Confidential. For distribution to Avalora Group Executive Committee, Beltone Board, and named recipients only. Not for external release.
     </div>
     <div class="signoff">
       <div class="role">Prepared by</div>
       <div class="name">Group Chief Risk Officer</div>
-      <div class="date">Avaloura Holding · May 2026</div>
+      <div class="date">Avalora Holding · May 2026</div>
     </div>
   </div>
 
   <div class="page-rule">
-    <span>Beltone CRO Visit · Risk Readiness</span>
+    <span>Beltone Risk Readiness Assessment</span>
     <em>End of report</em>
     <span>Page 02 / 02</span>
   </div>
