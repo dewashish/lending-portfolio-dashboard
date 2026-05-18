@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Beltone · CRO Risk Assessment Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0b0b08;
+    --ink-2: #2b2a26;
+    --muted: #56544c;
+    --faint: #8c8a7e;
+    --line: #d9d4c5;
+    --line-2: #b4ad97;
+    --rule: #1b1a14;
+    --accent: #1f3b6b;
+    --accent-2: #355e94;
+    --sienna: #7b3a16;
+    --sienna-soft: #f7efe4;
+    --green: #2c5a3a;
+    --green-soft: #ecf2eb;
+    --amber: #93571a;
+    --amber-soft: #f4ecdb;
+    --red: #8a2e2e;
+    --red-soft: #f4e6e6;
+    --paper: #ffffff;
+    --paper-2: #fbfaf6;
+    --paper-3: #f3f0e6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #e6e3d8;
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'cv11' 1;
+    line-height: 1.4;
+    font-size: 10pt;
+  }
+
+  /* ── Page: A4 portrait ──────────────────────── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background: var(--paper);
+    margin: 12mm auto;
+    padding: 13mm 13mm 12mm;
+    box-shadow: 0 1mm 4mm rgba(0,0,0,0.10), 0 0.3mm 1mm rgba(0,0,0,0.04);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  @page { size: A4 portrait; margin: 0; }
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; margin: 0; }
+  }
+
+  /* ── Header bar ─────────────────────────────── */
+  .top-strip {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.8rem;
+    padding-bottom: 5mm;
+    border-bottom: 2px solid var(--rule);
+    margin-bottom: 4mm;
+  }
+  .top-strip .left {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.32rem;
+  }
+  .wordmark .mark {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--rule);
+    color: var(--paper);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 2px;
+  }
+  .wordmark.beltone .mark { background: var(--rule); }
+  .wordmark.avaloura .mark { background: var(--accent); }
+  .wordmark .name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .wordmark .name .sub {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--faint);
+    font-weight: 400;
+    margin-left: 0.4rem;
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+  }
+  .top-strip .divider {
+    width: 1px;
+    height: 18px;
+    background: var(--line-2);
+    margin: 0 0.5rem;
+  }
+  .top-strip .right {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .top-strip .right .conf {
+    color: var(--red);
+  }
+  .top-strip .doc-id {
+    color: var(--faint);
+    margin-top: 1mm;
+  }
+
+  /* ── Title block ────────────────────────────── */
+  .title-block {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    margin-bottom: 4mm;
+    padding-bottom: 3mm;
+    border-bottom: 1px solid var(--line);
+  }
+  .title-block h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 72, 'SOFT' 30;
+    font-weight: 500;
+    font-size: 22pt;
+    line-height: 1.04;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+  }
+  .title-block h1 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 72, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .title-block .meta {
+    text-align: right;
+    font-size: 7.5pt;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+  .title-block .meta strong { color: var(--ink); }
+
+  /* ── Section header ─────────────────────────── */
+  .sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 4mm 0 2mm;
+  }
+  .sec-h .n {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 72, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 13pt;
+    color: var(--sienna);
+    line-height: 1;
+    min-width: 18px;
+  }
+  .sec-h h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 600;
+    font-size: 11.5pt;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    flex: none;
+  }
+  .sec-h h2 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 30, 'SOFT' 100;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .sec-h .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ── Two-column intro ───────────────────────── */
+  .intro {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 5mm;
+    margin-bottom: 3mm;
+  }
+  .intro-block {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    padding: 3mm 3.5mm;
+    border-radius: 2px;
+  }
+  .intro-block h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sienna);
+    font-weight: 600;
+    margin-bottom: 1.5mm;
+  }
+  .intro-block p {
+    font-size: 9pt;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .intro-block p strong { color: var(--ink); font-weight: 600; }
+  .intro-block dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1mm 4mm;
+    font-size: 8.5pt;
+  }
+  .intro-block dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.8pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    align-self: center;
+  }
+  .intro-block dd {
+    color: var(--ink-2);
+    font-weight: 500;
+    font-size: 9pt;
+    font-feature-settings: 'onum' 1;
+  }
+
+  /* ── Risk snapshot heatmap ──────────────────── */
+  .heat {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2mm;
+    margin-bottom: 3mm;
+  }
+  .heat-cell {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 2.5mm 3mm;
+    border-radius: 2px;
+    position: relative;
+  }
+  .heat-cell .bar {
+    position: absolute;
+    top: 0; left: 0;
+    height: 3px;
+    width: 100%;
+    background: var(--line-2);
+  }
+  .heat-cell.high   .bar { background: var(--red); }
+  .heat-cell.med    .bar { background: var(--amber); }
+  .heat-cell.low    .bar { background: var(--green); }
+  .heat-cell.oos    .bar { background: var(--faint); }
+  .heat-cell .cat {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+    font-weight: 500;
+    font-size: 9pt;
+    color: var(--ink);
+    margin-bottom: 1mm;
+    margin-top: 0.5mm;
+    line-height: 1.15;
+  }
+  .heat-cell .lvl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.5pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .heat-cell.high .lvl  { color: var(--red); }
+  .heat-cell.med .lvl   { color: var(--amber); }
+  .heat-cell.low .lvl   { color: var(--green); }
+  .heat-cell.oos .lvl   { color: var(--faint); }
+
+  /* ── Findings (page 1) ──────────────────────── */
+  .findings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5mm 4mm;
+    margin-bottom: 2mm;
+  }
+  .finding {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px dashed var(--line);
+  }
+  .finding:nth-last-child(-n+2) { border-bottom: 0; padding-bottom: 0; }
+  .finding .ord {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 14pt;
+    color: var(--accent);
+    line-height: 0.95;
+    width: 22px;
+    text-align: right;
+    font-feature-settings: 'onum' 1;
+  }
+  .finding .body {
+    font-size: 8.5pt;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .finding .body h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+    font-weight: 600;
+    font-size: 9.5pt;
+    color: var(--ink);
+    margin-bottom: 0.5mm;
+    letter-spacing: -0.005em;
+  }
+  .finding .body h4 .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.5mm 1.2mm;
+    margin-left: 1.5mm;
+    vertical-align: middle;
+    border-radius: 2px;
+  }
+  .finding .body h4 .pill.high { background: var(--red-soft); color: var(--red); }
+  .finding .body h4 .pill.med  { background: var(--amber-soft); color: var(--amber); }
+  .finding .body h4 .pill.low  { background: var(--green-soft); color: var(--green); }
+  .finding .body h4 .pill.oos  { background: var(--paper-3); color: var(--faint); }
+
+  /* ── Detailed assessment table (page 2) ─────── */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    margin-bottom: 4mm;
+    border: 1px solid var(--rule);
+  }
+  .tbl thead th {
+    text-align: left;
+    background: var(--rule);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 1.8mm 2.2mm;
+    border-right: 1px solid #444;
+  }
+  .tbl thead th:last-child { border-right: 0; }
+  .tbl tbody td {
+    padding: 1.8mm 2.2mm;
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    vertical-align: top;
+    line-height: 1.4;
+  }
+  .tbl tbody td:last-child { border-right: 0; }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl tbody tr:nth-child(even) td { background: var(--paper-2); }
+  .tbl td.num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 500;
+    color: var(--accent);
+    font-feature-settings: 'onum' 1;
+    width: 7mm;
+    text-align: center;
+  }
+  .tbl td.cat {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+    font-weight: 600;
+    color: var(--ink);
+    width: 28mm;
+  }
+  .tbl td.risk {
+    width: 12mm;
+    text-align: center;
+  }
+  .tbl td.risk .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.5pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.8mm 1.5mm;
+    border-radius: 2px;
+  }
+  .tbl td.risk .pill.high { background: var(--red-soft); color: var(--red); }
+  .tbl td.risk .pill.med  { background: var(--amber-soft); color: var(--amber); }
+  .tbl td.risk .pill.low  { background: var(--green-soft); color: var(--green); }
+  .tbl td.risk .pill.oos  { background: var(--paper-3); color: var(--faint); }
+  .tbl td.finding-cell { color: var(--ink-2); }
+  .tbl td.actions { color: var(--ink); font-size: 8pt; }
+  .tbl td.actions ul {
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  .tbl td.actions li {
+    padding-left: 3mm;
+    position: relative;
+    margin-bottom: 0.6mm;
+    line-height: 1.4;
+  }
+  .tbl td.actions li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 1.4mm;
+    width: 1.8mm;
+    height: 1px;
+    background: var(--accent);
+  }
+  .tbl td.owner {
+    font-size: 7.5pt;
+    color: var(--muted);
+    width: 24mm;
+    font-feature-settings: 'cv11' 1;
+  }
+  .tbl td.target {
+    width: 15mm;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    font-feature-settings: 'tnum' 1;
+    color: var(--accent);
+    font-weight: 500;
+    text-align: center;
+  }
+
+  /* ── Observations & next steps ──────────────── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin-bottom: 3mm;
+  }
+  .obs-block, .next-block {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--sienna);
+    padding: 3mm 3.5mm;
+  }
+  .next-block { border-left-color: var(--accent); }
+  .obs-block h3, .next-block h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 30;
+    font-weight: 600;
+    font-size: 10pt;
+    color: var(--ink);
+    margin-bottom: 1.5mm;
+  }
+  .obs-block h3 em, .next-block h3 em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 30, 'SOFT' 100;
+    color: var(--accent);
+  }
+  .obs-block .sub-obs {
+    margin-bottom: 2mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px dashed var(--line);
+  }
+  .obs-block .sub-obs:last-child { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+  .obs-block .sub-obs .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.8pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sienna);
+    font-weight: 600;
+    margin-bottom: 0.6mm;
+  }
+  .obs-block .sub-obs p {
+    font-size: 8.5pt;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .next-block ol {
+    list-style: none;
+    counter-reset: nl;
+    padding: 0;
+  }
+  .next-block ol li {
+    counter-increment: nl;
+    padding-left: 6.5mm;
+    position: relative;
+    margin-bottom: 1.5mm;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .next-block ol li::before {
+    content: counter(nl, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 30, 'SOFT' 100;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: var(--accent);
+    font-feature-settings: 'onum' 1;
+  }
+  .next-block ol li strong { color: var(--ink); font-weight: 600; }
+
+  /* ── Out-of-scope + sign-off (footer band) ──── */
+  .footer-band {
+    margin-top: auto;
+    padding-top: 3mm;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 5mm;
+  }
+  .oos-note {
+    font-size: 8pt;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .oos-note .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.8pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 600;
+    margin-bottom: 0.8mm;
+    display: block;
+  }
+  .signoff {
+    text-align: right;
+    font-size: 8pt;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .signoff .role {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 36, 'SOFT' 100;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 1mm;
+    font-size: 9pt;
+  }
+  .signoff .name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 24;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 9.5pt;
+  }
+  .signoff .date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    color: var(--faint);
+    margin-top: 1mm;
+  }
+
+  /* ── Page footer rule ───────────────────────── */
+  .page-rule {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 3mm;
+    padding-top: 1.5mm;
+    border-top: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    color: var(--faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .page-rule em {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--muted);
+    font-size: 8pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 1                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- TOP STRIP -->
+  <div class="top-strip">
+    <div class="left">
+      <span class="wordmark beltone">
+        <span class="mark">B</span>
+        <span class="name">Beltone <span class="sub">Egypt</span></span>
+      </span>
+      <span class="divider"></span>
+      <span class="wordmark avaloura">
+        <span class="mark">A</span>
+        <span class="name">Avaloura <span class="sub">Group Risk</span></span>
+      </span>
+    </div>
+    <div></div>
+    <div class="right">
+      <div class="conf">Confidential &middot; Group Risk</div>
+      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <h1>Beltone (Egypt) — <em>CRO Visit</em><br/>Risk Readiness Assessment.</h1>
+    <div class="meta">
+      <strong>Group CRO Field Visit</strong><br/>
+      Cairo · May 2026<br/>
+      Page 1 of 2
+    </div>
+  </div>
+
+  <!-- INTRO BLOCKS -->
+  <div class="intro">
+    <div class="intro-block">
+      <h3>Visit Purpose</h3>
+      <p>Field assessment of <strong>Beltone (Egypt)</strong> risk readiness across the subsidiary stack — including <strong>Factoring &amp; Leasing</strong>, <strong>Microfinance</strong>, and <strong>Seven</strong>. Objectives: validate operational risk maturity, identify control gaps, evaluate alignment with Avaloura Group risk frameworks, and define a prioritised remediation plan.</p>
+    </div>
+    <div class="intro-block">
+      <h3>Visit Context</h3>
+      <dl>
+        <dt>Entity</dt><dd>Beltone &middot; Egypt</dd>
+        <dt>Owner</dt><dd>Avaloura Holding</dd>
+        <dt>Scope</dt><dd>Risk readiness &amp; controls</dd>
+        <dt>Date</dt><dd>May 2026</dd>
+        <dt>Attendees</dt><dd>Beltone Risk, IT, HR &middot; Group Risk</dd>
+        <dt>Out of scope</dt><dd>Cyber risk (with CTO)</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- EXEC SUMMARY HEAT MAP -->
+  <div class="sec-h">
+    <span class="n">i</span>
+    <h2>Risk <em>snapshot</em>.</h2>
+    <span class="rule"></span>
+  </div>
+  <div class="heat">
+    <div class="heat-cell high"><div class="bar"></div><div class="cat">Technology &amp; Data Integrity</div><span class="lvl">High</span></div>
+    <div class="heat-cell high"><div class="bar"></div><div class="cat">Fraud Risk</div><span class="lvl">High</span></div>
+    <div class="heat-cell med"> <div class="bar"></div><div class="cat">PQR Standardisation</div><span class="lvl">Medium</span></div>
+    <div class="heat-cell high"><div class="bar"></div><div class="cat">Performance Risk (HR)</div><span class="lvl">High</span></div>
+    <div class="heat-cell high"><div class="bar"></div><div class="cat">Operational Risk · RCSA / SoD</div><span class="lvl">High</span></div>
+    <div class="heat-cell high"><div class="bar"></div><div class="cat">Microfinance · Key-man &amp; Black Box</div><span class="lvl">High</span></div>
+    <div class="heat-cell med"> <div class="bar"></div><div class="cat">Seven · Maker-Checker &amp; Tech</div><span class="lvl">Medium</span></div>
+    <div class="heat-cell high"><div class="bar"></div><div class="cat">Governance &amp; Compliance</div><span class="lvl">High</span></div>
+    <div class="heat-cell med"> <div class="bar"></div><div class="cat">Framework Alignment</div><span class="lvl">Medium</span></div>
+    <div class="heat-cell oos"> <div class="bar"></div><div class="cat">Cyber Risk</div><span class="lvl">Out of scope</span></div>
+  </div>
+
+  <!-- TOP FINDINGS -->
+  <div class="sec-h">
+    <span class="n">ii</span>
+    <h2>Top <em>findings</em>.</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="findings">
+
+    <div class="finding">
+      <div class="ord">01</div>
+      <div class="body">
+        <h4>Scalability &amp; Data Integrity <span class="pill high">High</span></h4>
+        The current technology landscape is not conducive to growth. Over-reliance on manual processes poses a direct risk to data accuracy and operational resilience. Factoring &amp; Leasing is the only organised stack. A clear, actionable technology upgrade plan is required.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">02</div>
+      <div class="body">
+        <h4>Fraud Risk <span class="pill high">High</span></h4>
+        Identified incidents discussed during the visit require immediate attention. Lack of automation and weak controls increase exposure. Root-cause analysis, corrective action plan, and formal incident documentation must be prioritised without delay.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">03</div>
+      <div class="body">
+        <h4>PQR Standardisation <span class="pill med">Medium</span></h4>
+        PQRs are submitted in multiple formats across entities — fragmenting group-level monitoring. Group prototype PQR dashboard has been presented to Beltone Risk &amp; IT. Execution plan with IT required; follow-up call to be scheduled on forward-looking scenarios.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">04</div>
+      <div class="body">
+        <h4>Performance Risk (Risk-team HR) <span class="pill high">High</span></h4>
+        Risk function lacks defined objectives, structured KPIs, formal documentation, and clearly articulated roles &amp; responsibilities. Needs a formal HR governance framework with measurable risk outcomes.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">05</div>
+      <div class="body">
+        <h4>Operational Risk &amp; RCSA <span class="pill high">High</span></h4>
+        RCSA process has been kicked off but risk-mitigation and control plans are not yet in place. Segregation of duties shows material weaknesses. Maker-checker absent in core teams.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="ord">06</div>
+      <div class="body">
+        <h4>Governance &amp; Compliance <span class="pill high">High</span></h4>
+        Non-compliance with policies; risk control over subsidiaries is weak. Lack of standardised reporting and trend visibility limits oversight. Group frameworks shared — alignment review pending.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-rule">
+    <span>Beltone CRO Visit · Risk Readiness</span>
+    <em>Continued overleaf</em>
+    <span>Page 01 / 02</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- TOP STRIP (continuation) -->
+  <div class="top-strip">
+    <div class="left">
+      <span class="wordmark beltone">
+        <span class="mark">B</span>
+        <span class="name">Beltone <span class="sub">Egypt</span></span>
+      </span>
+      <span class="divider"></span>
+      <span class="wordmark avaloura">
+        <span class="mark">A</span>
+        <span class="name">Avaloura <span class="sub">Group Risk</span></span>
+      </span>
+    </div>
+    <div></div>
+    <div class="right">
+      <div class="conf">Confidential &middot; Group Risk</div>
+      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <h1>Detailed assessment &amp; <em>action plan</em>.</h1>
+    <div class="meta">
+      <strong>Owners, risk levels &amp; targets</strong><br/>
+      Cairo · May 2026<br/>
+      Page 2 of 2
+    </div>
+  </div>
+
+  <!-- DETAILED ACTION TABLE -->
+  <div class="sec-h">
+    <span class="n">iii</span>
+    <h2>Detailed <em>findings &amp; actions</em>.</h2>
+    <span class="rule"></span>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>Category</th>
+        <th>Finding</th>
+        <th>Risk</th>
+        <th>Action Items</th>
+        <th>Owner</th>
+        <th>Target</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="num">01</td>
+        <td class="cat">Technology &amp; Data Integrity</td>
+        <td class="finding-cell">Manual processes dominate; only Factoring &amp; Leasing organised. Direct risk to data accuracy, controls, and scalability.</td>
+        <td class="risk"><span class="pill high">High</span></td>
+        <td class="actions">
+          <ul>
+            <li>Develop a technology upgrade roadmap by entity</li>
+            <li>Automate top-10 manual workflows</li>
+            <li>Implement core data-quality controls and lineage</li>
+            <li>Define interim manual-control compensating measures</li>
+          </ul>
+        </td>
+        <td class="owner">Beltone CIO &middot; Beltone Risk &middot; Group Risk</td>
+        <td class="target">Q3 2026</td>
+      </tr>
+      <tr>
+        <td class="num">02</td>
+        <td class="cat">Fraud Risk</td>
+        <td class="finding-cell">Identified incidents pending closure. Limited automation and controls elevate exposure across origination and post-disbursal.</td>
+        <td class="risk"><span class="pill high">High</span></td>
+        <td class="actions">
+          <ul>
+            <li>Conduct root-cause analysis on identified incidents</li>
+            <li>Issue corrective action plan with timelines</li>
+            <li>Stand up a formal fraud incident register</li>
+            <li>Refresh KYC / AML controls and monitoring</li>
+          </ul>
+        </td>
+        <td class="owner">Beltone Risk &middot; Compliance &middot; Group Risk</td>
+        <td class="target">60 days</td>
+      </tr>
+      <tr>
+        <td class="num">03</td>
+        <td class="cat">PQR Standardisation</td>
+        <td class="finding-cell">Reports submitted in varied formats; trends unclear; ad-hoc submissions across entities. Group prototype demoed to Beltone Risk &amp; IT.</td>
+        <td class="risk"><span class="pill med">Medium</span></td>
+        <td class="actions">
+          <ul>
+            <li>Adopt group PQR template across all entities</li>
+            <li>Define IT execution plan &amp; integration milestones</li>
+            <li>Schedule call on forward-looking scenario design</li>
+            <li>Set monthly cadence with Group Risk review</li>
+          </ul>
+        </td>
+        <td class="owner">Beltone Risk &amp; IT &middot; Group Risk</td>
+        <td class="target">Q2 2026</td>
+      </tr>
+      <tr>
+        <td class="num">04</td>
+        <td class="cat">Performance Risk (Risk-team HR)</td>
+        <td class="finding-cell">No defined objectives, structured performance metrics, formal documentation, or articulated R&amp;R for the risk function.</td>
+        <td class="risk"><span class="pill high">High</span></td>
+        <td class="actions">
+          <ul>
+            <li>Define risk-team objectives aligned to group KRIs</li>
+            <li>Issue role descriptions &amp; performance metrics</li>
+            <li>Establish formal HR governance framework</li>
+            <li>Set quarterly performance review cycle</li>
+          </ul>
+        </td>
+        <td class="owner">Beltone HR &middot; Risk Lead &middot; Group CHRO</td>
+        <td class="target">90 days</td>
+      </tr>
+      <tr>
+        <td class="num">05</td>
+        <td class="cat">Operational Risk &middot; RCSA &amp; SoD</td>
+        <td class="finding-cell">RCSA initiated but mitigation &amp; controls not designed. Segregation-of-duty gaps; no maker-checker in core teams.</td>
+        <td class="risk"><span class="pill high">High</span></td>
+        <td class="actions">
+          <ul>
+            <li>Close RCSA cycle with mitigation plans per risk</li>
+            <li>Design &amp; deploy SoD matrix; close conflicts</li>
+            <li>Implement maker-checker workflow in core processes</li>
+            <li>Schedule control-testing and KCI tracking</li>
+          </ul>
+        </td>
+        <td class="owner">Beltone Risk Lead &middot; Internal Audit</td>
+        <td class="target">Q3 2026</td>
+      </tr>
+      <tr>
+        <td class="num">06</td>
+        <td class="cat">Microfinance &middot; Black Box &amp; Key-man</td>
+        <td class="finding-cell">Limited transparency into microfinance operations; decision-making centralised on a single individual; low appetite for technology adoption.</td>
+        <td class="risk"><span class="pill high">High</span></td>
+        <td class="actions">
+          <ul>
+            <li>Onboard MF to group risk visibility &amp; reporting</li>
+            <li>Define succession plan to remove key-man dependency</li>
+            <li>Mandate technology adoption roadmap</li>
+            <li>Embed a Group Risk officer for 90-day handhold</li>
+          </ul>
+        </td>
+        <td class="owner">Group CRO &middot; MF CEO &middot; HR</td>
+        <td class="target">Q2 2026</td>
+      </tr>
+      <tr>
+        <td class="num">07</td>
+        <td class="cat">Seven &middot; Maker-checker &amp; Tech</td>
+        <td class="finding-cell">Limited advanced tech infrastructure; absence of maker-checker controls; outdated practices limiting growth.</td>
+        <td class="risk"><span class="pill med">Medium</span></td>
+        <td class="actions">
+          <ul>
+            <li>Implement maker-checker workflow in priority processes</li>
+            <li>Tech-infrastructure assessment &amp; modernisation plan</li>
+            <li>Phase out outdated practices on quarterly review</li>
+          </ul>
+        </td>
+        <td class="owner">Seven MD &middot; Beltone Risk &middot; CIO</td>
+        <td class="target">Q4 2026</td>
+      </tr>
+      <tr>
+        <td class="num">08</td>
+        <td class="cat">Governance &amp; Compliance</td>
+        <td class="finding-cell">Non-compliance with policies; weak risk control over subsidiaries; weak overall governance posture across entities.</td>
+        <td class="risk"><span class="pill high">High</span></td>
+        <td class="actions">
+          <ul>
+            <li>Stand up a monthly subsidiary governance forum</li>
+            <li>Issue a compliance scorecard per entity</li>
+            <li>Schedule policy-adherence audit</li>
+            <li>Define escalation matrix to Group Risk</li>
+          </ul>
+        </td>
+        <td class="owner">Group Risk &middot; Beltone Board</td>
+        <td class="target">Q3 2026</td>
+      </tr>
+      <tr>
+        <td class="num">09</td>
+        <td class="cat">Framework Alignment</td>
+        <td class="finding-cell">Avaloura risk frameworks &amp; policies have been shared with Beltone. Beltone's frameworks pending submission for group review &amp; alignment.</td>
+        <td class="risk"><span class="pill med">Medium</span></td>
+        <td class="actions">
+          <ul>
+            <li>Receive Beltone's frameworks &amp; policies for review</li>
+            <li>Map divergences against group baseline</li>
+            <li>Sign off aligned framework with Beltone CRO</li>
+          </ul>
+        </td>
+        <td class="owner">Beltone Risk &middot; Group Risk</td>
+        <td class="target">45 days</td>
+      </tr>
+      <tr>
+        <td class="num">10</td>
+        <td class="cat">Cyber Risk</td>
+        <td class="finding-cell">Not reviewed during this visit. Sits within the CTO's purview.</td>
+        <td class="risk"><span class="pill oos">OOS</span></td>
+        <td class="actions">
+          <ul>
+            <li>Route relevant observations to Saket's team</li>
+            <li>Track resolution via the group cyber forum</li>
+          </ul>
+        </td>
+        <td class="owner">CTO (Saket) &middot; Group Cyber</td>
+        <td class="target">Ongoing</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- COMPANY-LEVEL OBSERVATIONS + NEXT STEPS -->
+  <div class="two-col">
+    <div class="obs-block">
+      <h3>Company-level <em>observations</em>.</h3>
+      <div class="sub-obs">
+        <div class="lbl">Microfinance</div>
+        <p>Pronounced key-man dependency, with decision-making heavily centralised on a single individual. Limited appetite for technology adoption; preference for manual processes. Treat as a Group Risk priority.</p>
+      </div>
+      <div class="sub-obs">
+        <div class="lbl">Seven</div>
+        <p>Lack of advanced technology infrastructure, absence of maker-checker controls, and continuation of outdated practices are collectively limiting the company's growth potential. Modernisation roadmap required.</p>
+      </div>
+      <div class="sub-obs">
+        <div class="lbl">Factoring &amp; Leasing</div>
+        <p>The only entity with reasonably organised processes. Use as a reference baseline for the rest of the Beltone stack; codify operating model and apply to peers.</p>
+      </div>
+    </div>
+
+    <div class="next-block">
+      <h3>Recommended <em>next steps</em>.</h3>
+      <ol>
+        <li><strong>Stand up a 90-day Beltone risk programme</strong> under Group Risk oversight, anchored on the priority actions above.</li>
+        <li><strong>Embed a Group Risk officer at Beltone</strong> for the first quarter to drive RCSA closure and SoD design.</li>
+        <li><strong>Lock the PQR rollout</strong> with Beltone IT and schedule the forward-looking scenarios working session.</li>
+        <li><strong>Mandate tech roadmaps</strong> for Microfinance and Seven, with monthly progress reviews.</li>
+        <li><strong>Convene a Beltone Board risk session</strong> to communicate findings and secure ownership at the highest level.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- FOOTER BAND -->
+  <div class="footer-band">
+    <div class="oos-note">
+      <span class="lbl">Out of scope</span>
+      Cyber risk was not reviewed during this visit. It sits within the CTO's purview. Relevant observations will be routed to Saket's team for resolution and tracked separately under the group cyber forum.
+      <br/><br/>
+      <span class="lbl">Classification</span>
+      Confidential — for distribution to Avaloura Group Executive Committee, Beltone Board, and named recipients only. Not for external release.
+    </div>
+    <div class="signoff">
+      <div class="role">Prepared by</div>
+      <div class="name">Group Chief Risk Officer</div>
+      <div class="date">Avaloura Holding · May 2026</div>
+    </div>
+  </div>
+
+  <div class="page-rule">
+    <span>Beltone CRO Visit · Risk Readiness</span>
+    <em>End of report</em>
+    <span>Page 02 / 02</span>
+  </div>
+</div>
+
+</body>
+</html>
