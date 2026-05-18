@@ -66,12 +66,6 @@
     page-break-inside: avoid;
     overflow: hidden;
   }
-  /* Page 2 has more content; scale it down so everything fits the A4 sheet */
-  .page + .page {
-    width: calc(210mm / 0.86);
-    height: calc(297mm / 0.86);
-    zoom: 0.86;
-  }
   .page:last-child { page-break-after: auto; }
 
   @page { size: A4 portrait; margin: 0; }
@@ -385,12 +379,12 @@
   .finding .body h4 .pill.low  { background: var(--green-soft); color: var(--green); }
   .finding .body h4 .pill.oos  { background: var(--paper-3); color: var(--faint); }
 
-  /* ── Detailed assessment table (page 2) ─────── */
+  /* ── Detailed assessment table ──────────────── */
   .tbl {
     width: 100%;
     border-collapse: collapse;
-    font-size: 6.8pt;
-    margin-bottom: 2mm;
+    font-size: 7.8pt;
+    margin-bottom: 2.5mm;
     border: 1px solid var(--rule);
   }
   .tbl thead th {
@@ -398,20 +392,20 @@
     background: var(--rule);
     color: var(--paper);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 6pt;
-    letter-spacing: 0.12em;
+    font-size: 6.8pt;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     font-weight: 600;
-    padding: 0.9mm 1.5mm;
+    padding: 1.4mm 2mm;
     border-right: 1px solid #444;
   }
   .tbl thead th:last-child { border-right: 0; }
   .tbl tbody td {
-    padding: 0.7mm 1.5mm;
+    padding: 1.4mm 2mm;
     border-bottom: 1px solid var(--line);
     border-right: 1px solid var(--line);
     vertical-align: top;
-    line-height: 1.22;
+    line-height: 1.35;
   }
   .tbl tbody td:last-child { border-right: 0; }
   .tbl tbody tr:last-child td { border-bottom: 0; }
@@ -452,37 +446,37 @@
   .tbl td.risk .pill.low  { background: var(--green-soft); color: var(--green); }
   .tbl td.risk .pill.oos  { background: var(--paper-3); color: var(--faint); }
   .tbl td.finding-cell { color: var(--ink-2); }
-  .tbl td.actions { color: var(--ink); font-size: 6.4pt; }
+  .tbl td.actions { color: var(--ink); font-size: 7.3pt; }
   .tbl td.actions ul {
     list-style: none;
     margin: 0; padding: 0;
   }
   .tbl td.actions li {
-    padding-left: 2.2mm;
+    padding-left: 2.6mm;
     position: relative;
-    margin-bottom: 0;
-    line-height: 1.22;
+    margin-bottom: 0.3mm;
+    line-height: 1.35;
   }
   .tbl td.actions li::before {
     content: '';
     position: absolute;
-    left: 0; top: 0.9mm;
-    width: 1.2mm;
+    left: 0; top: 1.3mm;
+    width: 1.5mm;
     height: 1px;
     background: var(--accent);
   }
   .tbl td.owner {
-    font-size: 6.4pt;
+    font-size: 7.3pt;
     color: var(--muted);
-    width: 22mm;
+    width: 24mm;
     font-feature-settings: 'cv11' 1;
   }
   .tbl td.cat {
-    font-size: 6.8pt;
-    width: 22mm;
+    font-size: 7.8pt;
+    width: 26mm;
   }
   .tbl td.finding-cell {
-    font-size: 6.5pt;
+    font-size: 7.5pt;
   }
 
   /* ── Observations & next steps ──────────────── */
@@ -704,112 +698,10 @@
     <div class="heat-cell oos"> <div class="bar"></div><div class="cat">Cyber Risk</div><span class="lvl">Out of scope</span></div>
   </div>
 
-  <!-- TOP FINDINGS -->
+  <!-- DETAILED ACTION TABLE (starts on page 1) -->
   <div class="sec-h">
     <span class="n">ii</span>
-    <h2>Top <em>findings</em>.</h2>
-    <span class="rule"></span>
-  </div>
-
-  <div class="findings">
-
-    <div class="finding">
-      <div class="ord">01</div>
-      <div class="body">
-        <h4>Scalability &amp; Data Integrity <span class="pill high">High</span></h4>
-        The current technology landscape is not conducive to growth. Over-reliance on manual processes poses a direct risk to data accuracy and operational resilience. Factoring &amp; Leasing is the only organised stack. A clear, actionable technology upgrade plan is required.
-      </div>
-    </div>
-
-    <div class="finding">
-      <div class="ord">02</div>
-      <div class="body">
-        <h4>Fraud Risk <span class="pill high">High</span></h4>
-        Identified incidents require immediate attention. Lack of automation and weak controls increase exposure. Root-cause analysis, corrective action plan, and formal incident documentation must be prioritised without delay.
-      </div>
-    </div>
-
-    <div class="finding">
-      <div class="ord">03</div>
-      <div class="body">
-        <h4>PQR Standardisation <span class="pill high">High</span></h4>
-        PQRs are submitted in multiple formats across entities, fragmenting group-level monitoring. Group prototype PQR dashboard has been presented to Beltone Risk &amp; IT. Execution plan with IT required; follow-up call to be scheduled on forward-looking scenarios.
-      </div>
-    </div>
-
-    <div class="finding">
-      <div class="ord">04</div>
-      <div class="body">
-        <h4>Performance Risk (Risk-team HR) <span class="pill high">High</span></h4>
-        Risk function lacks defined objectives, structured KPIs, formal documentation, and clearly articulated roles &amp; responsibilities. Needs a formal HR governance framework with measurable risk outcomes.
-      </div>
-    </div>
-
-    <div class="finding">
-      <div class="ord">05</div>
-      <div class="body">
-        <h4>Operational Risk &amp; RCSA <span class="pill high">High</span></h4>
-        RCSA process has been kicked off but risk-mitigation and control plans are not yet in place. Segregation of duties shows material weaknesses. Maker-checker absent in core teams.
-      </div>
-    </div>
-
-    <div class="finding">
-      <div class="ord">06</div>
-      <div class="body">
-        <h4>Governance &amp; Compliance <span class="pill high">High</span></h4>
-        Non-compliance with policies; risk control over subsidiaries is weak. Lack of standardised reporting and trend visibility limits oversight. Group frameworks shared; alignment review pending.
-      </div>
-    </div>
-
-  </div>
-
-  <div class="page-rule">
-    <span>Beltone Risk Readiness Assessment</span>
-    <span></span>
-    <span>Page 01 / 02</span>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- PAGE 2                                                              -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<div class="page">
-
-  <!-- TOP STRIP (continuation) -->
-  <div class="top-strip">
-    <div class="left">
-      <span class="wordmark beltone">
-        <span class="mark">B</span>
-        <span class="name">Beltone <span class="sub">Egypt</span></span>
-      </span>
-      <span class="divider"></span>
-      <span class="wordmark avaloura">
-        <span class="mark">A</span>
-        <span class="name">Avalora <span class="sub">Group Risk</span></span>
-      </span>
-    </div>
-    <div></div>
-    <div class="right">
-      <div class="conf">Confidential &middot; Group Risk</div>
-      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
-    </div>
-  </div>
-
-  <!-- TITLE -->
-  <div class="title-block">
-    <h1>Detailed assessment &amp; <em>action plan</em>.</h1>
-    <div class="meta">
-      <strong>Findings, risk levels &amp; actions</strong><br/>
-      Cairo · May 2026<br/>
-      Page 2 of 2
-    </div>
-  </div>
-
-  <!-- DETAILED ACTION TABLE -->
-  <div class="sec-h">
-    <span class="n">iii</span>
-    <h2>Detailed <em>findings &amp; actions</em>.</h2>
+    <h2>Detailed assessment &amp; <em>action plan</em>.</h2>
     <span class="rule"></span>
   </div>
 
@@ -900,6 +792,61 @@
         </td>
         <td class="owner"></td>
       </tr>
+    </tbody>
+  </table>
+
+  <div class="page-rule">
+    <span>Beltone Risk Readiness Assessment</span>
+    <span></span>
+    <span>Page 01 / 02</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2                                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- TOP STRIP (continuation) -->
+  <div class="top-strip">
+    <div class="left">
+      <span class="wordmark beltone">
+        <span class="mark">B</span>
+        <span class="name">Beltone <span class="sub">Egypt</span></span>
+      </span>
+      <span class="divider"></span>
+      <span class="wordmark avaloura">
+        <span class="mark">A</span>
+        <span class="name">Avalora <span class="sub">Group Risk</span></span>
+      </span>
+    </div>
+    <div></div>
+    <div class="right">
+      <div class="conf">Confidential &middot; Group Risk</div>
+      <div class="doc-id">Doc · GR-2026-018 &middot; 18 May 2026</div>
+    </div>
+  </div>
+
+  <!-- CONTINUED FROM PAGE 1 -->
+  <div class="sec-h">
+    <span class="n">ii</span>
+    <h2>Detailed assessment &amp; action plan <em>continued</em>.</h2>
+    <span class="rule"></span>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>Category</th>
+        <th>Finding</th>
+        <th>Risk</th>
+        <th>Action Items</th>
+        <th>Owner</th>
+      </tr>
+    </thead>
+    <tbody>
       <tr>
         <td class="num">06</td>
         <td class="cat">Microfinance &middot; Black Box &amp; Key-man</td>
