@@ -31,10 +31,17 @@
     --paper-3: #f3f0e6;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 
   html, body {
-    background: #e6e3d8;
+    background: var(--paper);
     color: var(--ink);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -47,21 +54,23 @@
   /* ── Page: A4 portrait ──────────────────────── */
   .page {
     width: 210mm;
-    min-height: 297mm;
+    height: 297mm;
     background: var(--paper);
-    margin: 12mm auto;
-    padding: 13mm 13mm 12mm;
-    box-shadow: 0 1mm 4mm rgba(0,0,0,0.10), 0 0.3mm 1mm rgba(0,0,0,0.04);
+    margin: 8mm auto;
+    padding: 11mm 12mm 10mm;
+    box-shadow: 0 1mm 4mm rgba(0,0,0,0.08), 0 0.3mm 1mm rgba(0,0,0,0.03);
     position: relative;
     display: flex;
     flex-direction: column;
     page-break-after: always;
+    page-break-inside: avoid;
+    overflow: hidden;
   }
   .page:last-child { page-break-after: auto; }
 
   @page { size: A4 portrait; margin: 0; }
   @media print {
-    body { background: white; }
+    html, body { background: var(--paper); }
     .page { box-shadow: none; margin: 0; }
   }
 
@@ -71,9 +80,9 @@
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 0.8rem;
-    padding-bottom: 5mm;
+    padding-bottom: 3mm;
     border-bottom: 2px solid var(--rule);
-    margin-bottom: 4mm;
+    margin-bottom: 3mm;
   }
   .top-strip .left {
     display: flex;
@@ -150,16 +159,16 @@
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: end;
-    margin-bottom: 4mm;
-    padding-bottom: 3mm;
+    margin-bottom: 3mm;
+    padding-bottom: 2.5mm;
     border-bottom: 1px solid var(--line);
   }
   .title-block h1 {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: 'opsz' 72, 'SOFT' 30;
     font-weight: 500;
-    font-size: 22pt;
-    line-height: 1.04;
+    font-size: 19pt;
+    line-height: 1.02;
     letter-spacing: -0.018em;
     color: var(--ink);
   }
@@ -184,7 +193,7 @@
     display: flex;
     align-items: baseline;
     gap: 0.6rem;
-    margin: 4mm 0 2mm;
+    margin: 2.5mm 0 1.5mm;
   }
   .sec-h .n {
     font-family: 'Fraunces', Georgia, serif;
@@ -219,26 +228,26 @@
 
   /* ── Intro (full width) ─────────────────────── */
   .intro {
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
   }
   .intro-block {
     background: var(--paper-2);
     border: 1px solid var(--line);
-    padding: 3mm 3.5mm;
+    padding: 2mm 2.8mm;
     border-radius: 2px;
   }
   .intro-block h3 {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 7pt;
+    font-size: 6.6pt;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--sienna);
     font-weight: 600;
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
   }
   .intro-block p {
-    font-size: 9pt;
-    line-height: 1.45;
+    font-size: 8.4pt;
+    line-height: 1.38;
     color: var(--ink-2);
   }
   .intro-block p strong { color: var(--ink); font-weight: 600; }
@@ -268,13 +277,13 @@
   .heat {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 2mm;
-    margin-bottom: 3mm;
+    gap: 1.5mm;
+    margin-bottom: 2mm;
   }
   .heat-cell {
     background: var(--paper);
     border: 1px solid var(--line);
-    padding: 2.5mm 3mm;
+    padding: 1.8mm 2.4mm;
     border-radius: 2px;
     position: relative;
   }
@@ -316,14 +325,14 @@
   .findings {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2.5mm 4mm;
-    margin-bottom: 2mm;
+    gap: 1.8mm 4mm;
+    margin-bottom: 1.5mm;
   }
   .finding {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 2mm;
-    padding-bottom: 2mm;
+    padding-bottom: 1.5mm;
     border-bottom: 1px dashed var(--line);
   }
   .finding:nth-last-child(-n+2) { border-bottom: 0; padding-bottom: 0; }
@@ -340,17 +349,17 @@
     font-feature-settings: 'onum' 1;
   }
   .finding .body {
-    font-size: 8.5pt;
-    line-height: 1.5;
+    font-size: 7.8pt;
+    line-height: 1.38;
     color: var(--ink-2);
   }
   .finding .body h4 {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: 'opsz' 24;
     font-weight: 600;
-    font-size: 9.5pt;
+    font-size: 9pt;
     color: var(--ink);
-    margin-bottom: 0.5mm;
+    margin-bottom: 0.3mm;
     letter-spacing: -0.005em;
   }
   .finding .body h4 .pill {
@@ -374,8 +383,8 @@
   .tbl {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8.5pt;
-    margin-bottom: 4mm;
+    font-size: 7.8pt;
+    margin-bottom: 2.5mm;
     border: 1px solid var(--rule);
   }
   .tbl thead th {
@@ -383,20 +392,20 @@
     background: var(--rule);
     color: var(--paper);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 7pt;
-    letter-spacing: 0.14em;
+    font-size: 6.5pt;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     font-weight: 600;
-    padding: 1.8mm 2.2mm;
+    padding: 1.2mm 1.8mm;
     border-right: 1px solid #444;
   }
   .tbl thead th:last-child { border-right: 0; }
   .tbl tbody td {
-    padding: 1.8mm 2.2mm;
+    padding: 1.1mm 1.8mm;
     border-bottom: 1px solid var(--line);
     border-right: 1px solid var(--line);
     vertical-align: top;
-    line-height: 1.4;
+    line-height: 1.28;
   }
   .tbl tbody td:last-child { border-right: 0; }
   .tbl tbody tr:last-child td { border-bottom: 0; }
@@ -437,53 +446,60 @@
   .tbl td.risk .pill.low  { background: var(--green-soft); color: var(--green); }
   .tbl td.risk .pill.oos  { background: var(--paper-3); color: var(--faint); }
   .tbl td.finding-cell { color: var(--ink-2); }
-  .tbl td.actions { color: var(--ink); font-size: 8pt; }
+  .tbl td.actions { color: var(--ink); font-size: 7.3pt; }
   .tbl td.actions ul {
     list-style: none;
     margin: 0; padding: 0;
   }
   .tbl td.actions li {
-    padding-left: 3mm;
+    padding-left: 2.4mm;
     position: relative;
-    margin-bottom: 0.6mm;
-    line-height: 1.4;
+    margin-bottom: 0.15mm;
+    line-height: 1.28;
   }
   .tbl td.actions li::before {
     content: '';
     position: absolute;
-    left: 0; top: 1.4mm;
-    width: 1.8mm;
+    left: 0; top: 1.1mm;
+    width: 1.4mm;
     height: 1px;
     background: var(--accent);
   }
   .tbl td.owner {
-    font-size: 7.5pt;
+    font-size: 7pt;
     color: var(--muted);
-    width: 28mm;
+    width: 26mm;
     font-feature-settings: 'cv11' 1;
+  }
+  .tbl td.cat {
+    font-size: 7.8pt;
+    width: 26mm;
+  }
+  .tbl td.finding-cell {
+    font-size: 7.4pt;
   }
 
   /* ── Observations & next steps ──────────────── */
   .two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4mm;
-    margin-bottom: 3mm;
+    gap: 3mm;
+    margin-bottom: 2mm;
   }
   .obs-block, .next-block {
     background: var(--paper-2);
     border: 1px solid var(--line);
     border-left: 3px solid var(--sienna);
-    padding: 3mm 3.5mm;
+    padding: 2mm 2.6mm;
   }
   .next-block { border-left-color: var(--accent); }
   .obs-block h3, .next-block h3 {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: 'opsz' 30;
     font-weight: 600;
-    font-size: 10pt;
+    font-size: 9pt;
     color: var(--ink);
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
   }
   .obs-block h3 em, .next-block h3 em {
     font-style: italic;
@@ -491,23 +507,23 @@
     color: var(--accent);
   }
   .obs-block .sub-obs {
-    margin-bottom: 2mm;
-    padding-bottom: 2mm;
+    margin-bottom: 1.3mm;
+    padding-bottom: 1.3mm;
     border-bottom: 1px dashed var(--line);
   }
   .obs-block .sub-obs:last-child { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
   .obs-block .sub-obs .lbl {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 6.8pt;
+    font-size: 6.4pt;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--sienna);
     font-weight: 600;
-    margin-bottom: 0.6mm;
+    margin-bottom: 0.4mm;
   }
   .obs-block .sub-obs p {
-    font-size: 8.5pt;
-    line-height: 1.45;
+    font-size: 7.6pt;
+    line-height: 1.35;
     color: var(--ink-2);
   }
   .next-block ol {
@@ -517,11 +533,11 @@
   }
   .next-block ol li {
     counter-increment: nl;
-    padding-left: 6.5mm;
+    padding-left: 5.5mm;
     position: relative;
-    margin-bottom: 1.5mm;
-    font-size: 8.5pt;
-    line-height: 1.45;
+    margin-bottom: 1mm;
+    font-size: 7.6pt;
+    line-height: 1.35;
     color: var(--ink-2);
   }
   .next-block ol li::before {
@@ -542,16 +558,16 @@
   /* ── Out-of-scope + sign-off (footer band) ──── */
   .footer-band {
     margin-top: auto;
-    padding-top: 3mm;
+    padding-top: 2mm;
     border-top: 1px solid var(--line);
     display: grid;
     grid-template-columns: 1.4fr 1fr;
-    gap: 5mm;
+    gap: 4mm;
   }
   .oos-note {
-    font-size: 8pt;
+    font-size: 7.5pt;
     color: var(--muted);
-    line-height: 1.5;
+    line-height: 1.4;
   }
   .oos-note .lbl {
     font-family: 'JetBrains Mono', monospace;
