@@ -12,6 +12,7 @@ import type {
   CorporatePortfolioSummary,
 } from '../types';
 import { applyScopeAsync } from './shared';
+import { overrideScorecardRow } from '../baobab-overrides';
 import { fetchConsumerOverall, fetchConsumerUnsecuredFPD } from './consumer';
 import { fetchTradeExecutiveSummary, fetchTradeAssetQuality, fetchTradeEntityPerformance } from './trade';
 import { fetchCorporateExecutiveSummary, fetchCorporatePOSBySubsidiary, fetchCorporateStageBalances } from './corporate';
@@ -53,7 +54,7 @@ export async function fetchConsolidatedScorecard(scope?: ScopeSelection): Promis
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
-  return ((data ?? []) as ScorecardViewRow[]).map((r) => ({
+  return ((data ?? []) as ScorecardViewRow[]).map((r) => overrideScorecardRow({
     subsidiaryId: r.subsidiary_id,
     subsidiary: r.subsidiary,
     shortCode: r.short_code,

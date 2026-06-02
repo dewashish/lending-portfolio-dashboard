@@ -136,7 +136,7 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           >
             {subsidiaries.map((s) => (
               <MenuItem key={s.id} value={s.id} sx={{ fontSize: '0.72rem' }}>
-                {s.shortCode} · {s.currencyCode}
+                {s.shortCode} · {s.country}
               </MenuItem>
             ))}
           </Select>

@@ -1,10 +1,10 @@
 import { supabase } from '../supabase';
 import type { Database } from '../database.types';
 import type { ScopeSelection, Subsidiary, Region, ConsumerFilters } from '../types';
+import { applySubsidiaryOverride, REGION_OVERRIDES } from '../baobab-overrides';
 
 // ── Type aliases ─────────────────────────────────────────────────
 type SubsidiaryRow = Database['public']['Tables']['subsidiaries']['Row'];
-type RegionRow = Database['public']['Tables']['regions']['Row'];
 
 // ── Subsidiary Cache ─────────────────────────────────────────────
 
@@ -16,7 +16,7 @@ export async function getSubsidiaries(): Promise<Subsidiary[]> {
     .from('subsidiaries')
     .select('id, name, short_code, country, country_code, region_id, currency_code, institution_type, is_active')
     .eq('is_active', true);
-  _subsidiaryCache = ((data ?? []) as SubsidiaryRow[]).map((s) => ({
+  _subsidiaryCache = ((data ?? []) as SubsidiaryRow[]).map((s) => applySubsidiaryOverride({
     id: s.id,
     name: s.name,
     shortCode: s.short_code,
@@ -74,14 +74,7 @@ export async function fetchSubsidiaries(): Promise<Subsidiary[]> {
 }
 
 export async function fetchRegions(): Promise<Region[]> {
-  const { data, error } = await supabase
-    .from('regions')
-    .select('id, name, display_order')
-    .order('display_order');
-  if (error) throw error;
-  return ((data ?? []) as RegionRow[]).map((r) => ({
-    id: r.id,
-    name: r.name,
-    displayOrder: r.display_order,
-  }));
+  // Region grouping is overridden to the Baobab African regions. The ids align
+  // with the overridden subsidiary region_ids so scope filtering stays correct.
+  return REGION_OVERRIDES;
 }

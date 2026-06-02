@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import type { Database } from '../database.types';
+import { toBaobabProduct, toDbProduct, toDbProducts } from '../baobab-overrides';
 import type {
   ConsumerMetricRow,
   ConsumerProductData,
@@ -256,7 +257,7 @@ export async function fetchProductCatalog(scope?: ScopeSelection): Promise<Produ
     seen.add(r.product_name);
     return true;
   }).map((r: { product_name: string; product_category: string }) => ({
-    productName: r.product_name,
+    productName: toBaobabProduct(r.product_name),
     productCategory: r.product_category,
   }));
 }
@@ -282,7 +283,7 @@ export async function fetchConsumerProductNames(scope?: ScopeSelection): Promise
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
-  const unique = Array.from(new Set((data ?? []).map((r: { product_name: string }) => r.product_name)));
+  const unique = Array.from(new Set((data ?? []).map((r: { product_name: string }) => toBaobabProduct(r.product_name))));
   return unique;
 }
 
@@ -369,7 +370,7 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
       .order('id')
       .range(offset, offset + 999);
     if (filters?.period) q = q.eq('period', filters.period);
-    if (filters?.products && filters.products.length > 0) q = q.in('product_name', filters.products);
+    if (filters?.products && filters.products.length > 0) q = q.in('product_name', toDbProducts(filters.products));
     q = await applyScopeAsync(q, scope);
     return q;
   });
@@ -429,10 +430,14 @@ export async function fetchProductMetrics(scope?: ScopeSelection, filters?: Cons
       finalRows.push({ ...template, value });
     });
 
-    return aggregateAcrossProducts(pivotToProductData(finalRows));
+    return relabelProducts(aggregateAcrossProducts(pivotToProductData(finalRows)));
   }
 
-  return aggregateAcrossProducts(pivotToProductData(rows));
+  return relabelProducts(aggregateAcrossProducts(pivotToProductData(rows)));
+}
+
+function relabelProducts(items: ConsumerProductData[]): ConsumerProductData[] {
+  return items.map((d) => ({ ...d, productName: toBaobabProduct(d.productName) }));
 }
 
 export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: ConsumerFilters): Promise<NetFlowRow[]> {
@@ -444,7 +449,7 @@ export async function fetchNetFlowRates(scope?: ScopeSelection, filters?: Consum
       .range(offset, offset + 999);
     if (filters?.period) q = q.eq('period', filters.period);
     if (filters?.products && filters.products.length > 0) {
-      q = q.in('product_name', filters.products);
+      q = q.in('product_name', toDbProducts(filters.products));
     } else {
       q = q.is('product_name', null);
     }
@@ -463,7 +468,7 @@ export async function fetchRollRates(scope?: ScopeSelection, filters?: ConsumerF
       .range(offset, offset + 999);
     if (filters?.period) q = q.eq('period', filters.period);
     if (filters?.products && filters.products.length > 0) {
-      q = q.in('product_name', filters.products);
+      q = q.in('product_name', toDbProducts(filters.products));
     } else {
       q = q.is('product_name', null);
     }
@@ -482,7 +487,7 @@ export async function fetchCollectionMetrics(scope?: ScopeSelection, filters?: C
       .range(offset, offset + 999);
     if (filters?.period) q = q.eq('period', filters.period);
     if (filters?.products && filters.products.length > 0) {
-      q = q.in('product_name', filters.products);
+      q = q.in('product_name', toDbProducts(filters.products));
     } else {
       q = q.is('product_name', null);
     }
@@ -510,7 +515,7 @@ export async function fetchVintagePoints(metricType?: string, scope?: ScopeSelec
       .order('id')
       .range(offset, offset + 999);
     if (metricType) q = q.eq('metric_type', metricType);
-    if (products && products.length > 0) q = q.in('product_name', products);
+    if (products && products.length > 0) q = q.in('product_name', toDbProducts(products));
     q = await applyScopeAsync(q, scope);
     return q;
   });
@@ -531,7 +536,7 @@ export async function fetchNonStarters(scope?: ScopeSelection, filters?: Consume
       .order('id')
       .range(offset, offset + 999);
     if (category) q = q.eq('category', category);
-    if (filters?.products && filters.products.length > 0) q = q.in('product', filters.products);
+    if (filters?.products && filters.products.length > 0) q = q.in('product', toDbProducts(filters.products));
     q = await applyScopeAsync(q, scope);
     return q;
   });
@@ -542,7 +547,7 @@ export async function fetchNonStarters(scope?: ScopeSelection, filters?: Consume
     if (!map.has(key)) {
       map.set(key, {
         category: r.category,
-        product: r.product,
+        product: toBaobabProduct(r.product),
         metric: r.metric,
         monthlyValues: {},
         yearlyAverages: {},
@@ -642,13 +647,13 @@ export async function fetchLOSMetrics(scope?: ScopeSelection, filters?: Consumer
     .from('los_metrics')
     .select('metric, product, ftd, mtd, lmtd, lm_full, mom_change, target, achievement')
     .order('id');
-  if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
+  if (filters?.products && filters.products.length > 0) query = query.in('product', toDbProducts(filters.products));
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSMetricDbRow[]).map((r) => ({
     metric: r.metric,
-    product: r.product,
+    product: toBaobabProduct(r.product),
     ftd: r.ftd ?? 0,
     mtd: r.mtd ?? 0,
     lmtd: r.lmtd ?? 0,
@@ -661,14 +666,14 @@ export async function fetchLOSMetrics(scope?: ScopeSelection, filters?: Consumer
 
 export async function fetchLOSFunnel(product?: string, scope?: ScopeSelection, filters?: ConsumerFilters): Promise<LOSFunnelStep[]> {
   let query = supabase.from('los_funnel').select('stage, product, ftd, mtd, lmtd, conversion_rate').order('id');
-  if (product) query = query.eq('product', product);
-  if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
+  if (product) query = query.eq('product', toDbProduct(product));
+  if (filters?.products && filters.products.length > 0) query = query.in('product', toDbProducts(filters.products));
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSFunnelDbRow[]).map((r) => ({
     stage: r.stage,
-    product: r.product,
+    product: toBaobabProduct(r.product),
     ftd: r.ftd ?? 0,
     mtd: r.mtd ?? 0,
     lmtd: r.lmtd ?? 0,
@@ -681,13 +686,13 @@ export async function fetchLOSDaily(scope?: ScopeSelection, filters?: ConsumerFi
     .from('los_daily')
     .select('date, product, count, amount, avg_ticket_size')
     .order('date');
-  if (filters?.products && filters.products.length > 0) query = query.in('product', filters.products);
+  if (filters?.products && filters.products.length > 0) query = query.in('product', toDbProducts(filters.products));
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as LOSDailyDbRow[]).map((r) => ({
     date: r.date,
-    product: r.product,
+    product: toBaobabProduct(r.product),
     count: r.count ?? 0,
     amount: r.amount ?? 0,
     avgTicketSize: r.avg_ticket_size ?? 0,
@@ -733,7 +738,7 @@ export async function fetchConsumerUnsecuredFPD(scope?: ScopeSelection): Promise
     .from('consumer_product_metrics')
     .select('subsidiary_id, product_name, metric_type, metric, period, value, value_usd, benchmark')
     .eq('metric', 'FPD%')
-    .in('product_name', unsecuredProducts)
+    .in('product_name', toDbProducts(unsecuredProducts))
     .order('period');
   query = await applyScopeAsync(query, scope);
   const { data, error } = await query;
