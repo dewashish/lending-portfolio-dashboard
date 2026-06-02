@@ -1,9 +1,11 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { SUPABASE_ANON_KEY } from './supabase-config';
 
 export const SESSION_COOKIE = 'session';
 
 function getSecret() {
-  const secret = process.env.AUTH_SECRET ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'fallback-dev-secret';
+  // Use || (not ??) so an empty-string env var also falls back to a non-empty key.
+  const secret = process.env.AUTH_SECRET || SUPABASE_ANON_KEY;
   return new TextEncoder().encode(secret);
 }
 

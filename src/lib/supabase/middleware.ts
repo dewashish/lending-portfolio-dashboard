@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { SUPABASE_ANON_KEY } from '../supabase-config';
 
 const SESSION_COOKIE = 'session';
+
+// HMAC secret for the session JWT. Use || (not ??) so an empty-string env var
+// also falls back — crypto.subtle.importKey rejects a zero-length key.
+const SESSION_SECRET = process.env.AUTH_SECRET || SUPABASE_ANON_KEY;
 
 function bytesToBase64url(bytes: Uint8Array): string {
   let binary = '';
@@ -14,7 +19,7 @@ function strToBase64url(s: string): string {
 
 // Auto-provision a default Super Admin session for this instance (no login required).
 async function signDefaultSession(): Promise<string> {
-  const secret = process.env.AUTH_SECRET ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'fallback-dev-secret';
+  const secret = SESSION_SECRET;
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'HS256', typ: 'JWT' };
   const payload = {
@@ -38,7 +43,7 @@ async function signDefaultSession(): Promise<string> {
 
 async function verifyJWT(token: string): Promise<boolean> {
   try {
-    const secret = process.env.AUTH_SECRET ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'fallback-dev-secret';
+    const secret = SESSION_SECRET;
     const [headerB64, payloadB64, signatureB64] = token.split('.');
     if (!headerB64 || !payloadB64 || !signatureB64) return false;
 
