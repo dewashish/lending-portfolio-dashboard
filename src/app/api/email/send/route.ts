@@ -38,13 +38,13 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: `Avalora Reports <${senderDomain}>`,
+        from: `Baobab Reports <${senderDomain}>`,
         to: [recipientEmail],
         subject: `${title} — ${dateStr}`,
         text: [
           `Please find attached the ${title}.`,
           '',
-          `Generated on ${dateStr} by Avalora Portfolio Monitor.`,
+          `Generated on ${dateStr} by Baobab Portfolio Monitor.`,
           '',
           'This is an automated message. Please do not reply.',
         ].join('\n'),

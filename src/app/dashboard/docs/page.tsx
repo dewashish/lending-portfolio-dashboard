@@ -146,7 +146,7 @@ export default function ProductDocumentationPage() {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Avalora Docs
+            Baobab Docs
           </Typography>
 
           <Typography
@@ -166,7 +166,7 @@ export default function ProductDocumentationPage() {
             Documentation
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-            Avalora Portfolio Monitor — Enterprise Lending Portfolio Risk Management Platform
+            Baobab Portfolio Monitor — Enterprise Lending Portfolio Risk Management Platform
           </Typography>
         </Box>
 

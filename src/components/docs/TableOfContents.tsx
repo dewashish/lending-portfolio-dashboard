@@ -76,7 +76,7 @@ export function TableOfContents({ activeId, onNavigate }: Props) {
 
       <Box sx={{ pt: 2, px: 1.5, borderTop: 1, borderColor: 'divider' }}>
         <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled' }}>
-          Avalora Portfolio Monitor v{APP_VERSION}
+          Baobab Portfolio Monitor v{APP_VERSION}
         </Typography>
       </Box>
     </Box>

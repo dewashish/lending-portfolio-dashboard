@@ -20,7 +20,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Avalora Portfolio Monitor',
+  title: 'Baobab Portfolio Monitor',
   description: 'Group-level portfolio quality monitoring across consumer, trade, and corporate finance',
   icons: { icon: '/favicon.svg' },
 };

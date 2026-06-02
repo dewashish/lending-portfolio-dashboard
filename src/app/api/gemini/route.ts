@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
     const scope = parseScopeFromBody(body);
     const context = await buildPortfolioContext(scope);
 
-    const systemPrompt = `You are a senior credit risk analyst reviewing a lending portfolio dashboard for a multi-geography financial holding group (Avalora Group). The group has 5 subsidiaries across South Asia, Middle East, Eastern Europe, and Latin America operating in Consumer Finance, Trade Finance, and Corporate Finance.
+    const systemPrompt = `You are a senior credit risk analyst reviewing a lending portfolio dashboard for a multi-geography financial holding group (Baobab Group). The group has 5 subsidiaries across South Asia, Middle East, Eastern Europe, and Latin America operating in Consumer Finance, Trade Finance, and Corporate Finance.
 
 Use the following portfolio data context to answer the user's question accurately and concisely. If the data doesn't contain enough information to answer, say so clearly.
 

@@ -1231,7 +1231,7 @@ export async function POST(request: NextRequest) {
     }
 
     // System prompt requesting structured JSON
-    const systemPrompt = `You are a senior credit risk analyst and CRO advisor for Avalora Group, a multi-geography financial holding group with 5 subsidiaries across South Asia, Middle East, Eastern Europe, and Latin America. The group operates in Consumer Finance, Trade Finance, and Corporate Finance.
+    const systemPrompt = `You are a senior credit risk analyst and CRO advisor for Baobab Group, a multi-geography financial holding group with 5 subsidiaries across South Asia, Middle East, Eastern Europe, and Latin America. The group operates in Consumer Finance, Trade Finance, and Corporate Finance.
 
 You are generating an executive summary for the "${tabName}" dashboard view, scoped to: ${scopeLbl}.
 

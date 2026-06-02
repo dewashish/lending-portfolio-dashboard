@@ -110,7 +110,7 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
 
       <MenuItem
         onClick={() => {
-          window.location.href = 'mailto:dewashish.dey05@gmail.com?subject=Avalora Portfolio Monitor - Support Request';
+          window.location.href = 'mailto:dewashish.dey05@gmail.com?subject=Baobab Portfolio Monitor - Support Request';
           onClose();
         }}
         sx={{ fontSize: '0.85rem' }}
@@ -129,7 +129,7 @@ export function ProfileMenu({ anchorEl, open, onClose }: Props) {
       {/* ── Footer ── */}
       <Box sx={{ px: 2.5, py: 1.5 }}>
         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.4 }}>
-          Avalora Portfolio Monitor
+          Baobab Portfolio Monitor
         </Typography>
         <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', lineHeight: 1.4 }}>
           v{APP_VERSION} &middot; &copy; Dewashish Dey

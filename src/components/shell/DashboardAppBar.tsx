@@ -85,7 +85,7 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           <AccountBalanceIcon sx={{ fontSize: 16, color: '#fff' }} />
         </Box>
         <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary', letterSpacing: '0.02em' }}>
-          Avalora Portfolio Monitor
+          Baobab Portfolio Monitor
         </Typography>
 
         <Box sx={{ flex: 1 }} />

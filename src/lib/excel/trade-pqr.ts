@@ -40,7 +40,7 @@ export async function generateTradePQR(scope?: ScopeSelection): Promise<void> {
   ]);
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Avalora Portfolio Monitor';
+  wb.creator = 'Baobab Portfolio Monitor';
   wb.created = new Date();
   const tabColor = getTabColor(2);
 
