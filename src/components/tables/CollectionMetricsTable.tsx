@@ -21,6 +21,7 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
@@ -180,10 +181,11 @@ export function CollectionMetricsTable({
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       {title && (
-        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
             {title}
           </Typography>
+          <AvaSparkButton context={{ insightId: 'consumer.collections', breadcrumb: ['Consumer', 'Collections', 'Collection Metrics'] }} />
         </Box>
       )}
       <TableContainer sx={{ maxHeight: 520 }}>
@@ -232,6 +234,7 @@ export function CollectionMetricsTable({
                     </TableCell>
                   );
                 })}
+                <TableCell sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', position: 'sticky', top: 0, zIndex: 2, width: 36, p: 0.5 }} />
               </TableRow>
             ))}
           </TableHead>
@@ -241,7 +244,7 @@ export function CollectionMetricsTable({
               const showGroupHeader = portfolio !== lastPortfolio;
               lastPortfolio = portfolio;
 
-              const colSpan = columns.length - 1;
+              const colSpan = columns.length; // data columns minus portfolio, plus the AVA column
 
               return [
                 showGroupHeader && (
@@ -275,6 +278,7 @@ export function CollectionMetricsTable({
                   key={row.id}
                   sx={{
                     '&:hover': { bgcolor: 'action.hover' },
+                    '&:hover .ava-row-spark': { opacity: 1 },
                     '& td': {
                       borderBottom: 1,
                       borderColor: 'divider',
@@ -292,6 +296,24 @@ export function CollectionMetricsTable({
                       </TableCell>
                     );
                   })}
+                  <TableCell sx={{ width: 36, p: 0.5 }}>
+                    <Box className="ava-row-spark" sx={{ opacity: 0.15, transition: 'opacity 0.15s ease', display: 'flex' }}>
+                      <AvaSparkButton
+                        subtle
+                        context={{
+                          insightId: 'consumer.collections.bucket',
+                          breadcrumb: ['Consumer', 'Collections', portfolio],
+                          selection: [`${row.original.bucket}${row.original.rollForward != null ? ` \u00b7 RF ${formatPercent(row.original.rollForward)}` : ''}`],
+                          params: {
+                            bucket: row.original.bucket,
+                            metric: `${row.original.bucket} flows`,
+                            period: row.original.period ?? '',
+                            value: row.original.rollForward != null ? formatPercent(row.original.rollForward) : '',
+                          },
+                        }}
+                      />
+                    </Box>
+                  </TableCell>
                 </TableRow>,
               ];
             })}

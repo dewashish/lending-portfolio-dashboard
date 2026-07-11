@@ -8,6 +8,7 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { formatPercent, parsePeriodToNum, sortPeriodsChronologically } from '@/lib/format';
+import { useAva } from '@/components/ava/AvaProvider';
 import type { RollRateTimeSeries } from '@/lib/types';
 
 interface Props {
@@ -61,6 +62,7 @@ function BucketDictionary() {
 
 export function RollRateHeatmap({ data, maxPeriod }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { openAsk } = useAva();
 
   const { metrics, periods } = useMemo(() => {
     // Sort metrics by bucket prefix then by fixed metric order
@@ -148,11 +150,23 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
         .attr('fill', (d) => colorScale(d.value))
         .attr('rx', 2)
         .attr('opacity', 0.9)
+        .attr('cursor', 'pointer')
         .on('mouseover', function () {
           d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
         })
         .on('mouseout', function () {
           d3.select(this).attr('opacity', 0.9).attr('stroke', 'none');
+        })
+        .on('click', (event: MouseEvent, d) => {
+          openAsk(
+            {
+              insightId: 'consumer.collections.bucket',
+              breadcrumb: ['Consumer', 'Collections', 'Roll Rate Heatmap'],
+              selection: [`${d.metric} · ${d.period} · ${formatPercent(d.value, 1)}`],
+              params: { bucket: d.metric, metric: d.metric, period: d.period, value: formatPercent(d.value, 1) },
+            },
+            { position: { top: event.clientY, left: event.clientX } },
+          );
         });
 
       // Percentage labels inside cells
@@ -216,7 +230,8 @@ export function RollRateHeatmap({ data, maxPeriod }: Props) {
   return (
     <ChartContainer
       title="Roll Rate Heatmap"
-      subtitle="Transition rates by period"
+      subtitle={"Transition rates by period \u00b7 Click a cell to ask AVA"}
+      ava={{ insightId: 'consumer.collections.efficiency', breadcrumb: ['Consumer', 'Collections', 'Roll Rate Heatmap'] }}
       height={chartHeight}
       empty={!data.length}
       headerRight={<BucketDictionary />}

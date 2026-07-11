@@ -1,13 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Box } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
+import { Box, Button, Chip, Collapse, Stack, Typography } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import * as d3 from 'd3';
 import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
+import { useAva } from '@/components/ava/AvaProvider';
+import { AvaMark } from '@/components/ava/AvaMark';
+import { AVA_GRADIENT, AVA_SELECTION } from '@/lib/ava/brand';
+import type { AvaContext } from '@/lib/ava/types';
 import type { VintagePoint } from '@/lib/types';
 
 interface Props {
@@ -34,6 +39,15 @@ interface CellDatum {
 export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
   const { d3Tokens } = useThemeMode();
   const { formatCurrency } = useCurrencyFormat();
+  const { openAsk } = useAva();
+
+  // Cells the user has picked for AVA, keyed `${vintage}|${mob}`.
+  const [selected, setSelected] = useState<Map<string, CellDatum>>(new Map());
+
+  // Metric/filter change invalidates the selection.
+  useEffect(() => {
+    setSelected(new Map());
+  }, [metricType, data]);
 
   const filtered = useMemo(
     () => data.filter((d) => d.metricType === metricType),
@@ -223,6 +237,8 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
       });
 
       // ── Render heatmap cells ────────────────────────────────────────
+      const isSelected = (d: CellDatum) => selected.has(`${d.vintage}|${d.mob}`);
+
       g.selectAll('rect.cell')
         .data(cells)
         .join('rect')
@@ -233,17 +249,36 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .attr('height', y.bandwidth())
         .attr('fill', (d) => colorScale(d.rate))
         .attr('rx', 2)
-        .attr('opacity', 0.92)
+        .attr('cursor', 'pointer')
+        .attr('opacity', (d) => (isSelected(d) ? 1 : 0.92))
+        .attr('stroke', (d) => (isSelected(d) ? AVA_SELECTION : 'none'))
+        .attr('stroke-width', (d) => (isSelected(d) ? 2.5 : 0))
         .on('mouseover', function (_event, d) {
-          d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          if (!isSelected(d)) {
+            d3.select(this).attr('opacity', 1).attr('stroke', d3Tokens.text).attr('stroke-width', 1.5);
+          }
           showTooltip(_event as unknown as MouseEvent, d);
         })
         .on('mousemove', function (_event) {
           positionTooltip(_event as unknown as MouseEvent);
         })
-        .on('mouseout', function () {
-          d3.select(this).attr('opacity', 0.92).attr('stroke', 'none');
+        .on('mouseout', function (_event, d) {
+          if (isSelected(d)) {
+            d3.select(this).attr('opacity', 1).attr('stroke', AVA_SELECTION).attr('stroke-width', 2.5);
+          } else {
+            d3.select(this).attr('opacity', 0.92).attr('stroke', 'none');
+          }
           tooltip.style('opacity', '0');
+        })
+        .on('click', function (_event, d) {
+          tooltip.style('opacity', '0');
+          setSelected((prev) => {
+            const next = new Map(prev);
+            const key = `${d.vintage}|${d.mob}`;
+            if (next.has(key)) next.delete(key);
+            else next.set(key, d);
+            return next;
+          });
         });
 
       // ── Rate labels inside cells ────────────────────────────────────
@@ -296,17 +331,111 @@ export function VintageHeatmap({ data, metricType, fillHeight }: Props) {
         .attr('font-size', '9px')
         .text('Months on Book (MOB)');
     },
-    [filtered, vintages, mobs, maxRate, cellMap, vintageLoanMap, d3Tokens, formatCurrency, metricType],
+    [filtered, vintages, mobs, maxRate, cellMap, vintageLoanMap, d3Tokens, formatCurrency, metricType, selected],
   );
+
+  // \u2500\u2500 AVA context \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  const selectedCells = Array.from(selected.values()).sort(
+    (a, b) => a.vintage.localeCompare(b.vintage) || a.mob - b.mob,
+  );
+  const mobLabel = (m: number) => (m === MOB_OVERFLOW ? '18+' : `${m}`);
+
+  const sectionAva: AvaContext = {
+    insightId: 'consumer.delinquency.staticPool',
+    breadcrumb: ['Consumer', 'Delinquency', `Static Pool \u2014 ${metricType}`],
+    params: { metric: metricType },
+  };
+
+  const selectionAva: AvaContext = {
+    ...sectionAva,
+    selection: selectedCells.map(
+      (c) => `${c.vintage} \u00b7 MOB ${mobLabel(c.mob)} \u00b7 ${formatPercent(c.rate, 1)}`,
+    ),
+    params: {
+      metric: metricType,
+      vintages: Array.from(new Set(selectedCells.map((c) => c.vintage))),
+      mobs: selectedCells.map((c) => mobLabel(c.mob)),
+    },
+  };
 
   return (
     <ChartContainer
       title={`Static Pool \u2014 ${metricType}`}
-      subtitle="Delinquency rate by vintage cohort and MOB"
+      subtitle={"Delinquency rate by vintage cohort and MOB \u00b7 Click cells to ask AVA about them"}
       height={chartHeight}
       empty={!filtered.length}
       fillHeight={fillHeight}
+      ava={sectionAva}
     >
+      {/* Selection bar \u2014 appears when cells are picked */}
+      <Collapse in={selected.size > 0}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          useFlexGap
+          flexWrap="wrap"
+          sx={{
+            mb: 1,
+            px: 1.25,
+            py: 0.75,
+            borderRadius: 2,
+            border: `1px solid ${AVA_SELECTION}55`,
+            bgcolor: `${AVA_SELECTION}0d`,
+          }}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.66rem' }}>
+            {selected.size} cell{selected.size === 1 ? '' : 's'} selected
+          </Typography>
+          {selectedCells.slice(0, 4).map((c) => (
+            <Chip
+              key={`${c.vintage}|${c.mob}`}
+              size="small"
+              label={`${c.vintage} \u00b7 M${mobLabel(c.mob)} \u00b7 ${formatPercent(c.rate, 1)}`}
+              onDelete={() =>
+                setSelected((prev) => {
+                  const next = new Map(prev);
+                  next.delete(`${c.vintage}|${c.mob}`);
+                  return next;
+                })
+              }
+              sx={{ height: 20, fontSize: '0.6rem', fontWeight: 600 }}
+            />
+          ))}
+          {selectedCells.length > 4 && (
+            <Typography variant="caption" sx={{ fontSize: '0.62rem', color: 'text.secondary' }}>
+              +{selectedCells.length - 4} more
+            </Typography>
+          )}
+          <Box sx={{ flex: 1 }} />
+          <Button
+            size="small"
+            startIcon={<AvaMark size={13} color="#fff" />}
+            onClick={(e) => openAsk(selectionAva, { el: e.currentTarget })}
+            sx={{
+              height: 26,
+              px: 1.25,
+              fontSize: '0.66rem',
+              fontWeight: 700,
+              textTransform: 'none',
+              color: '#fff',
+              background: AVA_GRADIENT,
+              '&:hover': { background: AVA_GRADIENT, opacity: 0.9 },
+            }}
+          >
+            Ask AVA
+          </Button>
+          <Button
+            size="small"
+            startIcon={<CloseRoundedIcon sx={{ fontSize: 12 }} />}
+            onClick={() => setSelected(new Map())}
+            sx={{ height: 26, px: 1, fontSize: '0.64rem', textTransform: 'none', color: 'text.secondary' }}
+          >
+            Clear
+          </Button>
+        </Stack>
+      </Collapse>
+
       <Box sx={{ overflowX: 'auto', width: '100%', height: '100%' }}>
         <svg
           ref={ref}

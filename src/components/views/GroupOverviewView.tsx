@@ -17,6 +17,7 @@ import type { RiskHeatmapCell } from '@/components/charts/SubsidiaryRiskHeatmap'
 import { useGroupOverviewSummary } from '@/hooks/useOverviewData';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
 import { buildThresholdContext } from '@/lib/risk-appetite/build-context';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 
 // Section components
 import { GroupPortfolioComposition } from '@/components/views/overview/GroupPortfolioComposition';
@@ -141,6 +142,11 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       rawValue: dpd30 ?? undefined,
       color: dpd30 != null ? getColor('group_dpd_30_plus', dpd30, ctx) : undefined,
       thresholdContext: ctx,
+      ava: {
+        insightId: 'overview.kpi.dpd30',
+        breadcrumb: ['Group Overview', 'KPI', 'Group 30+ DPD'],
+        selection: dpd30 != null ? [`30+ DPD ${formatPercent(dpd30)}`] : undefined,
+      },
     },
     {
       label: 'Group NPL',
@@ -149,6 +155,11 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       rawValue: blendedNPL ?? undefined,
       color: blendedNPL != null ? getColor('group_npl', blendedNPL, ctx) : undefined,
       thresholdContext: ctx,
+      ava: {
+        insightId: 'overview.kpi.npl',
+        breadcrumb: ['Group Overview', 'KPI', 'Group NPL'],
+        selection: blendedNPL != null ? [`NPL ${formatPercent(blendedNPL)}`] : undefined,
+      },
     },
     {
       label: 'EWS Critical',
@@ -157,6 +168,10 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       rawValue: ewsCriticalCount,
       color: getColor('group_ews_critical', ewsCriticalCount, ctx),
       thresholdContext: ctx,
+      ava: {
+        insightId: 'overview.kpis',
+        breadcrumb: ['Group Overview', 'KPI', 'EWS Critical'],
+      },
     },
     {
       label: 'Provision Coverage',
@@ -166,6 +181,10 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
       color: blendedPCR != null ? getColor('group_provision_cov', blendedPCR, ctx) : undefined,
       thresholdContext: ctx,
       info: 'Exposure-weighted Trade + Corporate (Consumer: N/A)',
+      ava: {
+        insightId: 'overview.kpis',
+        breadcrumb: ['Group Overview', 'KPI', 'Provision Coverage'],
+      },
     },
     {
       label: 'Credit Cost',
@@ -363,9 +382,12 @@ export function GroupOverviewView({ scope, onTabChange, onScopeChange }: Props) 
 
       {/* Section 7: Enhanced Consolidated Scorecard */}
       <Paper sx={{ p: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700 }}>
-          Consolidated Scorecard
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1.5 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            Consolidated Scorecard
+          </Typography>
+          <AvaSparkButton context={{ insightId: 'overview.scorecard', breadcrumb: ['Group Overview', 'Consolidated Scorecard'] }} />
+        </Box>
         {scorecard.length > 0 ? (
           <TableContainer>
             <Table size="small">

@@ -347,6 +347,7 @@ export function DPDBucketDistribution({ data }: Props) {
     <ChartContainer
       title="DPD Bucket Distribution"
       subtitle="Proportional distribution with late-stage detail"
+      ava={{ insightId: 'consumer.overview.dpdDist', breadcrumb: ['Consumer', 'Overview', 'DPD Bucket Distribution'] }}
       height={680}
       empty={!processed.length}
     >

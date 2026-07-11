@@ -1,6 +1,8 @@
 'use client';
 
 import { Card, Typography, Box, Skeleton } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
+import type { AvaContext } from '@/lib/ava/types';
 
 interface Props {
   title: string;
@@ -9,12 +11,14 @@ interface Props {
   loading?: boolean;
   empty?: boolean;
   headerRight?: React.ReactNode;
+  /** When set, an AVA spark appears in the header so the user can ask about this chart. */
+  ava?: AvaContext;
   /** When true (default), Card stretches to fill its parent (needed inside Grid items). */
   fillHeight?: boolean;
   children: React.ReactNode;
 }
 
-export function ChartContainer({ title, subtitle, height = 320, loading, empty, headerRight, fillHeight = true, children }: Props) {
+export function ChartContainer({ title, subtitle, height = 320, loading, empty, headerRight, ava, fillHeight = true, children }: Props) {
   return (
     <Card sx={{ p: 2, ...(fillHeight && { height: '100%' }), display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
@@ -28,7 +32,10 @@ export function ChartContainer({ title, subtitle, height = 320, loading, empty, 
             </Typography>
           )}
         </Box>
-        {headerRight}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          {ava && <AvaSparkButton context={ava} />}
+          {headerRight}
+        </Box>
       </Box>
       <Box sx={{ ...(fillHeight ? { flex: 1, minHeight: height } : { height }), position: 'relative' }}>
         {loading ? (

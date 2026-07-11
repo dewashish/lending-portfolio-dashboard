@@ -21,6 +21,7 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { formatNumber, sortPeriodsChronologically } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { AugmentedNonStarterRow } from '@/lib/non-starter-utils';
@@ -186,10 +187,11 @@ export function NonStarterTable({
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       {title && (
-        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
             {title}
           </Typography>
+          <AvaSparkButton context={{ insightId: 'consumer.nonstarters', breadcrumb: ['Consumer', 'Non-Starters', 'Non-Starter Analysis'] }} />
         </Box>
       )}
       <TableContainer>

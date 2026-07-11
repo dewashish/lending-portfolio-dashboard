@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { Box, Grid, Card, Typography, Stack, Chip } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { LOSComparisonTable } from '@/components/tables/LOSComparisonTable';
 import { MTDFunnelComparison } from '@/components/charts/MTDFunnelComparison';
 import { DailyDisbursementTrend } from '@/components/charts/DailyDisbursementTrend';
@@ -44,19 +45,23 @@ function OriginationKPIBanner({ kpis, thresholdCtx }: { kpis: OriginationKPI[]; 
 
           return (
             <Box key={k.label} sx={{ flex: 1, py: 1.5, px: 1.5, textAlign: 'center' }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  fontSize: '0.6rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'text.secondary',
-                  display: 'block',
-                  mb: 0.5,
-                }}
-              >
-                {k.label}
-              </Typography>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25, mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}
+                >
+                  {k.label}
+                </Typography>
+                <AvaSparkButton
+                  subtle
+                  context={{
+                    insightId: 'consumer.origination.kpis',
+                    breadcrumb: ['Consumer', 'Origination', k.label],
+                    selection: [`${k.label} ${k.value}`],
+                    params: { metric: k.label },
+                  }}
+                />
+              </Box>
               <Typography
                 variant="h6"
                 className="mono"

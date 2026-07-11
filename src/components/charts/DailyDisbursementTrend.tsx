@@ -137,6 +137,7 @@ export function DailyDisbursementTrend({ data }: Props) {
     <ChartContainer
       title="Daily Disbursement Trend"
       subtitle="Aggregated across products"
+      ava={{ insightId: 'consumer.origination.daily', breadcrumb: ['Consumer', 'Origination', 'Daily Disbursement'] }}
       empty={!sorted.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />

@@ -23,6 +23,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { formatPercent } from '@/lib/format';
 import type { TDDPreDisbursal, TDDPostDisbursal } from '@/lib/types';
 
@@ -81,10 +82,11 @@ function TDDPreTable({ data, title }: { data: TDDPreDisbursal[]; title: string }
 
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           {title}
         </Typography>
+        <AvaSparkButton context={{ insightId: 'consumer.tdd', breadcrumb: ['Consumer', 'Due Diligence', title] }} />
       </Box>
       <TableContainer sx={{ maxHeight: 480 }}>
         <Table size="small" stickyHeader>
@@ -242,9 +244,12 @@ function TDDPostTable({ data, title }: { data: TDDPostDisbursal[]; title: string
           gap: 1,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
-          {title}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
+            {title}
+          </Typography>
+          <AvaSparkButton context={{ insightId: 'consumer.tdd', breadcrumb: ['Consumer', 'Due Diligence', title] }} />
+        </Box>
 
         {variants.length > 1 && (
           <ToggleButtonGroup

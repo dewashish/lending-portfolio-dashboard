@@ -7,6 +7,8 @@ import { useD3Chart } from '@/hooks/useD3Chart';
 import { useThemeMode } from '@/lib/theme-context';
 import { ChartContainer } from '@/components/charts/ChartContainer';
 import { formatNumber, formatPercent } from '@/lib/format';
+import { useAva } from '@/components/ava/AvaProvider';
+import type { AvaContext } from '@/lib/ava/types';
 import type { LOSFunnelStep } from '@/lib/types';
 
 interface Props {
@@ -37,6 +39,7 @@ function getValue(stage: LOSFunnelStep, key: PeriodKey): number {
 
 export function MTDFunnelComparison({ data }: Props) {
   const { d3Tokens } = useThemeMode();
+  const { openAsk } = useAva();
   const [leftPeriod, setLeftPeriod] = useState<PeriodKey>('mtd');
   const [rightPeriod, setRightPeriod] = useState<PeriodKey>('lmtd');
 
@@ -260,6 +263,16 @@ export function MTDFunnelComparison({ data }: Props) {
           })
           .on('mouseleave', () => {
             tooltip.style('opacity', '0');
+          })
+          .on('click', (event: MouseEvent) => {
+            tooltip.style('opacity', '0');
+            const context: AvaContext = {
+              insightId: 'consumer.origination.funnel',
+              breadcrumb: ['Consumer', 'Origination', 'Funnel'],
+              selection: [`Stage: ${stage.stage}`],
+              params: { stage: stage.stage },
+            };
+            openAsk(context, { position: { top: event.clientY, left: event.clientX } });
           });
       });
 
@@ -296,9 +309,13 @@ export function MTDFunnelComparison({ data }: Props) {
   return (
     <ChartContainer
       title="Origination Funnel"
-      subtitle="Compare periods — Clicks to Disbursement"
+      subtitle="Compare periods — Clicks to Disbursement · Click a stage to ask AVA"
       height={chartHeight}
       empty={!stages.length}
+      ava={{
+        insightId: 'consumer.origination.funnel',
+        breadcrumb: ['Consumer', 'Origination', 'Funnel'],
+      }}
       headerRight={
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>

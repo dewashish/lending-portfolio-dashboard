@@ -192,7 +192,7 @@ export function StagingDonut({ data, corporateStages }: Props) {
   );
 
   return (
-    <ChartContainer title="IFRS 9 Staging Distribution" subtitle="Trade + Corporate" height={340} empty={!data.length}>
+    <ChartContainer title="IFRS 9 Staging Distribution" subtitle="Trade + Corporate" height={340} empty={!data.length} ava={{ insightId: 'overview.composition', breadcrumb: ['Group Overview', 'IFRS 9 Staging'] }}>
       <svg ref={ref} width="100%" height={340} style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

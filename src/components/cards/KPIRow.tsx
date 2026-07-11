@@ -3,6 +3,7 @@
 import { Box } from '@mui/material';
 import { KPICard } from './KPICard';
 import type { ThresholdContext } from '@/lib/types';
+import type { AvaContext } from '@/lib/ava/types';
 
 export interface KPIItem {
   label: string;
@@ -21,6 +22,8 @@ export interface KPIItem {
   rawValue?: number;
   thresholdContext?: ThresholdContext;
   info?: string;
+  /** When set, the card shows an AVA spark on hover. */
+  ava?: AvaContext;
 }
 
 interface Props {

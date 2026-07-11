@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Box, Grid, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { RollRateHeatmap } from '@/components/charts/RollRateHeatmap';
 import { RollRateSankey } from '@/components/charts/RollRateSankey';
 import { CollectionMetricsTable } from '@/components/tables/CollectionMetricsTable';
@@ -33,12 +34,15 @@ function CollectionKPIStrip({ kpis, ctx }: { kpis: CollectionKPI[]; ctx?: import
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => (
         <Card key={k.label} sx={{ flex: 1, p: 1.5 }}>
-          <Typography
-            variant="caption"
-            sx={{ fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', display: 'block', mb: 0.3 }}
-          >
-            {k.label}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.3 }}>
+            <Typography
+              variant="caption"
+              sx={{ fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}
+            >
+              {k.label}
+            </Typography>
+            <AvaSparkButton subtle context={{ insightId: 'consumer.collections.efficiency', breadcrumb: ['Consumer', 'Collections', k.label], selection: [`${k.label} ${k.value}`], params: { metric: k.label } }} />
+          </Box>
           {k.metricKey != null && k.rawValue != null ? (
             <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
               <Typography

@@ -22,6 +22,7 @@ import {
   TableSortLabel,
   Stack,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { formatNumber } from '@/lib/format';
 import type { ApprovedBaseRow, RejectedBaseRow } from '@/lib/types';
 
@@ -153,10 +154,11 @@ function ApprovedBaseTable({ data }: { data: ApprovedBaseRow[] }) {
 
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           Approved Base
         </Typography>
+        <AvaSparkButton context={{ insightId: 'consumer.riskAnalytics', breadcrumb: ['Consumer', 'Risk Analytics', 'Approved Base'] }} />
       </Box>
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table size="small" stickyHeader>
@@ -335,10 +337,11 @@ function RejectedBaseTable({ data }: { data: RejectedBaseRow[] }) {
 
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           Rejected Base
         </Typography>
+        <AvaSparkButton context={{ insightId: 'consumer.riskAnalytics', breadcrumb: ['Consumer', 'Risk Analytics', 'Rejected Base'] }} />
       </Box>
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table size="small" stickyHeader>

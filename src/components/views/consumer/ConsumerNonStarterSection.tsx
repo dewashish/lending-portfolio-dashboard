@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Tooltip, IconButton } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { NonStarterTable } from '@/components/tables/NonStarterTable';
 import { LoadingSkeleton } from '@/components/common/LoadingSkeleton';
@@ -34,12 +35,15 @@ function NSKPIStrip({ kpis, ctx }: { kpis: NSKpi[]; ctx?: ThresholdContext }) {
     <Stack direction="row" spacing={1.5}>
       {kpis.map((k) => (
         <Card key={k.label} sx={{ flex: 1, p: 1.5 }}>
-          <Typography
-            variant="caption"
-            sx={{ fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', display: 'block', mb: 0.3 }}
-          >
-            {k.label}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.3 }}>
+            <Typography
+              variant="caption"
+              sx={{ fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}
+            >
+              {k.label}
+            </Typography>
+            <AvaSparkButton subtle context={{ insightId: 'consumer.nonstarters', breadcrumb: ['Consumer', 'Non-Starters', k.label], selection: [`${k.label} ${k.value}`], params: { metric: k.label } }} />
+          </Box>
           {k.metricKey != null && k.rawValue != null ? (
             <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
               <Typography

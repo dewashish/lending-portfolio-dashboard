@@ -339,6 +339,7 @@ export function RollRateSankey({ data, period }: Props) {
   return (
     <ChartContainer
       title="Roll Rate Flow (Sankey)"
+      ava={{ insightId: 'consumer.collections', breadcrumb: ['Consumer', 'Collections', 'Roll Rate Flow'] }}
       subtitle={activePeriod ? `Period: ${activePeriod}` : undefined}
       empty={!links.length}
     >
