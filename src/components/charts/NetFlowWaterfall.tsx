@@ -129,6 +129,7 @@ export function NetFlowWaterfall({ data, selectedPeriod, fillHeight, periodSelec
   return (
     <ChartContainer
       title="Net Flow — DPD Bucket Amounts"
+      ava={{ insightId: 'consumer.delinquency.netflow', breadcrumb: ['Consumer', 'Delinquency', 'Net Flow'] }}
       subtitle={period ? `Period: ${period}` : undefined}
       height={chartHeight}
       empty={!bars.length}

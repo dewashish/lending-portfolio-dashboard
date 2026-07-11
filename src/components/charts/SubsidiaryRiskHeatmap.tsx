@@ -152,6 +152,7 @@ export function SubsidiaryRiskHeatmap({ cells, subsidiaries, dimensions, onCellC
     <ChartContainer
       title="Subsidiary Risk Heatmap"
       subtitle="RAG status across risk dimensions — click to drill down"
+      ava={{ insightId: 'overview.heatmap', breadcrumb: ['Group Overview', 'Subsidiary Risk Heatmap'] }}
       height={chartHeight}
       empty={!cells.length}
     >

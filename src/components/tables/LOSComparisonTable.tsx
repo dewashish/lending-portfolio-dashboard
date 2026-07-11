@@ -21,6 +21,7 @@ import {
   Box,
   TableSortLabel,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import { useRiskAppetite } from '@/hooks/useRiskAppetite';
@@ -235,10 +236,11 @@ export function LOSComparisonTable({
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       {title && (
-        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
             {title}
           </Typography>
+          <AvaSparkButton context={{ insightId: 'consumer.origination.los', breadcrumb: ['Consumer', 'Origination', 'LOS vs Targets'] }} />
         </Box>
       )}
       <TableContainer sx={{ maxHeight: 520 }}>

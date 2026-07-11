@@ -22,6 +22,7 @@ import {
   TableSortLabel,
   Tooltip,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
@@ -349,6 +350,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           Product Metrics — {activeProduct}
         </Typography>
+        <AvaSparkButton context={{ insightId: 'consumer.products', breadcrumb: ['Consumer', 'Products', activeProduct] }} />
       </Box>
 
       <TableContainer sx={{ maxHeight: 700 }}>

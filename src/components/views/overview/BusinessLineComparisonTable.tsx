@@ -1,9 +1,10 @@
 'use client';
 
 import {
-  Paper, Typography, Table, TableBody, TableCell,
+  Box, Paper, Typography, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { BreachBadge } from '@/components/common/BreachBadge';
 import { formatPercent, formatNumber } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
@@ -211,9 +212,12 @@ export function BusinessLineComparisonTable({
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700 }}>
-        Business Line Comparison
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          Business Line Comparison
+        </Typography>
+        <AvaSparkButton context={{ insightId: 'overview.businessLines', breadcrumb: ['Group Overview', 'Business Line Comparison'] }} />
+      </Box>
       <TableContainer>
         <Table size="small">
           <TableHead>

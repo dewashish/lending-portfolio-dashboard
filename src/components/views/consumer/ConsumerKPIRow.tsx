@@ -98,6 +98,11 @@ export function ConsumerKPIRow({ data, scope }: Props) {
         metricKey: 'fpd_pct',
         rawValue: fpd,
         thresholdContext: ctx,
+        ava: {
+          insightId: 'consumer.kpi.fpd',
+          breadcrumb: ['Consumer', 'KPI', 'FPD%'],
+          selection: [`FPD% ${formatPercent(fpd)}`],
+        },
       },
       {
         label: '30+ DPD',
@@ -110,6 +115,11 @@ export function ConsumerKPIRow({ data, scope }: Props) {
         metricKey: 'dpd_30_plus',
         rawValue: dpd30,
         thresholdContext: ctx,
+        ava: {
+          insightId: 'consumer.kpi.dpd30',
+          breadcrumb: ['Consumer', 'KPI', '30+ DPD'],
+          selection: [`30+ DPD ${formatPercent(dpd30)}`],
+        },
       },
       {
         label: '90+ DPD',
@@ -122,6 +132,11 @@ export function ConsumerKPIRow({ data, scope }: Props) {
         metricKey: 'dpd_90_plus',
         rawValue: dpd90,
         thresholdContext: ctx,
+        ava: {
+          insightId: 'consumer.kpi.dpd90',
+          breadcrumb: ['Consumer', 'KPI', '90+ DPD'],
+          selection: [`90+ DPD ${formatPercent(dpd90)}`],
+        },
       },
       {
         label: 'Net Credit Loss',
@@ -131,6 +146,11 @@ export function ConsumerKPIRow({ data, scope }: Props) {
         invertTrend: true,
         sparkline: nclRateValues,
         benchmark: getBenchmark(data, 'Net Credit Loss'),
+        ava: {
+          insightId: 'consumer.kpi.ncl',
+          breadcrumb: ['Consumer', 'KPI', 'Net Credit Loss'],
+          selection: [`NCL ${formatPercent(nclRate)}`],
+        },
       },
     ];
   }, [data, getColor, formatCurrency, ctx]);

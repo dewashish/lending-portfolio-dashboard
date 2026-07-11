@@ -19,7 +19,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
+import { AvaMark } from '@/components/ava/AvaMark';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { QueryInput } from './QueryInput';
@@ -221,9 +221,9 @@ export function AIQueryPanel({ open, onClose, scope }: Props) {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SmartToyIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+          <AvaMark size={18} />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            AI Portfolio Analyst
+            AVA — Portfolio Analyst
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose}>

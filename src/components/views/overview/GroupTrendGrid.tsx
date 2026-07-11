@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Paper, Typography } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { KPICard } from '@/components/cards/KPICard';
 import { formatPercent } from '@/lib/format';
 import { sortPeriods } from '@/lib/period-utils';
@@ -160,13 +161,21 @@ export function GroupTrendGrid({ consumerOverall, tradeSummary, corporateSummary
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700 }}>
-        Key Risk Trends
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          Key Risk Trends
+        </Typography>
+        <AvaSparkButton context={{ insightId: 'overview.trends', breadcrumb: ['Group Overview', 'Key Risk Trends'] }} />
+      </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)', lg: 'repeat(7, 1fr)' }, gap: 1.5 }}>
         {cards.map(c => (
           <KPICard
             key={c.label}
+            ava={{
+              insightId: /fpd/i.test(c.label) ? 'consumer.kpi.fpd' : /ncl|credit loss/i.test(c.label) ? 'consumer.kpi.ncl' : /npl|npa/i.test(c.label) ? 'overview.kpis' : 'overview.kpi.dpd30',
+              breadcrumb: ['Group Overview', 'Key Risk Trends', c.label],
+              selection: [`${c.label} ${c.value}`],
+            }}
             label={c.label}
             value={c.value}
             subtitle={c.subtitle}

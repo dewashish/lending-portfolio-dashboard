@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Box, Card, Typography, Stack, ToggleButtonGroup, ToggleButton, Select, MenuItem, Divider, Tooltip, IconButton } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { NetFlowWaterfall } from '@/components/charts/NetFlowWaterfall';
 import { VintageHeatmap } from '@/components/charts/VintageHeatmap';
@@ -60,12 +61,23 @@ function DelinquencyKPIStrip({ kpis, ctx }: { kpis: DKpi[]; ctx?: import('@/lib/
 
         return (
           <Card key={k.label} sx={{ flex: 1, p: 1.5 }}>
-            <Typography
-              variant="caption"
-              sx={{ fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', display: 'block', mb: 0.3 }}
-            >
-              {k.label}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.3 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}
+              >
+                {k.label}
+              </Typography>
+              <AvaSparkButton
+                subtle
+                context={{
+                  insightId: /fpd/i.test(k.label) ? 'consumer.kpi.fpd' : /90/.test(k.label) ? 'consumer.kpi.dpd90' : /ncl|loss/i.test(k.label) ? 'consumer.kpi.ncl' : 'consumer.kpi.dpd30',
+                  breadcrumb: ['Consumer', 'Delinquency', k.label],
+                  selection: [`${k.label} ${k.value}`],
+                  params: { metric: k.label },
+                }}
+              />
+            </Box>
             {k.metricKey != null && k.rawValue != null ? (
               <BreachBadge metricKey={k.metricKey} value={k.rawValue} context={ctx}>
                 <Typography

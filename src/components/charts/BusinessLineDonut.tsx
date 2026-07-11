@@ -163,7 +163,7 @@ export function BusinessLineDonut({ consumer, trade, corporate, onSegmentClick }
   );
 
   return (
-    <ChartContainer title="Business Line Split" subtitle="AUM by portfolio type" empty={total === 0}>
+    <ChartContainer title="Business Line Split" subtitle="AUM by portfolio type" empty={total === 0} ava={{ insightId: 'overview.composition', breadcrumb: ['Group Overview', 'Business Line Split'] }}>
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible' }} />
     </ChartContainer>
   );

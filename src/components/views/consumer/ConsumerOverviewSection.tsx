@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { Box, Card, Typography, Stack, Chip } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { ConsumerOverallTable } from '@/components/tables/ConsumerOverallTable';
 import { DPDBucketDistribution } from '@/components/charts/DPDBucketDistribution';
 import { OverviewSkeleton } from '@/components/common/LoadingSkeleton';
@@ -68,19 +69,23 @@ function SummaryStrip({ metrics, thresholdCtx }: { metrics: SummaryMetric[]; thr
 
           return (
             <Box key={m.label} sx={{ flex: 1, py: 1.5, px: 1.5, textAlign: 'center' }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  fontSize: '0.6rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'text.secondary',
-                  display: 'block',
-                  mb: 0.5,
-                }}
-              >
-                {m.label}
-              </Typography>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25, mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}
+                >
+                  {m.label}
+                </Typography>
+                <AvaSparkButton
+                  subtle
+                  context={{
+                    insightId: 'consumer.overview',
+                    breadcrumb: ['Consumer', 'Overview', m.label],
+                    selection: [`${m.label} ${m.value}`],
+                    params: { metric: m.label },
+                  }}
+                />
+              </Box>
               <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.75}>
                 {m.metricKey != null && m.rawValue != null ? (
                   <BreachBadge metricKey={m.metricKey} value={m.rawValue} context={thresholdCtx}>

@@ -22,6 +22,7 @@ import {
   TableSortLabel,
   Tooltip,
 } from '@mui/material';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
@@ -325,10 +326,11 @@ export function ConsumerOverallTable({ data, title = 'Consumer Finance — Overa
   return (
     <Card sx={{ p: 0, overflow: 'hidden' }}>
       {title && (
-        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Box sx={{ px: 2, pt: 2, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
             {title}
           </Typography>
+          <AvaSparkButton context={{ insightId: 'consumer.overview', breadcrumb: ['Consumer', 'Overview', 'Overall Metrics'] }} />
         </Box>
       )}
       <TableContainer sx={{ maxHeight: 600 }}>

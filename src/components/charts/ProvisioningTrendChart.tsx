@@ -391,7 +391,7 @@ export function ProvisioningTrendChart({ data }: Props) {
   return (
     <ChartContainer
       title="Credit Cost Trend"
-      subtitle="Stacked credit cost by IFRS stage (Actual \u2192 Estimated \u2192 Projected)"
+      subtitle={"Stacked credit cost by IFRS stage (Actual \u2192 Estimated \u2192 Projected)"}
       empty={!data.length}
     >
       <svg ref={ref} width="100%" height="100%" style={{ overflow: 'visible', minHeight: 360 }} />

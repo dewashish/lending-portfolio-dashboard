@@ -23,6 +23,7 @@ import { AIQueryPanel } from '@/components/ai/AIQueryPanel';
 import { TourProvider } from '@/lib/tour-context';
 import { CurrencyProvider } from '@/lib/currency-context';
 import { DashboardTour } from '@/components/common/DashboardTour';
+import { AvaProvider } from '@/components/ava/AvaProvider';
 function DashboardContent() {
   const { mode } = useThemeMode();
   const [activeTab, setActiveTab] = useState(0);
@@ -111,7 +112,9 @@ export default function DashboardPage() {
     <AdminProvider>
       <TourProvider>
         <CurrencyProvider>
-          <DashboardContent />
+          <AvaProvider>
+            <DashboardContent />
+          </AvaProvider>
         </CurrencyProvider>
       </TourProvider>
     </AdminProvider>

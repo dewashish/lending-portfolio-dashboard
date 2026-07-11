@@ -7,6 +7,8 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import { formatPercent } from '@/lib/format';
 import { BreachBadge } from '@/components/common/BreachBadge';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
+import type { AvaContext } from '@/lib/ava/types';
 import type { ThresholdContext } from '@/lib/types';
 
 interface Props {
@@ -26,6 +28,8 @@ interface Props {
   thresholdContext?: ThresholdContext;
   /** Tooltip text shown via a small info icon next to the label */
   info?: string;
+  /** When set, an AVA spark appears on hover so the user can ask about this KPI. */
+  ava?: AvaContext;
 }
 
 /** Tiny inline SVG sparkline — no D3 dependency */
@@ -84,7 +88,7 @@ function Sparkline({ data, color, height = 24, width = 72, labels }: { data: num
   );
 }
 
-export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, sparklineLabels, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext, info }: Props) {
+export function KPICard({ label, value, subtitle, trend, color, icon, sparkline, sparklineLabels, invertTrend, benchmark, benchmarkLabel, metricKey, rawValue, thresholdContext, info, ava }: Props) {
   // For inverted metrics (delinquency, FPD): down is green, up is red
   const getTrendColor = () => {
     if (!trend) return undefined;
@@ -106,7 +110,16 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
         : TrendingDownIcon;
 
   return (
-    <Card sx={{ p: 2, flex: '1 1 0', minWidth: 130, position: 'relative', overflow: 'visible' }}>
+    <Card
+      sx={{
+        p: 2,
+        flex: '1 1 0',
+        minWidth: 130,
+        position: 'relative',
+        overflow: 'visible',
+        ...(ava && { '&:hover .ava-kpi-spark': { opacity: 0.8 } }),
+      }}
+    >
       <Stack spacing={0.75}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
@@ -126,6 +139,11 @@ export function KPICard({ label, value, subtitle, trend, color, icon, sparkline,
               <Tooltip title={info} arrow placement="top">
                 <InfoOutlinedIcon sx={{ fontSize: 12, color: 'text.disabled', cursor: 'help' }} />
               </Tooltip>
+            )}
+            {ava && (
+              <Box className="ava-kpi-spark" sx={{ opacity: 0.25, transition: 'opacity 0.15s ease', display: 'inline-flex' }}>
+                <AvaSparkButton context={ava} subtle />
+              </Box>
             )}
           </Box>
           {icon && (

@@ -6,7 +6,8 @@ import {
   ToggleButtonGroup, ToggleButton, Select, MenuItem,
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import { AvaMark } from '@/components/ava/AvaMark';
+import { AVA_GRADIENT } from '@/lib/ava/brand';
 import { ExcelExportButton } from '@/components/export/ExcelExportButton';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -200,18 +201,19 @@ export function DashboardAppBar({ onToggleAI, onToggleSettings, aiOpen, activeTa
           id="tour-ai-button"
           size="small"
           variant={aiOpen ? 'contained' : 'outlined'}
-          startIcon={<SmartToyOutlinedIcon />}
+          startIcon={aiOpen ? <AvaMark size={15} color="#fff" /> : <AvaMark size={15} />}
           onClick={onToggleAI}
           sx={{
             borderColor: 'divider',
             fontSize: '0.75rem',
+            fontWeight: 700,
             ...(aiOpen && {
-              background: 'linear-gradient(135deg, #00897b, #004d40)',
+              background: AVA_GRADIENT,
               color: '#fff',
             }),
           }}
         >
-          AI Query
+          Ask AVA
         </Button>
 
         <Avatar

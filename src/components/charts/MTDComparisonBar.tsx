@@ -183,7 +183,7 @@ export function MTDComparisonBar({ data }: Props) {
   return (
     <ChartContainer
       title="MTD vs LMTD Comparison"
-      subtitle="All Products \u2014 with achievement traffic light"
+      subtitle={"All Products \u2014 with achievement traffic light"}
       height={chartHeight}
       empty={!filtered.length}
     >
