@@ -551,6 +551,14 @@ function buildCorporateProvisioningECL(): Row[] {
         // PCR (provision coverage ratio) = provision / stage_gross — a different metric
         const pcr = stageGross > 0 ? +(provision / stageGross).toFixed(6) : 0;
 
+        // Sammaan PQR ECL movement: closing = provision; opening back-derived so
+        // opening + new − releases − writeoffs = closing (identity holds).
+        const closing = provision;
+        const newProvisions = +(provision * 0.15).toFixed(2);
+        const releases = +(provision * 0.05).toFixed(2);
+        const writeoffs = +(provision * (sIdx === 2 ? 0.08 : 0.01)).toFixed(2);
+        const opening = +(closing - newProvisions + releases + writeoffs).toFixed(2);
+
         rows.push({
           subsidiary_id: sub.id,
           period: pp.period,
@@ -562,6 +570,16 @@ function buildCorporateProvisioningECL(): Row[] {
           provision_amount_usd: toUSD(provision, sub.currencyCode),
           pcr_pct: pcr,
           credit_cost: cc,
+          opening_balance: opening,
+          opening_balance_usd: toUSD(opening, sub.currencyCode),
+          new_provisions: newProvisions,
+          new_provisions_usd: toUSD(newProvisions, sub.currencyCode),
+          releases,
+          releases_usd: toUSD(releases, sub.currencyCode),
+          writeoffs,
+          writeoffs_usd: toUSD(writeoffs, sub.currencyCode),
+          closing_balance: closing,
+          closing_balance_usd: toUSD(closing, sub.currencyCode),
           report_date: REPORT_DATE,
         });
       });
@@ -735,6 +753,21 @@ function buildCorporatePipeline(): Row[] {
 
 async function main() {
   console.log('=== Seeding V3 Enhancement Tables ===\n');
+
+  // Idempotent: clear tables this script seeds so re-runs don't hit unique-constraint conflicts
+  const v3Tables = [
+    'trade_stage_migration', 'trade_dpd_roll_rates', 'trade_dpd_aging_by_entity',
+    'corporate_top_customers', 'corporate_industry_concentration', 'corporate_collateral_analysis',
+    'corporate_ltv_distribution', 'corporate_maturity_profile', 'corporate_provisioning_ecl',
+    'corporate_rating_analysis', 'corporate_rating_migration', 'corporate_pd_distribution',
+    'corporate_pipeline',
+  ];
+  console.log('Clearing V3 tables for idempotent re-seed...');
+  for (const t of v3Tables) {
+    const { error } = await supabase.from(t).delete().gte('id', 0);
+    if (error) console.warn(`  Warning: could not clear ${t}:`, error.message);
+  }
+  console.log('  ✓ V3 tables cleared\n');
 
   // --- Trade Finance V3 ---
   console.log('--- Trade Finance V3 (3 tables) ---');

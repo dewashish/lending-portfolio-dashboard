@@ -429,6 +429,12 @@ export interface CovenantTrackingRow {
   rmDepartment: string;
   breached: boolean;
   daysSinceBreach: number;
+  // Sammaan PQR covenant monitoring (net-new; '—' when absent)
+  thresholdValue: string | null;
+  actualValue: string | null;
+  breachPct: number | null;
+  waiverStatus: string | null;
+  cureDeadline: string | null;
 }
 
 export interface CorporateWatchlistRow {
@@ -444,6 +450,10 @@ export interface CorporateWatchlistRow {
   remedialAction: string;
   dateAdded: string;
   daysOnWatchlist: number;
+  // Sammaan PQR watch-list detail (net-new; '—' when absent)
+  watchGrade: string | null;
+  dpd: number | null;
+  ifrsStage: string | null;
 }
 
 export interface CorporateDelinquencyRow {
@@ -477,6 +487,27 @@ export interface CorporatePARTrendRow {
   parRate: number;
   totalPOS: number;
   delinquentPOS: number;
+}
+
+// ── ARC Performance + NPA Collection (Sammaan PQR) ────────────────
+export interface ArcPerformanceRow {
+  arcName: string;
+  period: string;
+  originalPOS: number;
+  currentPOS: number;
+  lifetimeRecoveries: number;
+  expectedRecoveriesAgreed: number;
+  currentMonthRecoveries: number;
+  agreementStartDate: string | null;
+  agreementEndDate: string | null;
+}
+
+export interface NpaCollectionRow {
+  period: string;
+  arcType: string; // 'ARC' | 'Non-ARC' | 'Total'
+  pos: number;
+  moneyCollected: number;
+  collectedToPosPct: number;
 }
 
 // ── Trade Stage Migration ────────────────────────────────────────
@@ -614,6 +645,12 @@ export interface CorporateProvisioningRow {
   provisionAmount: number;
   pcrPct: number;
   creditCost: number;
+  // Sammaan PQR ECL movement (net-new; null when absent)
+  openingBalance: number | null;
+  newProvisions: number | null;
+  releases: number | null;
+  writeoffs: number | null;
+  closingBalance: number | null;
 }
 
 // ── Corporate Rating Analysis ────────────────────────────────────

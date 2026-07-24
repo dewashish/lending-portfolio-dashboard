@@ -322,6 +322,11 @@ export function CorporateCovenantSection({ scope }: Props) {
                   <TableCell sx={HDR}>Rating</TableCell>
                   <TableCell sx={HDR}>Category</TableCell>
                   <TableCell sx={HDR}>Covenant Type</TableCell>
+                  <TableCell sx={HDR}>Threshold</TableCell>
+                  <TableCell sx={HDR}>Actual</TableCell>
+                  <TableCell align="right" sx={HDR}>Breach %</TableCell>
+                  <TableCell sx={HDR}>Waiver</TableCell>
+                  <TableCell sx={HDR}>Cure Deadline</TableCell>
                   <TableCell sx={HDR}>Description</TableCell>
                   <TableCell sx={HDR}>Frequency</TableCell>
                   <TableCell sx={HDR}>Creation Date</TableCell>
@@ -362,6 +367,13 @@ export function CorporateCovenantSection({ scope }: Props) {
                     <TableCell sx={CELL_TEXT}>{row.riskRating}</TableCell>
                     <TableCell sx={CELL_TEXT}>{row.covenantCategory}</TableCell>
                     <TableCell sx={CELL_TEXT}>{row.covenantType}</TableCell>
+                    <TableCell sx={CELL}>{row.thresholdValue ?? '—'}</TableCell>
+                    <TableCell sx={{ ...CELL, color: row.breached ? '#f44336' : undefined, fontWeight: row.breached ? 700 : undefined }}>{row.actualValue ?? '—'}</TableCell>
+                    <TableCell align="right" sx={{ ...CELL, color: row.breachPct != null ? '#f44336' : undefined, fontWeight: row.breachPct != null ? 700 : undefined }}>
+                      {row.breachPct != null ? `${(row.breachPct * 100).toFixed(1)}%` : '—'}
+                    </TableCell>
+                    <TableCell sx={CELL_TEXT}>{row.waiverStatus ?? '—'}</TableCell>
+                    <TableCell sx={CELL_TEXT}>{row.cureDeadline ?? '—'}</TableCell>
                     <TableCell
                       sx={{
                         ...CELL_TEXT,

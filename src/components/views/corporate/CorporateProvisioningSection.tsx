@@ -135,6 +135,39 @@ export function CorporateProvisioningSection({ scope }: Props) {
     return { stageRows, totalValues };
   }, [rows, sortedPeriods]);
 
+  /* ── ECL Movement (Sammaan PQR): latest period, opening → closing by stage ── */
+
+  const eclMovement = useMemo(() => {
+    const withMovement = rows.filter((r) => r.closingBalance != null);
+    if (withMovement.length === 0) return null;
+    const periods = Array.from(new Set(withMovement.map((r) => r.period))).sort(
+      (a, b) => parsePeriod(a) - parsePeriod(b),
+    );
+    const latest = periods[periods.length - 1];
+    const stageRows = STAGE_ORDER.map((stage) => {
+      const r = withMovement.find((x) => x.period === latest && x.ifrsStage === stage);
+      return {
+        stage,
+        opening: r?.openingBalance ?? 0,
+        newProv: r?.newProvisions ?? 0,
+        releases: r?.releases ?? 0,
+        writeoffs: r?.writeoffs ?? 0,
+        closing: r?.closingBalance ?? 0,
+      };
+    });
+    const total = stageRows.reduce(
+      (acc, s) => ({
+        opening: acc.opening + s.opening,
+        newProv: acc.newProv + s.newProv,
+        releases: acc.releases + s.releases,
+        writeoffs: acc.writeoffs + s.writeoffs,
+        closing: acc.closing + s.closing,
+      }),
+      { opening: 0, newProv: 0, releases: 0, writeoffs: 0, closing: 0 },
+    );
+    return { latest, stageRows, total };
+  }, [rows]);
+
   /* ── Detail table: rows grouped by period ────────────────────── */
 
   const detailGrouped = useMemo(() => {
@@ -232,6 +265,49 @@ export function CorporateProvisioningSection({ scope }: Props) {
           </TableContainer>
         )}
       </Card>
+
+      {/* ECL Provision Movement (Sammaan PQR) — gated on movement data availability */}
+      {eclMovement && (
+        <Card sx={{ p: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', mb: 2 }}>
+            ECL Provision Movement — {eclMovement.latest}
+          </Typography>
+          <TableContainer sx={{ maxHeight: 320 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>ECL Stage</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Opening Bal</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>+ New Provisions</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>− Releases</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>− Write-offs</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Closing Bal</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {eclMovement.stageRows.map((r) => (
+                  <TableRow key={r.stage} hover>
+                    <TableCell sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{r.stage}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace' }}>{formatCurrency(r.opening)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', color: '#4caf50' }}>{formatCurrency(r.newProv)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', color: '#ff9800' }}>{formatCurrency(r.releases)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', color: '#f44336' }}>{formatCurrency(r.writeoffs)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700 }}>{formatCurrency(r.closing)}</TableCell>
+                  </TableRow>
+                ))}
+                <TableRow hover sx={{ bgcolor: 'rgba(25,118,210,0.06)' }}>
+                  <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>Total</TableCell>
+                  <TableCell align="right" sx={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}>{formatCurrency(eclMovement.total.opening)}</TableCell>
+                  <TableCell align="right" sx={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}>{formatCurrency(eclMovement.total.newProv)}</TableCell>
+                  <TableCell align="right" sx={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}>{formatCurrency(eclMovement.total.releases)}</TableCell>
+                  <TableCell align="right" sx={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}>{formatCurrency(eclMovement.total.writeoffs)}</TableCell>
+                  <TableCell align="right" sx={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}>{formatCurrency(eclMovement.total.closing)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+      )}
 
       {/* IFRS Provisioning Detail (Collapsible) */}
       <Card sx={{ p: 0 }}>

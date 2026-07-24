@@ -397,6 +397,12 @@ const corporateCovenantRowSchema = z.object({
   rm_department: z.string().optional(),
   breached: z.boolean().optional(),
   days_since_breach: z.number().int().optional(),
+  // Sammaan PQR covenant monitoring (net-new; optional)
+  threshold_value: z.string().nullable().optional(),
+  actual_value: z.string().nullable().optional(),
+  breach_pct: z.number().nullable().optional(),
+  waiver_status: z.string().nullable().optional(),
+  cure_deadline: z.string().nullable().optional(),
 });
 
 export const corporateCovenantsPayloadSchema = z.object({
@@ -445,6 +451,10 @@ const corporateWatchlistRowSchema = z.object({
   internal_rating: z.string().optional(),
   status: z.string().optional(),
   remedial_action: z.string().optional(),
+  // Sammaan PQR watch-list detail (net-new; optional)
+  watch_grade: z.string().nullable().optional(),
+  dpd: z.number().int().nullable().optional(),
+  ifrs_stage: z.string().nullable().optional(),
 });
 
 export const corporateWatchlistPayloadSchema = z.object({
@@ -501,6 +511,40 @@ export const fxRatesPayloadSchema = z.object({
   rows: z.array(fxRateRowSchema).min(1),
 });
 
+// ── ARC Performance (Sammaan PQR) ───────────────────────────────
+
+const arcPerformanceRowSchema = z.object({
+  arc_name: z.string().min(1),
+  period: z.string().min(1),
+  original_pos: nonNegativeNumber.optional(),
+  current_pos: nonNegativeNumber.optional(),
+  lifetime_recoveries: nonNegativeNumber.optional(),
+  expected_recoveries_agreed: nonNegativeNumber.optional(),
+  current_month_recoveries: nonNegativeNumber.optional(),
+  agreement_start_date: z.string().nullable().optional(),
+  agreement_end_date: z.string().nullable().optional(),
+});
+
+export const arcPerformancePayloadSchema = z.object({
+  subsidiary_id: z.number().positive(),
+  rows: z.array(arcPerformanceRowSchema).min(1),
+});
+
+// ── NPA Collection (ARC & Non-ARC) ──────────────────────────────
+
+const npaCollectionRowSchema = z.object({
+  period: z.string().min(1),
+  arc_type: z.string().min(1),
+  pos: nonNegativeNumber.optional(),
+  money_collected: nonNegativeNumber.optional(),
+  collected_to_pos_pct: z.number().optional(),
+});
+
+export const npaCollectionPayloadSchema = z.object({
+  subsidiary_id: z.number().positive(),
+  rows: z.array(npaCollectionRowSchema).min(1),
+});
+
 // ── Validate Payload (dry-run) ──────────────────────────────────
 
 const validatePayloadSchema = z.object({
@@ -536,4 +580,6 @@ export const SCHEMA_MAP: Record<string, z.ZodType> = {
   ews_entity_summary: ewsEntityPayloadSchema,
   ews_facility_alerts: ewsFacilityAlertsPayloadSchema,
   fx_rates: fxRatesPayloadSchema,
+  arc_performance: arcPerformancePayloadSchema,
+  npa_collection: npaCollectionPayloadSchema,
 };

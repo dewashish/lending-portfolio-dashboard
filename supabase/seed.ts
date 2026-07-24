@@ -51,6 +51,8 @@ async function batchUpsert(table: string, rows: Row[], batchSize = 500) {
 /** Delete from all tables in correct FK order */
 async function clearAll() {
   const tables = [
+    // ARC / NPA Collection (Sammaan PQR; FK -> subsidiaries)
+    'arc_performance', 'npa_collection',
     // Forward Outlook tables (FK -> subsidiaries)
     'subsidiary_stress_scores', 'management_actions',
     // Risk Outlook tables (FK -> subsidiaries)
@@ -311,27 +313,35 @@ function buildDataSources(): Row[] {
   return rows;
 }
 
+// Product → Secured/Unsecured classification (module-scope: used by catalog + product metrics)
+const PRODUCT_CATEGORY: Record<string, string> = {
+  'Home Loan': 'Secured',
+  'LAP': 'Secured',
+  'Personal Loan': 'Unsecured',
+  'Auto Loan': 'Secured',
+  'Credit Card': 'Unsecured',
+  'Consumer Loan': 'Unsecured',
+  'Housing Loan': 'Secured',
+  'Leasing': 'Secured',
+  'Mortgage': 'Secured',
+  'Gold Loan': 'Secured',
+};
+
+// Samman-specific extra product surfaced from the Sammaan PQR (not in the base products array
+// so it does not cascade into net-flow/vintage/etc. seeds — Products + Delinquency only).
+const SAMMAN_EXTRA_PRODUCTS = ['Gold Loan'] as const;
+
 function buildProductCatalog(): Row[] {
-  const categoryMap: Record<string, string> = {
-    'Home Loan': 'Secured',
-    'LAP': 'Secured',
-    'Personal Loan': 'Unsecured',
-    'Auto Loan': 'Secured',
-    'Credit Card': 'Unsecured',
-    'Consumer Loan': 'Unsecured',
-    'Housing Loan': 'Secured',
-    'Leasing': 'Secured',
-    'Mortgage': 'Secured',
-  };
   const rows: Row[] = [];
   let id = 1;
   for (const s of SUBSIDIARIES) {
-    for (const p of s.products) {
+    const products = s.id === 1 ? [...s.products, ...SAMMAN_EXTRA_PRODUCTS] : s.products;
+    for (const p of products) {
       rows.push({
         id: id++,
         subsidiary_id: s.id,
         product_name: p,
-        product_category: categoryMap[p] || 'Other',
+        product_category: PRODUCT_CATEGORY[p] || 'Other',
         is_active: true,
       });
     }
@@ -483,16 +493,51 @@ function buildConsumerProductMetrics(): Row[] {
     { metric_type: 'Collection Efficiency', metric: 'Collection Efficiency', baseValues: [0.92, 0.925, 0.93, 0.935, 0.94, 0.945, 0.95], benchmark: 0.95, isRate: false, isAbsolute: true },
   ];
 
+  // ── Collateral & LTV (generalized to ALL secured products; Hybrid rule) ──
+  const collateralLtvDefs: MetricDef[] = [
+    { metric_type: 'Collateral & LTV', metric: 'Average LTV at disbursement', baseValues: [0.62, 0.62, 0.61, 0.61, 0.60, 0.60, 0.59], benchmark: 0.70, isRate: false, isAbsolute: true },
+    { metric_type: 'Collateral & LTV', metric: 'Average current LTV', baseValues: [0.55, 0.55, 0.54, 0.54, 0.53, 0.53, 0.52], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Collateral & LTV', metric: '% loans LTV 75-90%', baseValues: [0.14, 0.14, 0.13, 0.13, 0.12, 0.12, 0.11], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Collateral & LTV', metric: '% loans LTV >90%', baseValues: [0.040, 0.038, 0.035, 0.032, 0.030, 0.026, 0.022], benchmark: 0.05, isRate: false, isAbsolute: true },
+  ];
+
+  // ── Auction Recovery (Gold Loan only) → surfaced in Products + Delinquency asset-quality ──
+  const auctionRecoveryDefs: MetricDef[] = [
+    { metric_type: 'Auction Recovery', metric: 'Accounts near auction threshold (#)', baseValues: [140, 135, 130, 128, 122, 118, 110], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Auction Recovery', metric: 'Accounts sent for auction (#)', baseValues: [45, 42, 40, 38, 35, 33, 30], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Auction Recovery', metric: 'Gold auctioned value (₹Cr)', baseValues: [9.2, 8.8, 8.5, 8.1, 7.6, 7.2, 6.8], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Auction Recovery', metric: 'Recovery from auction (₹Cr)', baseValues: [8.5, 8.2, 8.0, 7.7, 7.3, 7.0, 6.6], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Auction Recovery', metric: 'Auction recovery rate (%)', baseValues: [0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.97], benchmark: 0.95, isRate: false, isAbsolute: true },
+  ];
+
+  // ── Gold Context (Gold Loan only; hover-only — excluded from the metrics table body) ──
+  const goldContextDefs: MetricDef[] = [
+    { metric_type: 'Gold Context', metric: 'Gold price month-end (₹/g)', baseValues: [6200, 6350, 6480, 6600, 6720, 6850, 6980], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Gold Context', metric: 'Total gold pledged (kg)', baseValues: [3800, 3900, 4000, 4100, 4200, 4300, 4450], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Gold Context', metric: 'Avg appraisal TAT (mins)', baseValues: [32, 31, 30, 29, 28, 27, 26], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Gold Context', metric: '% pledged value insured', baseValues: [0.95, 0.955, 0.96, 0.965, 0.97, 0.975, 0.98], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Gold Context', metric: 'Top-5 branch concentration (₹Cr)', baseValues: [310, 320, 330, 340, 350, 360, 375], benchmark: null, isRate: false, isAbsolute: true },
+    { metric_type: 'Gold Context', metric: 'Largest single customer exposure (%)', baseValues: [0.028, 0.027, 0.026, 0.025, 0.024, 0.023, 0.022], benchmark: null, isRate: false, isAbsolute: true },
+  ];
+
   const rows: Row[] = [];
   for (const sub of SUBSIDIARIES) {
-    const nProducts = sub.products.length;
+    const products = sub.id === 1 ? [...sub.products, ...SAMMAN_EXTRA_PRODUCTS] : sub.products;
+    const nProducts = products.length;
     for (let pri = 0; pri < nProducts; pri++) {
-      const product = sub.products[pri];
+      const product = products[pri];
       const productWeight = 1 / nProducts; // even split for AUM share
       const prodDelinq = PRODUCT_DELINQ_MULT[product] || 1.0;
+      const isSecured = PRODUCT_CATEGORY[product] === 'Secured';
+      const isGold = product === 'Gold Loan';
+      const productDefs: MetricDef[] = [
+        ...defs,
+        ...(isSecured ? collateralLtvDefs : []),
+        ...(isGold ? [...auctionRecoveryDefs, ...goldContextDefs] : []),
+      ];
 
-      for (let di = 0; di < defs.length; di++) {
-        const d = defs[di];
+      for (let di = 0; di < productDefs.length; di++) {
+        const d = productDefs[di];
         for (let pi = 0; pi < PERIODS_7.length; pi++) {
           let value: number;
           let valueUsd: number | null = null;
@@ -533,7 +578,7 @@ const PRODUCT_DELINQ_MULT: Record<string, number> = {
   'Home Loan': 0.65, 'LAP': 0.75, 'Personal Loan': 1.40,
   'Auto Loan': 0.85, 'Credit Card': 1.55,
   'Consumer Loan': 1.0, 'Housing Loan': 0.65,
-  'Leasing': 0.80, 'Mortgage': 0.60,
+  'Leasing': 0.80, 'Mortgage': 0.60, 'Gold Loan': 0.55,
 };
 
 function buildNetFlowRates(): Row[] {
@@ -1913,6 +1958,79 @@ function buildCorporateDelinquency(): Row[] {
 // ---------------------------------------------------------------------------
 // 18. corporate_portfolio_metrics (period-based KPIs per subsidiary)
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// ARC Performance + NPA Collection (Sammaan PQR — Samman Capital only)
+// ---------------------------------------------------------------------------
+function buildArcPerformance(): Row[] {
+  const rows: Row[] = [];
+  const sam = SUBSIDIARIES[0]; // Samman Capital (INR)
+  const arcs = [
+    { name: 'Prudent ARC', frac: 0.08, start: '2023-06-15', end: '2028-06-14' },
+    { name: 'Phoenix ARC', frac: 0.05, start: '2024-01-10', end: '2029-01-09' },
+    { name: 'Omkara ARC', frac: 0.03, start: '2024-09-01', end: '2029-08-31' },
+  ];
+  const periods = ["Q3'25", "Q4'25", "Q1'26", "Q2'26"];
+  arcs.forEach((arc, ai) => {
+    const originalPos = +(sam.aumLocal * arc.frac).toFixed(2);
+    periods.forEach((period, pi) => {
+      const n = noise(sam.id, ai, pi + 700);
+      const lifetime = +(originalPos * (0.04 * (pi + 1)) * n).toFixed(2);
+      const currentPos = +(originalPos - lifetime).toFixed(2);
+      const expected = +(originalPos * 0.35).toFixed(2);
+      const currentMonth = +(originalPos * 0.013 * n).toFixed(2);
+      rows.push({
+        subsidiary_id: sam.id,
+        arc_name: arc.name,
+        period,
+        original_pos: originalPos,
+        original_pos_usd: toUSD(originalPos, sam.currencyCode, FX_MAP),
+        current_pos: currentPos,
+        current_pos_usd: toUSD(currentPos, sam.currencyCode, FX_MAP),
+        lifetime_recoveries: lifetime,
+        lifetime_recoveries_usd: toUSD(lifetime, sam.currencyCode, FX_MAP),
+        expected_recoveries_agreed: expected,
+        expected_recoveries_agreed_usd: toUSD(expected, sam.currencyCode, FX_MAP),
+        current_month_recoveries: currentMonth,
+        current_month_recoveries_usd: toUSD(currentMonth, sam.currencyCode, FX_MAP),
+        agreement_start_date: arc.start,
+        agreement_end_date: arc.end,
+        data_source_id: sam.dsOffset,
+      });
+    });
+  });
+  return rows;
+}
+
+function buildNpaCollection(): Row[] {
+  const rows: Row[] = [];
+  const sam = SUBSIDIARIES[0];
+  const periods = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26"];
+  const arcPosBase = sam.aumLocal * 0.16;    // ARC 90+ POS
+  const nonArcPosBase = sam.aumLocal * 0.08; // Non-ARC 90+ POS
+  const mk = (period: string, arcType: string, pos: number, collected: number): Row => ({
+    subsidiary_id: sam.id,
+    period,
+    arc_type: arcType,
+    pos: +pos.toFixed(2),
+    pos_usd: toUSD(pos, sam.currencyCode, FX_MAP),
+    money_collected: +collected.toFixed(2),
+    money_collected_usd: toUSD(collected, sam.currencyCode, FX_MAP),
+    collected_to_pos_pct: pos > 0 ? +(collected / pos).toFixed(4) : 0,
+    data_source_id: sam.dsOffset,
+  });
+  periods.forEach((period, pi) => {
+    const n = noise(sam.id, pi, 800);
+    const arcPos = arcPosBase * (1 - pi * 0.005) * n;
+    const arcColl = arcPos * noiseRange(0.008, 0.022, sam.id, pi, 801);
+    const nonArcPos = nonArcPosBase * (1 + pi * 0.004) * n;
+    const nonArcColl = nonArcPos * noiseRange(0.002, 0.006, sam.id, pi, 802);
+    rows.push(mk(period, 'ARC', arcPos, arcColl));
+    rows.push(mk(period, 'Non-ARC', nonArcPos, nonArcColl));
+    rows.push(mk(period, 'Total', arcPos + nonArcPos, arcColl + nonArcColl));
+  });
+  return rows;
+}
+
 function buildCorporatePortfolioMetrics(): Row[] {
   const rows: Row[] = [];
   const periods = ['Q1 2025', 'Q2 2025', 'Jul 2025', 'Aug 2025'];
@@ -1920,8 +2038,12 @@ function buildCorporatePortfolioMetrics(): Row[] {
     'Total Sanctioned Limit',
     'Total Disbursement',
     'Current POS',
+    'On Book',
+    'Off Book',
     'Fund Based Exposure',
     'Non-Fund Based Exposure',
+    'Write-off',
+    'Recoveries',
     'Avg. Yield',
   ];
 
@@ -1941,8 +2063,12 @@ function buildCorporatePortfolioMetrics(): Row[] {
           case 'Total Sanctioned Limit': total = corpUsd * 1.4 * growth * n; break;
           case 'Total Disbursement': total = corpUsd * 1.1 * growth * n; break;
           case 'Current POS': total = corpUsd * growth * n; break;
+          case 'On Book': total = corpUsd * 0.80 * growth * n; break;
+          case 'Off Book': total = corpUsd * 0.20 * growth * n; break;
           case 'Fund Based Exposure': total = corpUsd * 0.65 * growth * n; break;
           case 'Non-Fund Based Exposure': total = corpUsd * 0.35 * growth * n; break;
+          case 'Write-off': total = corpUsd * 0.015 * (1 + pi * 0.05) * n; break;
+          case 'Recoveries': total = corpUsd * 0.006 * (1 + pi * 0.08) * n; break;
           case 'Avg. Yield': total = +(7.5 + (n - 1) * 2).toFixed(2); break;
         }
         fundBased = particular === 'Avg. Yield' ? 0 : total * 0.65;
@@ -2027,6 +2153,16 @@ function buildCorporateWatchlist(): Row[] {
       const reportDate = new Date('2025-08-15');
       const dateAdded = new Date(reportDate.getTime() - daysOnWatchlist * 86400000);
 
+      // Sammaan PQR watch-list detail: grade (WL-1/2/3), DPD and IFRS stage escalate with severity
+      const severity = (ci + sub.id) % 3; // 0=mild, 1=medium, 2=severe
+      const watchGrade = `WL-${severity + 1}`;
+      const dpd = severity === 0
+        ? Math.round(noiseRange(0, 15, sub.id, ci, 1953))
+        : severity === 1
+          ? Math.round(noiseRange(30, 60, sub.id, ci, 1953))
+          : Math.round(noiseRange(90, 180, sub.id, ci, 1953));
+      const ifrsStage = dpd >= 90 ? 'Stage 3' : dpd >= 30 ? 'Stage 2' : 'Stage 2';
+
       rows.push({
         subsidiary_id: sub.id,
         borrower: cust.name,
@@ -2041,6 +2177,9 @@ function buildCorporateWatchlist(): Row[] {
         remedial_action: WATCHLIST_ACTIONS[(ci * 2 + sub.id) % WATCHLIST_ACTIONS.length],
         date_added: dateAdded.toISOString().slice(0, 10),
         days_on_watchlist: daysOnWatchlist,
+        watch_grade: watchGrade,
+        dpd,
+        ifrs_stage: ifrsStage,
         report_date: '2025-08-15',
         data_source_id: sub.dsOffset,
       });
@@ -2066,6 +2205,21 @@ function buildCorporateCovenants(): Row[] {
       const pos = +(perCust * n).toFixed(2);
       const npaFlag = ci >= 8;
       const watchlistFlag = ci >= 7;
+      const breached = npaFlag || watchlistFlag;
+
+      // Sammaan PQR covenant monitoring: numeric threshold vs actual, breach %, waiver, cure date
+      const covType = ci % 3 === 0 ? 'DSCR' : ci % 3 === 1 ? 'Change of Control' : 'Quarterly Reporting';
+      const threshold = covType === 'DSCR' ? '≥1.20x' : covType === 'Change of Control' ? 'No change' : 'Q+30 days';
+      const actual = breached
+        ? (covType === 'DSCR' ? `${(0.7 + n * 0.3).toFixed(2)}x` : covType === 'Change of Control' ? 'Sponsor change' : 'Q+68 days')
+        : (covType === 'DSCR' ? `${(1.25 + n * 0.3).toFixed(2)}x` : covType === 'Change of Control' ? 'No change' : 'Q+12 days');
+      const breachPct = breached ? +(noiseRange(0.05, 0.45, sub.id, ci, 2097)).toFixed(3) : null;
+      const waiverStatus = breached
+        ? (npaFlag ? 'Not Waived' : 'Waiver Requested')
+        : 'Compliant';
+      const cureDeadline = breached && !npaFlag
+        ? new Date(new Date('2025-08-15').getTime() + Math.round(noiseRange(20, 75, sub.id, ci, 2098)) * 86400000).toISOString().slice(0, 10)
+        : null;
 
       rows.push({
         subsidiary_id: sub.id,
@@ -2083,13 +2237,19 @@ function buildCorporateCovenants(): Row[] {
         security_cover: +(0.8 + n * 0.4).toFixed(2),
         risk_rating: cust.rating,
         covenant_category: ci % 3 === 0 ? 'Financial' : ci % 3 === 1 ? 'Non-Financial' : 'Reporting',
-        covenant_type: ci % 3 === 0 ? 'DSCR' : ci % 3 === 1 ? 'Change of Control' : 'Quarterly Reporting',
+        covenant_type: covType,
         covenant_description: ci % 3 === 0 ? 'DSCR > 1.2x' : ci % 3 === 1 ? 'No change of control' : 'Quarterly financial reporting',
         covenant_frequency: ci % 2 === 0 ? 'Quarterly' : 'Annual',
         npa_flag: npaFlag,
         restructured_flag: false,
         watchlist_flag: watchlistFlag,
         writeoff_flag: false,
+        breached,
+        threshold_value: threshold,
+        actual_value: actual,
+        breach_pct: breachPct,
+        waiver_status: waiverStatus,
+        cure_deadline: cureDeadline,
         report_date: '2025-08-15',
         data_source_id: sub.dsOffset,
       });
@@ -3035,6 +3195,12 @@ async function main() {
 
   console.log('Seeding los_daily...');
   await batchInsert('los_daily', buildLosDaily());
+
+  console.log('Seeding arc_performance...');
+  await batchInsert('arc_performance', buildArcPerformance());
+
+  console.log('Seeding npa_collection...');
+  await batchInsert('npa_collection', buildNpaCollection());
 
   console.log('Seeding trade_asset_quality...');
   await batchInsert('trade_asset_quality', buildTradeAssetQuality());
