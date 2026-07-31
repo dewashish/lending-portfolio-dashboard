@@ -413,6 +413,9 @@ export function CorporateWatchlistSection({ scope }: Props) {
                   <TableCell sx={HDR}>Category</TableCell>
                   <TableCell sx={HDR}>Prior Rating</TableCell>
                   <TableCell sx={HDR}>Current Rating</TableCell>
+                  <TableCell sx={HDR}>Watch Grade</TableCell>
+                  <TableCell align="right" sx={HDR}>DPD</TableCell>
+                  <TableCell sx={HDR}>IFRS Stage</TableCell>
                   <TableCell align="right" sx={HDR}>Days on Watch</TableCell>
                   <TableCell sx={HDR}>Status</TableCell>
                   <TableCell sx={HDR}>Remedial Action</TableCell>
@@ -437,6 +440,11 @@ export function CorporateWatchlistSection({ scope }: Props) {
                       <TableCell sx={{ ...CELL, color: isWorse ? '#f44336' : undefined, fontWeight: isWorse ? 700 : undefined }}>
                         {row.internalRating}
                       </TableCell>
+                      <TableCell sx={CELL}>{row.watchGrade ?? '—'}</TableCell>
+                      <TableCell align="right" sx={{ ...CELL, color: (row.dpd ?? 0) >= 90 ? '#f44336' : (row.dpd ?? 0) >= 30 ? '#ff9800' : undefined, fontWeight: (row.dpd ?? 0) >= 90 ? 700 : undefined }}>
+                        {row.dpd != null ? formatNumber(row.dpd) : '—'}
+                      </TableCell>
+                      <TableCell sx={CELL}>{row.ifrsStage ?? '—'}</TableCell>
                       <TableCell align="right" sx={{ ...CELL, fontWeight: row.daysOnWatchlist > 180 ? 700 : undefined, color: row.daysOnWatchlist > 180 ? '#ff9800' : undefined }}>
                         {formatNumber(row.daysOnWatchlist)}
                       </TableCell>

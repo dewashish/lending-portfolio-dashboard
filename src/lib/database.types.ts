@@ -1,6 +1,64 @@
 export interface Database {
   public: {
     Tables: {
+      // ── ARC Performance + NPA Collection (Sammaan PQR) ──────────
+      arc_performance: {
+        Row: {
+          id: number; subsidiary_id: number; arc_name: string; period: string;
+          original_pos: number | null; original_pos_usd: number | null;
+          current_pos: number | null; current_pos_usd: number | null;
+          lifetime_recoveries: number | null; lifetime_recoveries_usd: number | null;
+          expected_recoveries_agreed: number | null; expected_recoveries_agreed_usd: number | null;
+          current_month_recoveries: number | null; current_month_recoveries_usd: number | null;
+          agreement_start_date: string | null; agreement_end_date: string | null;
+          data_source_id: number | null; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; arc_name: string; period: string;
+          original_pos?: number | null; original_pos_usd?: number | null;
+          current_pos?: number | null; current_pos_usd?: number | null;
+          lifetime_recoveries?: number | null; lifetime_recoveries_usd?: number | null;
+          expected_recoveries_agreed?: number | null; expected_recoveries_agreed_usd?: number | null;
+          current_month_recoveries?: number | null; current_month_recoveries_usd?: number | null;
+          agreement_start_date?: string | null; agreement_end_date?: string | null;
+          data_source_id?: number | null; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; arc_name?: string; period?: string;
+          original_pos?: number | null; original_pos_usd?: number | null;
+          current_pos?: number | null; current_pos_usd?: number | null;
+          lifetime_recoveries?: number | null; lifetime_recoveries_usd?: number | null;
+          expected_recoveries_agreed?: number | null; expected_recoveries_agreed_usd?: number | null;
+          current_month_recoveries?: number | null; current_month_recoveries_usd?: number | null;
+          agreement_start_date?: string | null; agreement_end_date?: string | null;
+          data_source_id?: number | null; created_at?: string;
+        };
+        Relationships: [];
+      };
+      npa_collection: {
+        Row: {
+          id: number; subsidiary_id: number; period: string; arc_type: string;
+          pos: number | null; pos_usd: number | null;
+          money_collected: number | null; money_collected_usd: number | null;
+          collected_to_pos_pct: number | null;
+          data_source_id: number | null; created_at: string;
+        };
+        Insert: {
+          id?: number; subsidiary_id: number; period: string; arc_type: string;
+          pos?: number | null; pos_usd?: number | null;
+          money_collected?: number | null; money_collected_usd?: number | null;
+          collected_to_pos_pct?: number | null;
+          data_source_id?: number | null; created_at?: string;
+        };
+        Update: {
+          id?: number; subsidiary_id?: number; period?: string; arc_type?: string;
+          pos?: number | null; pos_usd?: number | null;
+          money_collected?: number | null; money_collected_usd?: number | null;
+          collected_to_pos_pct?: number | null;
+          data_source_id?: number | null; created_at?: string;
+        };
+        Relationships: [];
+      };
       // ── User Profiles ───────────────────────────────────────────
       profiles: {
         Row: {

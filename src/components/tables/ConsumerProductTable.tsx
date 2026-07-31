@@ -21,13 +21,17 @@ import {
   Box,
   TableSortLabel,
   Tooltip,
+  IconButton,
+  Popover,
+  Stack,
 } from '@mui/material';
-import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DiamondOutlinedIcon from '@mui/icons-material/DiamondOutlined';
+import { AvaSparkButton } from '@/components/ava/AvaSparkButton';
 import { formatPercent } from '@/lib/format';
 import { useCurrencyFormat } from '@/lib/currency-context';
 import type { ConsumerProductData, ConsumerMetricRow } from '@/lib/types';
@@ -38,8 +42,10 @@ const GROUP_COLORS: Record<string, string> = {
   'Book Size and Growth': '#0d47a1',
   'Entry Rates': '#ff6f00',
   'Portfolio Performance': '#4527a0',
+  'Collateral & LTV': '#00838f',
   'Process Efficiency': '#37474f',
   'Provision Coverage': '#00695c',
+  'Auction Recovery': '#8e24aa',
   'Collection Efficiency': '#2e7d32',
 };
 
@@ -47,17 +53,24 @@ const GROUP_ORDER = [
   'Book Size and Growth',
   'Entry Rates',
   'Portfolio Performance',
+  'Collateral & LTV',
   'Process Efficiency',
   'Provision Coverage',
+  'Auction Recovery',
   'Collection Efficiency',
 ];
 
+/** metric_type groups rendered as hover-only context (excluded from the metrics table body) */
+const HOVER_ONLY_GROUPS = new Set(['Gold Context']);
+
 function isInverseMetric(metric: string): boolean {
-  return /(%|FPD|SPD|TPD|NPA|DPD|Delinquency|Write-off|NCL|Net Credit Loss|Policy Deviation|PDD|Bounce)/i.test(metric);
+  // Recovery/collection/resolution metrics are "higher = better" — never inverse
+  if (/recover|collection efficiency|resolution|insured/i.test(metric)) return false;
+  return /(%|FPD|SPD|TPD|NPA|DPD|LTV|Delinquency|Write-off|NCL|Net Credit Loss|Policy Deviation|PDD|Bounce|auction)/i.test(metric);
 }
 
 function isPercentMetric(metric: string): boolean {
-  return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|Delinquency|Efficiency|Ratio|ROI|Credit Loss|Bounce|GCL)/i.test(metric);
+  return /(%|Rate|Amt%|FPD|SPD|TPD|NPA|LTV|Delinquency|Efficiency|Ratio|ROI|Credit Loss|Bounce|GCL)/i.test(metric);
 }
 
 function isCurrencyMetric(metric: string): boolean {
@@ -128,6 +141,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
   const { formatCurrency } = useCurrencyFormat();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [ctxAnchor, setCtxAnchor] = useState<HTMLElement | null>(null);
 
   const activeProduct = selectedProduct ?? data[0]?.productName ?? '';
 
@@ -145,16 +159,26 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
     return match?.metrics ?? data[0]?.metrics ?? [];
   }, [data, activeProduct]);
 
+  // Hover-only context rows (e.g. Gold Context) are excluded from the table body and shown in a popover.
+  const goldContextRows = useMemo<ConsumerMetricRow[]>(
+    () => productData.filter((r) => HOVER_ONLY_GROUPS.has(r.metricType)),
+    [productData],
+  );
+  const visibleData = useMemo<ConsumerMetricRow[]>(
+    () => productData.filter((r) => !HOVER_ONLY_GROUPS.has(r.metricType)),
+    [productData],
+  );
+
   const periodKeys = useMemo<string[]>(() => {
-    if (productData.length === 0) return [];
-    return Object.keys(productData[0].values).sort();
-  }, [productData]);
+    if (visibleData.length === 0) return [];
+    return Object.keys(visibleData[0].values).sort();
+  }, [visibleData]);
 
   const latestPeriodKey = periodKeys.length > 0 ? periodKeys[periodKeys.length - 1] : '';
 
   const groups = useMemo(() => {
     const map = new Map<string, ConsumerMetricRow[]>();
-    productData.forEach((row) => {
+    visibleData.forEach((row) => {
       const existing = map.get(row.metricType);
       if (existing) existing.push(row);
       else map.set(row.metricType, [row]);
@@ -169,7 +193,7 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
       if (!sorted.has(key)) sorted.set(key, rows);
     });
     return sorted;
-  }, [productData]);
+  }, [visibleData]);
 
   const flatRows = useMemo(() => {
     const result: ConsumerMetricRow[] = [];
@@ -347,11 +371,55 @@ export function ConsumerProductTable({ data, selectedProduct }: Props) {
           gap: 1,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
-          Product Metrics — {activeProduct}
-        </Typography>
-        <AvaSparkButton context={{ insightId: 'consumer.products', breadcrumb: ['Consumer', 'Products', activeProduct] }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
+            Product Metrics — {activeProduct}
+          </Typography>
+          {goldContextRows.length > 0 && (
+            <Tooltip title="Gold collateral context" arrow placement="top">
+              <IconButton
+                size="small"
+                onClick={(e) => setCtxAnchor(e.currentTarget)}
+                sx={{ p: 0.3 }}
+              >
+                <DiamondOutlinedIcon sx={{ fontSize: '1rem', color: '#8e24aa' }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          <AvaSparkButton context={{ insightId: 'consumer.products', breadcrumb: ['Consumer', 'Products', activeProduct] }} />
+        </Box>
       </Box>
+
+      <Popover
+        open={Boolean(ctxAnchor)}
+        anchorEl={ctxAnchor}
+        onClose={() => setCtxAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Box sx={{ p: 1.5, minWidth: 240 }}>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8e24aa', display: 'block', mb: 0.75 }}
+          >
+            Gold Collateral Context — {latestPeriodKey || 'Latest'}
+          </Typography>
+          <Stack spacing={0.5}>
+            {goldContextRows.map((row) => {
+              const v = latestPeriodKey ? row.values[latestPeriodKey] : null;
+              return (
+                <Box key={row.metric} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                    {row.metric}
+                  </Typography>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: 700, fontFamily: '"Roboto Mono", monospace' }}>
+                    {formatMetricValue(v, row.metric, formatCurrency)}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Box>
+      </Popover>
 
       <TableContainer sx={{ maxHeight: 700 }}>
         <Table size="small" stickyHeader>

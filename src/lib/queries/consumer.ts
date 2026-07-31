@@ -105,8 +105,13 @@ const RATE_METRICS = new Set([
   'Current BKT Bounce Rate', 'FPD%', 'FPD To GCL Trend',
   'X+ Amt% excl w/o', '30+ Amt% excl w/o', '60+ Amt% excl w/o', '90+ Amt% excl w/o',
   'Net Credit Loss %', 'Policy Deviation (%account)',
+  // Collateral & LTV (ratios — weighted-averaged across products/subsidiaries)
+  'Average LTV at disbursement', 'Average current LTV', '% loans LTV 75-90%', '% loans LTV >90%',
+  // Auction Recovery / Gold Context rates (counts & ₹Cr amounts are left to SUM)
+  'Auction recovery rate (%)', 'Avg appraisal TAT (mins)', 'Gold price month-end (₹/g)',
+  '% pledged value insured', 'Largest single customer exposure (%)',
 ]);
-// Note: 'PDD Pending > 60 days (#)' is a COUNT — it gets SUMMED, not averaged
+// Note: '#' counts and '₹Cr' amounts (accounts, kg pledged, auctioned/recovery value) are SUMMED, not averaged
 
 /**
  * Aggregates multiple products into a single "All Products" entry.

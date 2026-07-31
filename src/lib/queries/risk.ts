@@ -7,6 +7,8 @@ import type {
   ScopeSelection,
   RAGStatus,
   IFRSStage,
+  ArcPerformanceRow,
+  NpaCollectionRow,
 } from '../types';
 import { applyScopeAsync } from './shared';
 
@@ -101,5 +103,39 @@ export async function fetchCountryRisk(scope?: ScopeSelection): Promise<CountryR
     capitalImpact: r.capital_impact_usd ?? r.capital_impact ?? 0,
     recommendation: r.recommendation ?? '',
     rag: (r.rag_status ?? 'Green') as RAGStatus,
+  }));
+}
+
+export async function fetchArcPerformance(scope?: ScopeSelection): Promise<ArcPerformanceRow[]> {
+  let query = supabase.from('arc_performance').select('*').order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    arcName: r.arc_name,
+    period: r.period,
+    originalPOS: r.original_pos_usd ?? r.original_pos ?? 0,
+    currentPOS: r.current_pos_usd ?? r.current_pos ?? 0,
+    lifetimeRecoveries: r.lifetime_recoveries_usd ?? r.lifetime_recoveries ?? 0,
+    expectedRecoveriesAgreed: r.expected_recoveries_agreed_usd ?? r.expected_recoveries_agreed ?? 0,
+    currentMonthRecoveries: r.current_month_recoveries_usd ?? r.current_month_recoveries ?? 0,
+    agreementStartDate: r.agreement_start_date ?? null,
+    agreementEndDate: r.agreement_end_date ?? null,
+  }));
+}
+
+export async function fetchNpaCollection(scope?: ScopeSelection): Promise<NpaCollectionRow[]> {
+  let query = supabase.from('npa_collection').select('*').order('id');
+  query = await applyScopeAsync(query, scope);
+  const { data, error } = await query;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({
+    period: r.period,
+    arcType: r.arc_type,
+    pos: r.pos_usd ?? r.pos ?? 0,
+    moneyCollected: r.money_collected_usd ?? r.money_collected ?? 0,
+    collectedToPosPct: r.collected_to_pos_pct ?? 0,
   }));
 }

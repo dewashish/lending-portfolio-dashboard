@@ -18,3 +18,11 @@ export function useFXRisk(scope?: ScopeSelection) {
 export function useCountryRisk(scope?: ScopeSelection) {
   return useSWR(scopeKey('country-risk', scope), () => queries.fetchCountryRisk(scope));
 }
+
+export function useArcPerformance(scope?: ScopeSelection) {
+  return useSWR(scopeKey('arc-performance', scope), () => queries.fetchArcPerformance(scope));
+}
+
+export function useNpaCollection(scope?: ScopeSelection) {
+  return useSWR(scopeKey('npa-collection', scope), () => queries.fetchNpaCollection(scope));
+}

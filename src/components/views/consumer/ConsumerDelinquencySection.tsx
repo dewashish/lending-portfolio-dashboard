@@ -114,6 +114,16 @@ function DelinquencyKPIStrip({ kpis, ctx }: { kpis: DKpi[]; ctx?: import('@/lib/
 
 const VINTAGE_METRICS = ['X+', '30+', '60+', '90+'] as const;
 
+// Data-availability gated: only Samman's Gold Loan carries an "Auction Recovery" group,
+// so this returns rows only where that data exists (Samman scope / group).
+const GOLD_AUCTION_FILTER: ConsumerFilters = { period: null, products: ['Gold Loan'] };
+
+function fmtAuction(metric: string, v: number | string | null): string {
+  if (v == null || typeof v !== 'number' || isNaN(v)) return '—';
+  if (/\(%\)|rate/i.test(metric)) return formatPercent(v);
+  return parseFloat(v.toFixed(2)).toString();
+}
+
 export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const [securedFilter, setSecuredFilter] = useState<SecuredFilter>('all');
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
@@ -157,6 +167,21 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
   const { data: netFlow, isLoading: l1 } = useNetFlowRates(scope, netFlowFilters);
   const { data: overall } = useConsumerOverall(scope, filters);
   const { data: productData } = useProductMetrics(scope, hasProductFilter ? netFlowFilters : undefined);
+
+  // Gold auction recovery (asset quality) — gated on data availability (Samman only today)
+  const { data: goldData } = useProductMetrics(scope, GOLD_AUCTION_FILTER);
+  const auctionMetrics = useMemo(() => {
+    const gold = goldData?.find((p) => p.productName === 'Gold Loan');
+    const rows = gold?.metrics.filter((m) => m.metricType === 'Auction Recovery') ?? [];
+    return rows.map((r) => {
+      const keys = Object.keys(r.values).sort();
+      const curr = keys.length ? r.values[keys[keys.length - 1]] : null;
+      const prev = keys.length >= 2 ? r.values[keys[keys.length - 2]] : null;
+      const delta = typeof curr === 'number' && typeof prev === 'number' && prev !== 0
+        ? ((curr - prev) / Math.abs(prev)) * 100 : null;
+      return { metric: r.metric, value: curr as number | string | null, delta };
+    });
+  }, [goldData]);
 
   // Vintage / Static Pool data
   const vintageProducts = useMemo(() => effectiveProducts.length > 0 ? effectiveProducts : undefined, [effectiveProducts]);
@@ -295,6 +320,44 @@ export function ConsumerDelinquencySection({ scope, filters }: Props) {
       </Box>
 
       {kpis.length > 0 && <DelinquencyKPIStrip kpis={kpis} ctx={ctx} />}
+
+      {/* Gold auction recovery — asset quality (gated: renders only when auction data exists) */}
+      {auctionMetrics.length > 0 && (
+        <Card sx={{ p: 1.5 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 700, fontSize: '0.75rem', mb: 1, color: '#8e24aa', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+          >
+            Auction &amp; Recovery — Gold Loan
+          </Typography>
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+            {auctionMetrics.map((m) => {
+              const deltaColor = m.delta == null
+                ? undefined
+                : Math.abs(m.delta) < 0.5
+                  ? '#78909c'
+                  : /recover/i.test(m.metric)
+                    ? (m.delta > 0 ? '#66bb6a' : '#ef5350')
+                    : (m.delta < 0 ? '#66bb6a' : '#ef5350');
+              return (
+                <Box key={m.metric} sx={{ flex: '1 1 150px', minWidth: 150 }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.56rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', display: 'block', mb: 0.3 }}>
+                    {m.metric}
+                  </Typography>
+                  <Typography variant="h6" className="mono" sx={{ fontWeight: 800, fontSize: '1.05rem', lineHeight: 1 }}>
+                    {fmtAuction(m.metric, m.value)}
+                  </Typography>
+                  {m.delta != null && (
+                    <Typography variant="caption" sx={{ fontSize: '0.6rem', fontWeight: 700, color: deltaColor, mt: 0.3, display: 'block' }}>
+                      {m.delta >= 0 ? '+' : ''}{formatPercent(m.delta, 1)} MoM
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
+          </Stack>
+        </Card>
+      )}
 
       {/* Static Pool Analysis — always shows current data, unaffected by period filter */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

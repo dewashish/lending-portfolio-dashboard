@@ -30,11 +30,14 @@ import {
   useEWSFacilityAlerts,
   useFXRisk,
   useCountryRisk,
+  useArcPerformance,
 } from '@/hooks/useRiskData';
 import { useTradeConcentrations } from '@/hooks/useTradeData';
+import { ArcPerformanceSection } from '@/components/views/risk/ArcPerformanceSection';
 import type { ScopeSelection } from '@/lib/types';
 
 const SUB_TABS = ['EWS Radar', 'Concentrations', 'FX Risk', 'Country Risk'] as const;
+const ARC_TAB = 'ARC Performance';
 
 interface Props {
   scope?: ScopeSelection;
@@ -50,6 +53,11 @@ export function RiskConcentrationsView({ scope, initialSubTab }: Props) {
   const { data: fxRisk } = useFXRisk(scope);
   const { data: countryRisk } = useCountryRisk(scope);
   const { data: concentrations } = useTradeConcentrations(undefined, scope);
+  const { data: arcData } = useArcPerformance(scope);
+
+  // ARC Performance sub-tab is data-availability gated (Samman today)
+  const hasArc = (arcData ?? []).length > 0;
+  const tabs = hasArc ? [...SUB_TABS, ARC_TAB] : [...SUB_TABS];
 
   const totalFlagged = (ewsSummary ?? []).reduce((s, e) => s + e.score2 + e.score3 + e.score4Plus, 0);
   const avgScore = (ewsSummary ?? []).length > 0
@@ -183,6 +191,8 @@ export function RiskConcentrationsView({ scope, initialSubTab }: Props) {
             )}
           </Card>
         );
+      case 4:
+        return <Box key="sub-4"><ArcPerformanceSection scope={scope} /></Box>;
       default:
         return null;
     }
@@ -205,7 +215,7 @@ export function RiskConcentrationsView({ scope, initialSubTab }: Props) {
           borderColor: 'divider',
         }}
       >
-        {SUB_TABS.map((label) => (
+        {tabs.map((label) => (
           <Tab key={label} label={label} />
         ))}
       </Tabs>

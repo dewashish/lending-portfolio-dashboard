@@ -51,6 +51,9 @@ export async function fetchCorporateWatchlist(scope?: ScopeSelection): Promise<C
     remedialAction: r.remedial_action ?? '',
     dateAdded: r.date_added ?? '',
     daysOnWatchlist: r.days_on_watchlist ?? 0,
+    watchGrade: r.watch_grade ?? null,
+    dpd: r.dpd ?? null,
+    ifrsStage: r.ifrs_stage ?? null,
   }));
 }
 
@@ -112,6 +115,11 @@ export async function fetchCorporateCovenants(scope?: ScopeSelection): Promise<C
     rmDepartment: r.rm_department ?? '',
     breached: r.breached ?? false,
     daysSinceBreach: r.days_since_breach ?? 0,
+    thresholdValue: r.threshold_value ?? null,
+    actualValue: r.actual_value ?? null,
+    breachPct: r.breach_pct ?? null,
+    waiverStatus: r.waiver_status ?? null,
+    cureDeadline: r.cure_deadline ?? null,
   }));
 }
 
@@ -384,6 +392,11 @@ export async function fetchCorporateProvisioningECL(scope?: ScopeSelection): Pro
     provisionAmount: r.provision_amount_usd ?? r.provision_amount ?? 0,
     pcrPct: r.pcr_pct ?? 0,
     creditCost: r.credit_cost ?? 0,
+    openingBalance: r.opening_balance_usd ?? r.opening_balance ?? null,
+    newProvisions: r.new_provisions_usd ?? r.new_provisions ?? null,
+    releases: r.releases_usd ?? r.releases ?? null,
+    writeoffs: r.writeoffs_usd ?? r.writeoffs ?? null,
+    closingBalance: r.closing_balance_usd ?? r.closing_balance ?? null,
   }));
 }
 
