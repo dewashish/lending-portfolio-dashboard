@@ -229,14 +229,14 @@ Provide a clear, data-driven response. Use specific numbers from the context whe
 
 Format your response using Markdown. Use tables (GFM pipe syntax) for comparisons and tabular data. Use **bold** for key figures, bullet lists for summaries, and headings (##/###) to organize multi-part answers.`;
 
-    const res = await fetch('https://api.kie.ai/gemini-3-flash/v1/chat/completions', {
+    const res = await fetch('https://api.kie.ai/gpt-4.1/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gemini-3-flash',
+        model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question },
